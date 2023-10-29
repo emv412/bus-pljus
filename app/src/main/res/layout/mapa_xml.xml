@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/sve"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:layout_weight="20">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/tasteri"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <AutoCompleteTextView
+            android:id="@+id/polje_za_unos"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:hint="Broj stanice..."
+            android:imeOptions="actionDone|flagNoExtractUi"
+            android:inputType="numberSigned"
+            android:maxLength="4"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/promenaunosa"
+            app:layout_constraintStart_toEndOf="@id/skorasnjeomiljenest"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <Button
+            android:id="@+id/promenaunosa"
+            android:layout_width="48dp"
+            android:layout_height="0dp"
+            android:text="1"
+            android:textAlignment="center"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@id/polje_za_unos"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <Button
+            android:id="@+id/skorasnjeomiljenest"
+            android:layout_width="48dp"
+            android:layout_height="wrap_content"
+            android:drawableStart="@drawable/drawing"
+            android:visibility="gone"
+            app:layout_constraintEnd_toStartOf="@id/polje_za_unos"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <org.oscim.android.MapView
+        android:id="@+id/mapa"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:focusable="true"
+        android:focusableInTouchMode="true"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tasteri" />
+
+    <ProgressBar
+        android:id="@+id/napredak"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="-70dp"
+        android:layout_marginTop="11dp"
+        android:indeterminate="true"
+        android:visibility="invisible"
+        app:layout_constraintStart_toEndOf="@id/mapa"
+        app:layout_constraintTop_toBottomOf="@id/tasteri"
+        tools:visibility="visible" />
+
+    <ListView
+        android:id="@+id/lista"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="#000000"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/napredak"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tasteri"
+        tools:visibility="invisible" >
+
+    </ListView>
+
+    <ImageButton
+        android:id="@+id/osvezi"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="-70dp"
+        android:layout_marginTop="11dp"
+        android:src="@android:drawable/ic_popup_sync"
+        android:visibility="gone"
+        app:layout_constraintStart_toEndOf="@id/mapa"
+        app:layout_constraintTop_toBottomOf="@id/tasteri" />
+
+
+</androidx.constraintlayout.widget.ConstraintLayout>
