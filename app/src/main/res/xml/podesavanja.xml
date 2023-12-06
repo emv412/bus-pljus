@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen
+    xmlns:android="http://schemas.android.com/apk/res/android">
+    <PreferenceCategory
+        android:title="@string/prva_sekcija_podesavanja">
+
+        <CheckBoxPreference
+            android:key="automatskiunos"
+            android:id="@+id/autounos"
+            android:title="@string/auto_unos"
+            android:summary="@string/auto_unos_opis"
+            android:defaultValue="true" />
+    </PreferenceCategory>
+
+<PreferenceCategory
+    android:title="@string/podesavanja_prikaza">
+    <CheckBoxPreference
+        android:key="prikazgb"
+        android:id="@+id/gb"
+        android:title="@string/prikaz_gb"
+        android:summary="@string/prikaz_gb_opis"
+        android:defaultValue="false"/>
+</PreferenceCategory>
+
+    <PreferenceCategory
+        android:title="@string/program">
+    </PreferenceCategory>
+
+    <Preference
+        android:title="@string/nadogradnja_programa"
+        android:key="nadogradnja"
+        android:summary="@string/provera_ver">
+    </Preference>
+
+    <Preference
+        android:title="@string/o_programu"
+        android:key="o_programu" >
+    </Preference>
+
+</PreferenceScreen>

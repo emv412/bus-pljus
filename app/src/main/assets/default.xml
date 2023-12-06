@@ -16,7 +16,7 @@
     <!--###### TEXT styles ######-->
 
     <!--default label-->
-    <style-text caption="true" dy="20" fill="#2d51bc" font-family="medium" id="caption-small-blue"
+    <style-text caption="true" dy="20" fill="#16537e" font-family="medium" id="caption-small-blue"
         k="name" size="14" stroke="#ffffff" stroke-width="2.0" />
     <!--shop-->
     <style-text caption="true" dy="20" fill="#ac39ac" font-family="medium" id="shop" k="name"
@@ -38,13 +38,13 @@
         k="name" size="14" stroke="#ffffff" stroke-width="2.0" />
     <!--roads-->
     <style-text fill="#101010" id="road" k="name" priority="2" size="16" stroke="#eeeeee"
-        stroke-width="2.0" />
+        stroke-width="5.0" />
     <!--major roads-->
     <style-text style="bold" fill="#101010" id="major-road" k="name" priority="1" size="16"
-        stroke="#eeeeee" stroke-width="2.0" />
+        stroke="#eeeeee" stroke-width="5.0" />
     <!--references-->
     <style-text style="bold" fill="#606060" id="ref" k="ref" priority="2" size="12" stroke="#ffffff"
-        stroke-width="2.0" />
+        stroke-width="5.0" />
     <style-text caption="true" style="bold" fill="#ffffff" id="ref-caption" k="ref" priority="2"
         size="12" bg-fill="#45a976" />
     <!--ferry-->
@@ -168,7 +168,7 @@
     <!--###### SYMBOL styles ######-->
 
     <!-- oneway -->
-    <style-symbol id="oneway" repeat="true" src="assets:symbols/oneway.svg" />
+    <style-symbol id="oneway" repeat="true" src="assets:jednosmerna.svg" />
 
 
     <!--###### ASSIGNMENT ######-->
@@ -1059,12 +1059,6 @@
         </m>
         <!-- </m> -->
 
-        <!-- historic -->
-        <!-- <m k="historic" v="ruins" zoom-min="17">
-          <caption k="name" style="bold" size="10" fill="#2d51bc" stroke="#ffffff" stroke-width="2.0"
-          />
-          </m> -->
-
         <!-- place -->
         <m k="place" v="locality" zoom-min="17">
             <caption style="bold" fill="#000000" k="name" size="12" stroke="#ffffff"
@@ -1115,58 +1109,6 @@
         </m>
 
         <m k="amenity">
-            <m select="first">
-                <!--<m v="bench" zoom-min="17">
-                    <symbol src="assets:symbols/bench.svg" />
-                </m>-->
-                <m v="drinking_water" zoom-min="17">
-                    <symbol src="assets:symbols/food/drinkingtap.svg" />
-                </m>
-                <m v="fire_station" zoom-min="17">
-                    <symbol src="assets:symbols/amenity/firestation3.svg" />
-                </m>
-                <m v="place_of_worship" zoom-min="17">
-                    <m k="denomination|religion" v="buddhist">
-                        <symbol src="assets:symbols/place_of_worship/buddhist.svg" />
-                    </m>
-                    <m k="denomination|religion" v="christian">
-                        <symbol src="assets:symbols/place_of_worship/christian.svg" />
-                    </m>
-                    <m k="denomination|religion" v="hindu">
-                        <symbol src="assets:symbols/place_of_worship/hindu.svg" />
-                    </m>
-                    <m k="denomination|religion" v="jewish">
-                        <symbol src="assets:symbols/place_of_worship/jewish.svg" />
-                    </m>
-                    <m k="denomination|religion" v="muslim|moslem">
-                        <symbol src="assets:symbols/place_of_worship/islamic.svg" />
-                    </m>
-                    <m k="denomination|religion" v="shinto">
-                        <symbol src="assets:symbols/place_of_worship/shinto.svg" />
-                    </m>
-                    <m k="denomination|religion" v="~|*">
-                        <symbol src="assets:symbols/place_of_worship/unknown.svg" />
-                    </m>
-                </m>
-                <m v="post_box" zoom-min="17">
-                    <symbol src="assets:symbols/amenity/post_box.svg" />
-                </m>
-                <m v="recycling" zoom-min="17">
-                    <symbol src="assets:symbols/amenity/recycling.svg" />
-                </m>
-                <m v="shelter" zoom-min="17">
-                    <symbol src="assets:symbols/accommodation/shelter2.svg" />
-                </m>
-                <m v="telephone" zoom-min="17">
-                    <symbol src="assets:symbols/amenity/telephone.svg" />
-                </m>
-                <m v="toilets" zoom-min="17">
-                    <symbol src="assets:symbols/custom/amenity/toilets.svg" />
-                </m>
-                <m select="when-matched" zoom-min="17">
-                    <text priority="9" use="caption-small-blue" />
-                </m>
-            </m>
 
             <m select="first"> <!--Accomodation-->
                 <m v="parking" zoom-min="17">
@@ -1191,28 +1133,13 @@
                     <symbol src="assets:symbols/custom/amenity/library.svg" />
                 </m>
                 <m v="school" zoom-min="17">
-                    <symbol src="assets:symbols/education/school.svg" />
+                    <symbol src="assets:skola.svg" />
                 </m>
                 <m v="university|college" zoom-min="17">
                     <symbol src="assets:symbols/education/university.svg" />
                 </m>
                 <m select="when-matched" zoom-min="17">
-                    <text priority="9" use="education" />
-                </m>
-            </m>
-
-            <m select="first"> <!--Entertainment-->
-                <m v="cinema" zoom-min="17">
-                    <symbol src="assets:symbols/custom/tourist/cinema2.svg" />
-                </m>
-                <m v="fountain" zoom-min="17">
-                    <symbol src="assets:symbols/custom/amenity/fountain2.svg" />
-                </m>
-                <m v="theatre" zoom-min="17">
-                    <symbol src="assets:symbols/custom/tourist/theatre.svg" />
-                </m>
-                <m select="when-matched" zoom-min="17">
-                    <text priority="9" use="entertainment" />
+                    <text area-size="1" priority="9" use="education" />
                 </m>
             </m>
 
@@ -1246,35 +1173,6 @@
                 </m>
             </m>
 
-            <m select="first"> <!--Tavern-->
-                <m v="cafe" zoom-min="17">
-                    <symbol src="assets:symbols/food/cafe.svg" />
-                </m>
-                <m v="bar" zoom-min="17">
-                    <symbol src="assets:symbols/food/bar.svg" />
-                </m>
-                <m v="fast_food" zoom-min="17">
-                    <symbol src="assets:symbols/food/fastfood.svg" />
-                </m>
-                <m v="pub" zoom-min="17">
-                    <symbol src="assets:symbols/food/pub.svg" />
-                </m>
-                <m v="restaurant" zoom-min="17">
-                    <symbol src="assets:symbols/food/restaurant.svg" />
-                </m>
-                <m select="when-matched" zoom-min="17">
-                    <text priority="9" use="tavern" />
-                </m>
-            </m>
-        </m>
-
-        <!-- historic -->
-        <m k="historic" zoom-min="10">
-            <symbol src="assets:symbols/custom/tourist/monument.svg" />
-
-            <m zoom-min="17">
-                <text priority="7" use="entertainment" />
-            </m>
         </m>
 
         <!-- place -->
@@ -1326,75 +1224,15 @@
         <!-- railway -->
         <m k="railway">
             <m v="station" zoom-min="14">
-                <symbol src="assets:symbols/transport/train_station2.svg" />
+                <symbol src="assets:zeleznicka_stanica.svg" />
                 <caption style="bold" dy="20" fill="#af3a3a" k="name" size="14" stroke="#ffffff"
                     stroke-width="2.0" />
             </m>
 
-            <m v="halt|tram_stop" zoom-min="15">
-                <symbol src="assets:symbols/transport/tram_stop.svg" />
-                <caption style="bold" dy="20" fill="#af3a3a" k="name" size="12" stroke="#ffffff"
+            <m v="halt|tram_stop" zoom-min="18">
+                <symbol src="assets:tramvajska_stanica.svg" />
+                <caption style="bold" dy="20" fill="#000000" k="name" size="12" stroke="#ffffff"
                     stroke-width="2.0" />
-            </m>
-        </m>
-
-        <m k="shop" select="first">
-            <m v="bakery" zoom-min="17">
-                <symbol src="assets:symbols/shopping/bakery.svg" />
-            </m>
-            <!--<m v="florist" zoom-min="17">
-                <symbol src="assets:symbols/shopping/florist.svg" />
-            </m>-->
-            <!--<m v="hairdresser" zoom-min="16">
-                    <symbol src="assets:symbols/shopping/hairdresser.svg" />
-                </m>-->
-            <m v="supermarket|organic" zoom-min="17">
-                <symbol src="assets:symbols/shopping/supermarket.svg" />
-            </m>
-            <m zoom-min="17">
-                <symbol src="assets:symbols/dot_magenta.svg" />
-            </m>
-            <m select="when-matched" zoom-min="17">
-                <text priority="9" use="shop" />
-            </m>
-        </m>
-
-        <m k="tourism">
-            <m select="first"> <!--Accomodation-->
-                <m v="alpine_hut" zoom-min="16">
-                    <symbol src="assets:symbols/accommodation/alpinehut.svg" />
-                </m>
-                <m v="camp_site" zoom-min="17">
-                    <symbol src="assets:symbols/accommodation/camping.svg" />
-                </m>
-                <m v="hostel" zoom-min="17">
-                    <symbol src="assets:symbols/accommodation/hostel.svg" />
-                </m>
-                <m v="hotel" zoom-min="17">
-                    <symbol src="assets:symbols/accommodation/hotel2.svg" />
-                </m>
-                <m select="when-matched" zoom-min="17">
-                    <text priority="8" use="accommodation" />
-                </m>
-            </m>
-            <!-- <m v="information" zoom-min="17">
-              <m k="name" v="*">
-              <symbol src="assets:symbols/custom/tourist/information.svg" />
-              </m>
-            </m>-->
-            <m select="first"> <!--Entertainment-->
-                <m v="attraction" zoom-min="16">
-                    <symbol src="assets:symbols/custom/tourist/attraction.svg" />
-                </m>
-                <m v="museum" zoom-min="15">
-                    <symbol src="assets:symbols/custom/tourist/museum.svg" />
-                </m>
-                <m v="viewpoint" zoom-min="15">
-                    <symbol src="assets:symbols/custom/tourist/view_point.svg" />
-                </m>
-                <m select="when-matched" zoom-min="17">
-                    <text priority="8" use="entertainment" />
-                </m>
             </m>
         </m>
 
@@ -1414,59 +1252,14 @@
             </m>
         </m>-->
 
-        <m k="barrier">
-            <m zoom-min="16">
-                <m v="bollard">
-                    <symbol src="assets:symbols/barrier/bollard.svg" />
-                </m>
-                <m v="block">
-                    <symbol src="assets:symbols/barrier/blocks.svg" />
-                </m>
-                <m v="gate">
-                    <symbol src="assets:symbols/barrier/gate.svg" />
-                </m>
-                <m v="lift_gate">
-                    <symbol src="assets:symbols/barrier/lift_gate.svg" />
-                </m>
-            </m>
-        </m>
-
         <m k="highway">
             <m v="bus_stop" zoom-min="16">
-                <symbol src="assets:symbols/transport/bus_stop.svg" />
-                <caption style="bold" dy="20" fill="#2e3dbd" k="name" size="12" stroke="#ffffff"
+                <symbol src="assets:autobuska_stanica.svg" />
+                <caption style="bold" dy="20" fill="#000099" k="name" size="12" stroke="#ffffff"
                     stroke-width="2.0" />
             </m>
             <m v="traffic_signals" zoom-min="17">
-                <symbol src="assets:symbols/transport/traffic_lights.svg" />
-            </m>
-            <!--<m v="turning_circle" zoom-min="15">-->
-            <!--<circle fill="#ffffff" radius="1.4" scale-radius="true" />-->
-            <!--</m>-->
-        </m>
-
-        <m k="natural">
-            <m select="first">
-                <m v="cave_entrance" zoom-min="15">
-                    <symbol src="assets:symbols/poi/cave.svg" />
-                    <m zoom-min="17">
-                        <text use="caption-small-blue" />
-                    </m>
-                </m>
-                <m v="peak" zoom-min="12">
-                    <symbol src="assets:symbols/peak.svg" />
-                    <caption style="bold" dy="12" fill="#4D2F08" k="name" size="14" stroke="#ffffff"
-                        stroke-width="2.0" />
-                    <caption style="bold" dy="-12" fill="#4D2F08" k="ele" size="12" stroke="#ffffff"
-                        stroke-width="2.0" />
-                </m>
-                <m v="volcano" zoom-min="12">
-                    <symbol src="assets:symbols/volcano.svg" />
-                    <caption style="bold" dy="12" fill="#4D2F08" k="name" size="14" stroke="#ffffff"
-                        stroke-width="2.0" />
-                    <caption style="bold" dy="-12" fill="#4D2F08" k="ele" size="12" stroke="#ffffff"
-                        stroke-width="2.0" />
-                </m>
+                <symbol src="assets:semafor.svg" />
             </m>
         </m>
 

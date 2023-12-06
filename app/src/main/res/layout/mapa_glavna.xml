@@ -18,14 +18,14 @@
         <AutoCompleteTextView
             android:id="@+id/polje_za_unos"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:hint="Broj stanice..."
+            android:layout_height="48dp"
+            android:hint="@string/broj_stanice"
             android:imeOptions="actionDone|flagNoExtractUi"
             android:inputType="numberSigned"
             android:maxLength="4"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toStartOf="@id/promenaunosa"
-            app:layout_constraintStart_toEndOf="@id/skorasnjeomiljenest"
+            app:layout_constraintStart_toEndOf="@id/podesavanja"
             app:layout_constraintTop_toTopOf="parent" />
 
         <Button
@@ -39,13 +39,12 @@
             app:layout_constraintStart_toEndOf="@id/polje_za_unos"
             app:layout_constraintTop_toTopOf="parent" />
 
-        <Button
-            android:id="@+id/skorasnjeomiljenest"
-            android:layout_width="48dp"
+        <ImageButton
+            android:id="@+id/podesavanja"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:drawableStart="@drawable/drawing"
-            android:visibility="gone"
-            app:layout_constraintEnd_toStartOf="@id/polje_za_unos"
+            android:src="@android:drawable/ic_menu_manage"
+            app:layout_constraintEnd_toStartOf="@+id/polje_za_unos"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
@@ -80,12 +79,14 @@
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:background="#000000"
+        android:divider="#bab5a8"
+        android:dividerHeight="1dp"
         android:visibility="gone"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toStartOf="@id/napredak"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/tasteri"
-        tools:visibility="invisible" >
+        tools:visibility="invisible">
 
     </ListView>
 

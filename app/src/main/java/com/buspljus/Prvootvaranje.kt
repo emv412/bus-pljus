@@ -1,9 +1,9 @@
 package com.buspljus
 
-import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
 import android.widget.Button
+import androidx.appcompat.app.AppCompatActivity
 import okhttp3.Call
 import okhttp3.Callback
 import okhttp3.OkHttpClient
@@ -21,7 +21,7 @@ import java.util.zip.ZipInputStream
 import kotlin.system.exitProcess
 
 
-class Prvootvaranje: Activity() {
+class Prvootvaranje: AppCompatActivity() {
     override fun onCreate(SavedInstanceState: Bundle?) {
         super.onCreate(SavedInstanceState)
         setContentView(R.layout.prvootvaranje)
@@ -31,8 +31,7 @@ class Prvootvaranje: Activity() {
 
         if (File(filesDir,"beograd.map").exists()) {
             try {
-                val intent = Intent(this, Glavna::class.java)
-                startActivity(intent)
+                startActivity(Intent(this, Glavna::class.java))
                 finish()
             } catch (g: Exception) {
                 Toster(this).toster("greska: "+g)
@@ -51,7 +50,7 @@ class Prvootvaranje: Activity() {
     fun skidanjemape() {
         OkHttpClient().newCall(Request.Builder().url("https://github.com/emv412/buspljus/raw/main/za_app.zip").build()).enqueue(object : Callback {
             override fun onFailure(call: Call, e: IOException) {
-                Toster(this@Prvootvaranje).toster("Nema interneta, ili je greska na serveru")
+                Toster(this@Prvootvaranje).toster(resources.getString(R.string.nema_interneta))
             }
 
             override fun onResponse(call: Call, response: Response) {
@@ -71,12 +70,12 @@ class Prvootvaranje: Activity() {
 
                     }
                     catch(e: Exception) {
-                        Toster(this@Prvootvaranje).toster("Greska pri podesavanju baze stanica : "+e)
+                        Toster(this@Prvootvaranje).toster(resources.getString(R.string.greska_baza))
                     }
 
                 }
                 catch (e: Exception){
-                    Toster(this@Prvootvaranje).toster("Greska prilikom raspakivanja zip fajla: "+e)
+                    Toster(this@Prvootvaranje).toster(resources.getString(R.string.greska_zip))
                 }
 
             }

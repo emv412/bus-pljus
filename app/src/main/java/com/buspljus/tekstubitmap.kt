@@ -1,13 +1,14 @@
 package com.buspljus
 
-import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.drawable.Drawable
+import android.view.ContextThemeWrapper
 import android.view.Gravity
 import android.view.View
 import android.widget.TextView
+import androidx.vectordrawable.graphics.drawable.VectorDrawableCompat
 
 class tekstubitmap {
 
@@ -15,26 +16,26 @@ class tekstubitmap {
         view.background = background
     }
 
-    fun getBitmapFromTitle(title: String?, context: Context, boja: Int): Bitmap {
+    fun getBitmapFromTitle(title: String?, context: Glavna, boja: Int): Bitmap {
         val bubbleView = TextView(context)
-        if (boja == 0) {
-            setBackground(
-                bubbleView,
-                context.getDrawable(R.drawable.oblak)
-            )
-        }
-        else if (boja == 1) {
-            setBackground(
-                bubbleView,
-                context.getDrawable(R.drawable.oblak_crveni)
-            )
-        }
+        setBackground(
+            bubbleView,
+            VectorDrawableCompat.create(context.resources, R.drawable.oblak, ContextThemeWrapper(context,
+                when (boja) {
+                    0 -> R.style.Stanica
+                    1 -> R.style.Autobus
+                    2 -> R.style.Tramvaj
+                    3 -> R.style.Trolejbus
+                    else -> {R.style.Autobus}
+                }).theme))
 
-        bubbleView.gravity = Gravity.CENTER
+        bubbleView.gravity = Gravity.CENTER_VERTICAL
         bubbleView.maxEms = 20
         bubbleView.textSize = 15f
-        bubbleView.setPadding(20, 0, 20, 15)
-        bubbleView.setTextColor(Color.WHITE)
+        bubbleView.setPadding(20, 0, 20, 8)
+        if (boja == 0)
+            bubbleView.setTextColor(Color.BLACK)
+        else bubbleView.setTextColor(Color.WHITE)
         bubbleView.text = title
 
         bubbleView.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED)

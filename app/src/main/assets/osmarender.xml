@@ -55,7 +55,7 @@
     <!--###### SYMBOL styles ######-->
 
     <!-- oneway -->
-    <style-symbol id="oneway" repeat="true" src="assets:symbols/oneway.svg" />
+    <style-symbol id="oneway" repeat="true" src="assets:jednosmerna.svg" />
 
 
     <!--###### ASSIGNMENT ######-->
@@ -560,14 +560,14 @@
                     top-color="#eaf8d9b9" />
             </m>
 
-            <!--Only add house numbers where no name exist-->
-            <!--<m k="addr:housenumber" zoom-min="18">
+            <!--Only add house numbers where no name exist
+            <m k="addr:housenumber" zoom-min="18">
                 <m k="name" v="~">
                     <caption style="bold" fill="#606060" font-family="condensed"
                         k="addr:housenumber" priority="10" size="12" stroke="#ffffff"
                         stroke-width="2.0" />
                 </m>
-            </m> -->
+            </m>-->
         </m>
 
         <outline-layer cap="round" id="casing" stroke="#707070" width="0.15" />
@@ -1192,13 +1192,13 @@
                     <symbol src="assets:symbols/custom/amenity/library.svg" />
                 </m>
                 <m v="school" zoom-min="17">
-                    <symbol src="assets:symbols/education/school.svg" />
+                    <symbol src="assets:skola.svg" />
                 </m>
                 <m v="university|college" zoom-min="17">
                     <symbol src="assets:symbols/education/university.svg" />
                 </m>
                 <m select="when-matched" zoom-min="17">
-                    <text priority="1" use="education" />
+                    <text priority="9" use="education" />
                 </m>
             </m>
 
@@ -1319,13 +1319,13 @@
         <!-- railway -->
         <m k="railway">
             <m v="station" zoom-min="14">
-                <symbol src="assets:symbols/transport/train_station2.svg" />
+                <symbol src="assets:zeleznicka_stanica.svg" />
                 <caption style="bold" dy="20" fill="#af3a3a" k="name" size="14" stroke="#ffffff"
                     stroke-width="2.0" />
             </m>
 
             <m v="halt|tram_stop" zoom-min="15">
-                <symbol src="assets:symbols/transport/tram_stop.svg" />
+                <symbol src="assets:tramvajska_stanica.svg" />
                 <caption style="bold" dy="20" fill="#af3a3a" k="name" size="12" stroke="#ffffff"
                     stroke-width="2.0" />
             </m>
@@ -1399,13 +1399,13 @@
     </m>
 
     <m e="node" select="first">
-        <!--Only add house numbers where no name exist-->
-         <!--<m k="addr:housenumber" zoom-min="18">
+        <!--Only add house numbers where no name exist
+        <m k="addr:housenumber" zoom-min="18">
             <m k="name" v="~">
                 <caption style="bold" fill="#606060" font-family="condensed" k="addr:housenumber"
                     priority="10" size="12" stroke="#ffffff" stroke-width="2.0" />
             </m>
-        </m> -->
+        </m>-->
 
         <m k="barrier">
             <m zoom-min="16">
@@ -1426,12 +1426,12 @@
 
         <m k="highway">
             <m v="bus_stop" zoom-min="16">
-                <symbol src="assets:symbols/transport/bus_stop.svg" />
-                <caption style="bold" dy="20" fill="#0000ff" k="name" size="12" stroke="#ffffff"
+                <symbol src="assets:autobuska_stanica.svg" />
+                <caption style="bold" dy="20" fill="#000099" k="name" size="12" stroke="#ffffff"
                     stroke-width="2.0" />
             </m>
             <m v="traffic_signals" zoom-min="17">
-                <symbol src="assets:symbols/transport/traffic_lights.svg" />
+                <symbol src="assets:semafor.svg" />
             </m>
             <!--<m v="turning_circle" zoom-min="15">-->
             <!--<circle fill="#ffffff" radius="1.4" scale-radius="true" />-->
