@@ -12,7 +12,7 @@ android {
         minSdk = 21
         targetSdk = 34
         versionCode = 1
-        versionName = "0.6-alpha"
+        versionName = "1.0-beta"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -22,7 +22,8 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }
@@ -76,9 +77,8 @@ dependencies {
     debugImplementation("androidx.compose.ui:ui-test-manifest")
 
     implementation("org.mapsforge:vtm:0.20.0")
-    implementation("org.slf4j:slf4j-api:1.7.30")
     runtimeOnly("org.mapsforge:vtm-android:0.20.0:natives-arm64-v8a")
-    runtimeOnly("org.mapsforge:vtm-android:0.20.0:natives-x86_64")
+    debugRuntimeOnly("org.mapsforge:vtm-android:0.20.0:natives-x86_64")
     implementation("org.mapsforge:vtm-android:0.20.0")
     implementation("com.caverock:androidsvg:1.4")
     implementation("com.squareup.okio:okio:3.5.0")
