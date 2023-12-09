@@ -15,13 +15,13 @@ class Internet : OkHttpClient() {
     }
 
     companion object {
-        val PROVERA_POLOZAJA = "http://buspljus.azurewebsites.net/broj_stanice?st="
-        val PREUZIMANJE_ZIP = "https://github.com/emv412/buspljus/raw/main/za_app.zip"
+        const val PROVERA_POLOZAJA = "http://buspljus.azurewebsites.net/broj_stanice?st="
+        const val PREUZIMANJE_ZIP = "https://github.com/emv412/buspljus-materijal/raw/main/za_app.zip"
         val adresa = Request.Builder()
         private lateinit var zahtev: Call
     }
 
-    fun zahtev_prema_internetu(stanica: String?, argument: Int, callback: ApiResponseCallback) {
+    fun zahtevPremaInternetu(stanica: String?, argument: Int, callback: ApiResponseCallback) {
         when (argument) {
             0 -> adresa.url(PREUZIMANJE_ZIP)
             1 -> if (stanica != null)

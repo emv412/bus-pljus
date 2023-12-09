@@ -41,12 +41,12 @@ class Podesavanja : AppCompatActivity() {
             prikazgb2?.onPreferenceChangeListener = this
             autounos?.onPreferenceChangeListener = this
 
-            nadogradnja?.onPreferenceClickListener = Preference.OnPreferenceClickListener { podesavanje : Preference? ->
+            nadogradnja?.onPreferenceClickListener = Preference.OnPreferenceClickListener { _ : Preference? ->
                 startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/emv412/bus-pljus/releases")))
                 true
             }
 
-            o_programu?.onPreferenceClickListener = Preference.OnPreferenceClickListener { podesavanje : Preference? ->
+            o_programu?.onPreferenceClickListener = Preference.OnPreferenceClickListener { _ : Preference? ->
                 startActivity(Intent(context, OProgramu::class.java))
                 true
             }

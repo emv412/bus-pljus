@@ -4,10 +4,6 @@ import android.content.Intent
 import android.os.Bundle
 import android.widget.Button
 import androidx.appcompat.app.AppCompatActivity
-import okhttp3.Call
-import okhttp3.Callback
-import okhttp3.OkHttpClient
-import okhttp3.Request
 import okhttp3.Response
 import okio.BufferedSink
 import okio.buffer
@@ -39,21 +35,16 @@ class Prvootvaranje: AppCompatActivity() {
             }
         }
         preuzimanje.setOnClickListener {
-            skidanjemape()
+            skidanjeMape()
             preuzimanje.isClickable=false
             preuzimanje.isEnabled=false
         }
 
     }
 
-
-    fun skidanjemape() {
-        OkHttpClient().newCall(Request.Builder().url("https://github.com/emv412/buspljus/raw/main/za_app.zip").build()).enqueue(object : Callback {
-            override fun onFailure(call: Call, e: IOException) {
-                Toster(this@Prvootvaranje).toster(resources.getString(R.string.nema_interneta))
-            }
-
-            override fun onResponse(call: Call, response: Response) {
+    fun skidanjeMape() {
+        Internet().zahtevPremaInternetu(null,0,object: Internet.ApiResponseCallback {
+            override fun onSuccess(response: Response) {
                 val downloadedFile = File(cacheDir, "beograd.zip")
                 val sink: BufferedSink = downloadedFile.sink().buffer()
                 sink.writeAll(response.body!!.source())
@@ -77,14 +68,16 @@ class Prvootvaranje: AppCompatActivity() {
                 catch (e: Exception){
                     Toster(this@Prvootvaranje).toster(resources.getString(R.string.greska_zip))
                 }
-
             }
-        }
-        )
+
+            override fun onFailure(e: IOException) {
+                Toster(this@Prvootvaranje).toster(resources.getString(R.string.nema_interneta))
+            }
+
+        })
     }
 
     fun unzip(zipFile: File, destinationDir: File) {
-        // Create the destination directory if it doesn't exist
         if (!destinationDir.exists()) {
             destinationDir.mkdirs()
         }
