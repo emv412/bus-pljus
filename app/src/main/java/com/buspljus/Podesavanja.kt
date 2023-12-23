@@ -4,16 +4,23 @@ import android.content.Intent
 import android.content.SharedPreferences
 import android.net.Uri
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.preference.CheckBoxPreference
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.PreferenceManager
+import okhttp3.Response
+import org.json.JSONObject
+import java.io.IOException
 
 
 class Podesavanja : AppCompatActivity() {
     companion object {
         lateinit var deljenapodesavanja : SharedPreferences
+        val verzija = BuildConfig.VERSION_NAME
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -24,7 +31,7 @@ class Podesavanja : AppCompatActivity() {
     }
 
     class SettingsFragment: PreferenceFragmentCompat(),Preference.OnPreferenceChangeListener {
-        var stalanprikazgb : Boolean = false
+        private var stalanprikazgb : Boolean = false
         var auto : Boolean = true
 
         override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
@@ -32,7 +39,7 @@ class Podesavanja : AppCompatActivity() {
             val prikazgb2: CheckBoxPreference? = findPreference("prikazgb")
             val autounos: CheckBoxPreference? = findPreference("automatskiunos")
             val nadogradnja: Preference? = findPreference("nadogradnja")
-            val o_programu: Preference? = findPreference("o_programu")
+            val oProgramu: Preference? = findPreference("o_programu")
 
             deljenapodesavanja = PreferenceManager.getDefaultSharedPreferences(requireContext())
             stalanprikazgb = deljenapodesavanja.getBoolean("prikazgb", false)
@@ -42,11 +49,39 @@ class Podesavanja : AppCompatActivity() {
             autounos?.onPreferenceChangeListener = this
 
             nadogradnja?.onPreferenceClickListener = Preference.OnPreferenceClickListener { _ : Preference? ->
-                startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/emv412/bus-pljus/releases")))
+                Internet().zahtevPremaInternetu(null,4,object: Internet.ApiResponseCallback{
+                    override fun onSuccess(response: Response) {
+                        if (response.isSuccessful) {
+                            val odgovor = JSONObject(response.body!!.string())
+                            if (odgovor.getString("name").toDouble() >= verzija.toDouble()) {
+
+                                val prozorZaNadogradnju = context?.let {
+                                    AlertDialog.Builder(it)
+                                        .setTitle(resources.getString(R.string.dostupna_nadogradnja))
+                                        .setMessage(odgovor.getString("body"))
+                                        .setPositiveButton(resources.getString(R.string.preuzmi)) { dialog, _ ->
+                                            dialog.dismiss()
+                                            startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(
+                                                odgovor.getJSONArray("assets").getJSONObject(0).getString("browser_download_url"))))
+                                        }
+                                }
+
+                                Handler(Looper.getMainLooper()).post {
+                                    prozorZaNadogradnju?.create()?.show()
+                                }
+                            }
+                            else context?.let { Toster(it).toster(resources.getString(R.string.nema_nadogradnje)) }
+                        }
+                    }
+
+                    override fun onFailure(e: IOException) {
+                        context?.let {Toster(it).toster(resources.getString(R.string.nema_interneta))}
+                    }
+                })
                 true
             }
 
-            o_programu?.onPreferenceClickListener = Preference.OnPreferenceClickListener { _ : Preference? ->
+            oProgramu?.onPreferenceClickListener = Preference.OnPreferenceClickListener { _ : Preference? ->
                 startActivity(Intent(context, OProgramu::class.java))
                 true
             }

@@ -21,4 +21,10 @@
     <string name="nadogradnja_programa">Надоградња програма</string>
     <string name="provera_ver">Провера доступности нове верзије на GitHub-у</string>
     <string name="opis_programa">Мала, брза апликација за преглед положаја возила градског превоза у Београду. Користи OpenStreetMap податке, док за графичко исцртавање користи VTM.</string>
+    <string name="odabir_servera">Сервер за положаје возила</string>
+    <string name="nema_nadogradnje">Нема нове надоградње</string>
+    <string name="dostupna_nadogradnja">Доступна је надоградња</string>
+    <string name="pronadjene_stanice">Пронађене станице</string>
+    <string name="prihvatiti_stanicu">Послати упит за ову станицу?</string>
+    <string name="da">Да</string>
 </resources>

@@ -2,7 +2,6 @@ package com.buspljus
 
 import android.content.Context
 import android.content.Intent
-import android.database.Cursor
 import android.net.Uri
 import android.os.Bundle
 import android.text.Editable
@@ -21,6 +20,7 @@ import android.widget.ProgressBar
 import android.widget.SimpleCursorAdapter
 import androidx.appcompat.app.AppCompatActivity
 import androidx.preference.PreferenceManager
+import com.google.android.material.floatingactionbutton.FloatingActionButton
 import okhttp3.Response
 import org.json.JSONObject
 import org.oscim.android.MapView
@@ -28,6 +28,10 @@ import org.oscim.android.canvas.AndroidBitmap
 import org.oscim.android.theme.AssetsRenderTheme
 import org.oscim.core.GeoPoint
 import org.oscim.core.MapPosition
+import org.oscim.event.Gesture
+import org.oscim.event.GestureListener
+import org.oscim.event.MotionEvent
+import org.oscim.layers.Layer
 import org.oscim.layers.marker.ItemizedLayer
 import org.oscim.layers.marker.MarkerInterface
 import org.oscim.layers.marker.MarkerItem
@@ -45,39 +49,39 @@ import java.math.RoundingMode
 import java.util.Timer
 import kotlin.concurrent.schedule
 
-
 class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInterface> {
-    companion object {
-        lateinit var kursor : Cursor
-    }
 
-    private lateinit var podesavanje : ImageButton
-    private lateinit var ucitavanje : ProgressBar
-    private lateinit var lista : ListView
-    private lateinit var osvezi : ImageButton
-    private lateinit var mapa : Map
-    private lateinit var pregledmape : MapView
-    private lateinit var polje : AutoCompleteTextView
-    private lateinit var markeriVozila : ItemizedLayer
+    private lateinit var odabranoStajalisteSloj: ItemizedLayer
+    private lateinit var odabranoStajalisteMarker: MarkerItem
+    private lateinit var polje: AutoCompleteTextView
+    private lateinit var podesavanje: ImageButton
+    private lateinit var ucitavanje: ProgressBar
+    private lateinit var lista: ListView
+    private lateinit var osvezi: ImageButton
+    private lateinit var pregledmape: MapView
+    private lateinit var markeriVozila: ItemizedLayer
+    private lateinit var gpsdugme: FloatingActionButton
 
-    private var markersimbol : MarkerSymbol? = null
-    private val markeriVozilaSpisak : MutableList<MarkerInterface> = ArrayList()
-    private lateinit var odabranoStajalisteSloj : ItemizedLayer
-    private lateinit var odabranoStajalisteMarker : MarkerItem
+    private var markersimbol: MarkerSymbol? = null
+    private val markeriVozilaSpisak: MutableList<MarkerInterface> = ArrayList()
 
-    private var tajmer : Timer? = null
-    private var tastaturasklonjena : Boolean = true
-    private var kliknalistu : Boolean = false
+    private var tastaturasklonjena: Boolean = true
+    private var kliknalistu: Boolean = false
     private var boja = 1
 
     private var najbliziAutobusRastojanje = 100000.0
-    private lateinit var najbliziAutobusMarker : MarkerItem
+    private lateinit var najbliziAutobusMarker: MarkerItem
 
     var primljeniString = ""
-    var stanica : String = ""
-    var trazenjepobroju : Boolean = true
-    var prviput : Boolean = true
+    var stanica: String = ""
+    var stanica_naziv: String = ""
+    var pozicija = MapPosition()
+    var trazenjepobroju: Boolean = true
+    private var prviput: Boolean = true
 
+    private lateinit var adapter : SimpleCursorAdapter
+    private lateinit var mapa: Map
+    private var tajmer: Timer? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(null)
@@ -91,49 +95,58 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
         lista = findViewById(R.id.lista)
         osvezi = findViewById(R.id.osvezi)
         podesavanje = findViewById(R.id.podesavanja)
+        gpsdugme = findViewById(R.id.gps)
 
         mapa = pregledmape.map()
 
         val fromColumns = arrayOf("_id", "naziv", "staju")
         val toViews = intArrayOf(R.id.sifra_stanice, R.id.naziv_stanice, R.id.odredista_sa_stanice)
-        val adapter = SimpleCursorAdapter(this, R.layout.probna_lista,null, fromColumns, toViews,0)
-        adapter.viewBinder=Selektor()
+        adapter = SimpleCursorAdapter(this, R.layout.probna_lista, null, fromColumns, toViews, 0)
+        adapter.viewBinder = Selektor()
 
         val promenaunosa = findViewById<Button>(R.id.promenaunosa)
 
-        podesavanje.setOnClickListener{
+        gpsdugme.setOnClickListener{
+            Toster(this@Glavna).toster("Dugme radi!")
+        }
+
+        podesavanje.setOnClickListener {
             startActivity(Intent(this, Podesavanja::class.java))
         }
 
         osvezi.setOnClickListener {
-            ukucanastanica(stanica, odabranoStajalisteSloj, odabranoStajalisteMarker,false)
+            ukucanastanica(
+                this@Glavna,
+                stanica,
+                odabranoStajalisteSloj,
+                odabranoStajalisteMarker,
+                false
+            )
         }
 
         promenaunosa.setOnClickListener {
             fun unosteksta() {
                 if (promenaunosa.text == "A") {
-                    promenaunosa.text="1"
-                    polje.filters=arrayOf(InputFilter.LengthFilter(4))
-                    trazenjepobroju=true
-                    polje.inputType=InputType.TYPE_CLASS_NUMBER
+                    promenaunosa.text = "1"
+                    polje.filters = arrayOf(InputFilter.LengthFilter(4))
+                    trazenjepobroju = true
+                    polje.inputType = InputType.TYPE_CLASS_NUMBER
                     polje.text.clear()
-                    polje.hint=resources.getString(R.string.broj_stanice)
-                }
-                else {
-                    promenaunosa.text="A"
-                    polje.filters=arrayOf()
-                    trazenjepobroju=false
-                    polje.inputType=InputType.TYPE_CLASS_TEXT
+                    polje.hint = resources.getString(R.string.broj_stanice)
+                } else {
+                    promenaunosa.text = "A"
+                    polje.filters = arrayOf()
+                    trazenjepobroju = false
+                    polje.inputType = InputType.TYPE_CLASS_TEXT
                     polje.text.clear()
-                    polje.hint=resources.getString(R.string.naziv_stanice)
+                    polje.hint = resources.getString(R.string.naziv_stanice)
                 }
             }
             unosteksta()
         }
 
-
-        lista.adapter=adapter
-        polje.addTextChangedListener(object: TextWatcher {
+        lista.adapter = adapter
+        polje.addTextChangedListener(object : TextWatcher {
 
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
                 return
@@ -141,22 +154,28 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
 
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
                 runOnUiThread { lista.visibility = View.VISIBLE }
+                tastaturasklonjena = false
                 if (polje.length() > 0) {
-                    adapter.changeCursor(SQLcitac(this@Glavna).dobavisifre(s.toString(),trazenjepobroju))
-                    if ( (trazenjepobroju) and //Trazenje po broju, a ne imenu stanice
+                    adapter.changeCursor(
+                        SQLcitac(this@Glavna).dobavisifre(s.toString(), trazenjepobroju)
+                    )
+                    if ((trazenjepobroju) and //Trazenje po broju, a ne imenu stanice
                         (adapter.cursor.count == 1) and // U listi je ostala jedna stanica
                         (!kliknalistu) and // Na stanicu nije kliknuto na listi, vec se odabira samo kucanjem
-                        (Podesavanja.deljenapodesavanja.getBoolean("automatskiunos",true)) ) { //Podesavanje ukljuceno/iskljuceno
+                        (Podesavanja.deljenapodesavanja.getBoolean("automatskiunos", true))
+                    ) { //Podesavanje ukljuceno/iskljuceno
 
                         adapter.cursor.moveToFirst()
                         stanica = adapter.cursor.getString(adapter.cursor.getColumnIndexOrThrow("_id"))
-                        ukucanastanica(stanica,odabranoStajalisteSloj,odabranoStajalisteMarker,true)
-                        polje.hint=StringBuilder(stanica+" / "+adapter.cursor.getString(adapter.cursor.getColumnIndexOrThrow("naziv")))
-                        polje.text.clear()
+                        stanica_naziv = adapter.cursor.getString(adapter.cursor.getColumnIndexOrThrow("naziv"))
+                        ukucanastanica(this@Glavna, stanica, odabranoStajalisteSloj, odabranoStajalisteMarker, true)
+                        podesiNaziv()
                     }
                     kliknalistu = false
+                } else {
+                    lista.visibility = View.GONE
                 }
-                else lista.visibility=View.GONE
+
             }
 
             override fun afterTextChanged(s: Editable?) {
@@ -167,41 +186,44 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
 
         lista.setOnItemClickListener { _, _, _, _ ->
             stanica = adapter.cursor.getString(adapter.cursor.getColumnIndexOrThrow("_id"))
+            stanica_naziv = adapter.cursor.getString(adapter.cursor.getColumnIndexOrThrow("naziv"))
             if (!trazenjepobroju)
                 promenaunosa.callOnClick()
             kliknalistu = true
-            polje.hint=StringBuilder(stanica+" / "+adapter.cursor.getString(adapter.cursor.getColumnIndexOrThrow("naziv")))
-            polje.text.clear()
-            ukucanastanica(stanica,odabranoStajalisteSloj,odabranoStajalisteMarker,true)
+            podesiNaziv()
+            ukucanastanica(this@Glavna, stanica, odabranoStajalisteSloj, odabranoStajalisteMarker, true)
         }
         otvoriMapu()
     }
 
-    private fun ukucanastanica(stanica: String, stajalisteSloj: ItemizedLayer, stajaliste: MarkerItem, animacija: Boolean) {
+    fun ukucanastanica(context: Context, stanica: String, stajalisteSloj: ItemizedLayer, stajaliste: MarkerItem, animacija: Boolean) {
         try {
+            sklonitastaturu()
+
             markeriVozila.removeAllItems()
             prviput = true
 
             if (tajmer != null)
                 stopTajmera()
             zahtevZaPozicijuVozila()
-            dugmezaosvezavanje(1,0)
-
-
+            dugmezaosvezavanje(1, 0)
             tajmer = Timer()
 
-            sklonitastaturu()
-
-            stajaliste.title=stanica
-            stajaliste.geoPoint=SQLcitac(this).pozahtevu_jednastanica(stanica)
-            stajaliste.marker=(MarkerSymbol(
-                AndroidBitmap(tekstubitmap().getBitmapFromTitle(stajaliste.getTitle(),this,0)),
-                MarkerSymbol.HotspotPlace.NONE,true))
+            stajaliste.title = stanica
+            stajaliste.geoPoint = SQLcitac(this).pozahtevu_jednastanica(stanica)
+            stajaliste.marker = (MarkerSymbol(
+                AndroidBitmap(tekstubitmap().getBitmapFromTitle(stajaliste.getTitle(), this, 0)),
+                MarkerSymbol.HotspotPlace.NONE, true
+            ))
 
             if (animacija) {
-                mapa.mapPosition = MapPosition(stajaliste.geoPoint.latitude,stajaliste.geoPoint.longitude,2000.0)
-                if (stajalisteSloj.size() == 0) { mapa.animator().animateZoom(2000, 22.0,0F,0F) }
-                else {mapa.animator().animateTo(500,stajaliste.geoPoint,22.0,true)}
+                mapa.mapPosition =
+                    MapPosition(stajaliste.geoPoint.latitude, stajaliste.geoPoint.longitude, 2000.0)
+                if (stajalisteSloj.size() == 0) {
+                    mapa.animator().animateZoom(2000, 22.0, 0F, 0F)
+                } else {
+                    mapa.animator().animateTo(500, stajaliste.geoPoint, 22.0, true)
+                }
             }
             if (stajalisteSloj.size() != 0)
                 stajalisteSloj.removeItem(0)
@@ -209,33 +231,53 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
             stajalisteSloj.addItem(stajaliste)
 
             mapa.updateMap()
+        } catch (e: Exception) {
+            Toster(context).toster(context.resources.getString(R.string.greska_u_programu))
+            Log.d("BUSPLJUS!", "" + e)
         }
-
-        catch (e: Exception) {
-                Toster(this@Glavna).toster(resources.getString(R.string.greska_u_programu))
-        }
-
-
     }
 
     private fun otvoriMapu() {
         try {
-            //val tileSource: MBTilesTileSource = MBTilesMvtTileSource(file.absolutePath, "sr")
+            class klikNaMapu : Layer(mapa), GestureListener {
+                override fun onGesture(g: Gesture, e: MotionEvent): Boolean {
+                    if (g == Gesture.TAP) {
+                        val p = mMap.viewport().fromScreenPoint(e.x, e.y)
+                        SQLcitac(this@Glavna).pretragabaze_kliknamapu(p.latitude.toString(),p.longitude.toString(), object: SQLcitac.Callback {
+                            override fun korak1(s: String) {
+                                stanica = s
+                                stanica_naziv = ""
+                                podesiNaziv()
+                                ukucanastanica(this@Glavna, s, odabranoStajalisteSloj, odabranoStajalisteMarker, false)
+                            }
+                        })
+                    }
+                    return false
+                }
+            }
+
             val tileSource = MapFileTileSource()
-            val fis = contentResolver.openInputStream(Uri.fromFile((File(filesDir,"beograd.map")))) as FileInputStream?
+            val fis = contentResolver.openInputStream(
+                Uri.fromFile(
+                    (File(
+                        filesDir,
+                        "beograd.map"
+                    ))
+                )
+            ) as FileInputStream?
 
             tileSource.setMapFileInputStream(fis)
 
             val tileLayer = mapa.setBaseMap(tileSource)
 
-            markeriVozila = ItemizedLayer(mapa, markeriVozilaSpisak, markersimbol,this)
-            odabranoStajalisteSloj = ItemizedLayer(mapa,markersimbol)
-            odabranoStajalisteMarker = MarkerItem(null,null,null,null)
+            markeriVozila = ItemizedLayer(mapa, markeriVozilaSpisak, markersimbol, this)
+            odabranoStajalisteSloj = ItemizedLayer(mapa, markersimbol)
+            odabranoStajalisteMarker = MarkerItem(null, null, null, null)
 
             mapa.layers().add(BitmapTileLayer(mapa, tileSource))
             mapa.layers().add(BuildingLayer(mapa, tileLayer))
             mapa.layers().add(LabelLayer(mapa, tileLayer))
-            mapa.layers().add(Kliknamapu(mapa,this))
+            mapa.layers().add(klikNaMapu())
             mapa.layers().add(markeriVozila)
             mapa.layers().add(odabranoStajalisteSloj)
 
@@ -243,12 +285,11 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
 
             mapa.events.bind(Map.UpdateListener { e, mapPosition ->
 
+                pozicija = mapPosition
+
                 if (e == Map.ANIM_END) {
                     if (!tastaturasklonjena)
                         sklonitastaturu()
-
-                    Kliknamapu.pozicija=mapPosition
-                    Log.d("BUSPLJUS!",""+mapa.mapPosition.scale)
                 }
             })
 
@@ -256,7 +297,7 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
             mapa.setMapPosition(44.821, 20.471, 2000.0)
 
         } catch (e: Exception) {
-            Log.d("BUSPLJUS!",""+e)
+            Log.d("BUSPLJUS!", "" + e)
         }
     }
 
@@ -282,9 +323,10 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
                         if (marker.description.toString().startsWith("P9"))
                             boja = 1
                         if (marker.description.toString().startsWith("P8")) {
-                            boja = if (marker.description.toString()[2] == '0' || marker.description.toString()[2] == '1')
-                                2 //tramvaj
-                            else 3 //trolejbus
+                            boja =
+                                if (marker.description.toString()[2] == '0' || marker.description.toString()[2] == '1')
+                                    2 //tramvaj
+                                else 3 //trolejbus
                         }
                         if (marker.description.toString()[2] == '0')
                             marker.description = marker.description.drop(3)
@@ -304,19 +346,34 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
                         MarkerSymbol.HotspotPlace.BOTTOM_CENTER, true
                     ))
                     markeriVozila.addItem(marker)
-                    if (odabranoStajalisteMarker.geoPoint.sphericalDistance(GeoPoint(marker.geoPoint.latitude,marker.geoPoint.longitude)) < najbliziAutobusRastojanje) {
-                        najbliziAutobusRastojanje = odabranoStajalisteMarker.geoPoint.sphericalDistance(GeoPoint(marker.geoPoint.latitude,marker.geoPoint.longitude))
 
-                        najbliziAutobusMarker = MarkerItem(marker.title,marker.description,GeoPoint(marker.geoPoint.latitude,marker.geoPoint.longitude))
+                    if (odabranoStajalisteMarker.geoPoint.sphericalDistance(
+                            GeoPoint(marker.geoPoint.latitude, marker.geoPoint.longitude)) < najbliziAutobusRastojanje) {
+
+                        najbliziAutobusRastojanje =
+                            odabranoStajalisteMarker.geoPoint.sphericalDistance(
+                                GeoPoint(
+                                    marker.geoPoint.latitude,
+                                    marker.geoPoint.longitude
+                                )
+                            )
+                        najbliziAutobusMarker = MarkerItem(
+                            null,
+                            null,
+                            GeoPoint(marker.geoPoint.latitude, marker.geoPoint.longitude)
+                        )
                     }
                 }
             }
 
             dugmezaosvezavanje(0, 0)
-            if (prviput) {
-                runOnUiThread { mapa.setMapPosition((odabranoStajalisteMarker.geoPoint.latitude+najbliziAutobusMarker.geoPoint.latitude)/2,
-                    (odabranoStajalisteMarker.geoPoint.longitude+najbliziAutobusMarker.geoPoint.longitude)/2,
-                    1/najbliziAutobusRastojanje*30000000)
+            if ((prviput) and (najbliziAutobusMarker.geoPoint != null)) {
+                runOnUiThread {
+                    mapa.setMapPosition(
+                        (odabranoStajalisteMarker.geoPoint.latitude + najbliziAutobusMarker.geoPoint.latitude) / 2,
+                        (odabranoStajalisteMarker.geoPoint.longitude + najbliziAutobusMarker.geoPoint.longitude) / 2,
+                        1 / najbliziAutobusRastojanje * 25000000
+                    )
                 }
                 prviput = false
             }
@@ -324,22 +381,33 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
             mapa.updateMap()
             tajmer?.schedule(15000) { zahtevZaPozicijuVozila() }
 
-        }
-        catch (e: Exception) {
+        } catch (e: Exception) {
             with(Toster(this@Glavna)) {
                 if (odgovor == "0\n")
                     this.toster(resources.getString(R.string.nema_vozila))
-                else
-                    this.toster(e.toString())
+                else {
+                    this.toster(resources.getString(R.string.greska_u_programu))
+                    Log.d("BUSPLJUS!", "" + e)
+                }
             }
-            dugmezaosvezavanje(0,1)
+            dugmezaosvezavanje(0, 1)
         }
     }
 
     override fun onItemSingleTapUp(index: Int, item: MarkerInterface?): Boolean {
         val markerItem = item as MarkerItem
-        val rastojanjedostanice = markerItem.geoPoint.sphericalDistance(GeoPoint(odabranoStajalisteMarker.geoPoint.latitude,odabranoStajalisteMarker.geoPoint.longitude)).div(1000)
-        Toster(this).toster(markerItem.description+ "\n"+BigDecimal(rastojanjedostanice).setScale(1,RoundingMode.HALF_EVEN).toString()+" km")
+        val rastojanjedostanice = markerItem.geoPoint.sphericalDistance(
+            GeoPoint(
+                odabranoStajalisteMarker.geoPoint.latitude,
+                odabranoStajalisteMarker.geoPoint.longitude
+            )
+        ).div(1000)
+        Toster(this).toster(
+            markerItem.description + "\n" + BigDecimal(rastojanjedostanice).setScale(
+                1,
+                RoundingMode.HALF_EVEN
+            ).toString() + " km"
+        )
         return true
     }
 
@@ -349,8 +417,11 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
     }
 
     private fun sklonitastaturu() {
-        (getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager).hideSoftInputFromWindow(currentFocus?.windowToken,0)
-        runOnUiThread{ lista.visibility=View.GONE }
+        (getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager).hideSoftInputFromWindow(
+            currentFocus?.windowToken,
+            0
+        )
+        runOnUiThread { lista.visibility = View.GONE }
         tastaturasklonjena = true
     }
 
@@ -374,8 +445,8 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
     }
 
     private fun zahtevZaPozicijuVozila() {
-        dugmezaosvezavanje(1,0)
-        Internet().zahtevPremaInternetu(stanica,1, object: Internet.ApiResponseCallback{
+        dugmezaosvezavanje(1, 0)
+        Internet().zahtevPremaInternetu(stanica, 1, object : Internet.ApiResponseCallback {
             override fun onSuccess(response: Response) {
                 if (response.isSuccessful) {
                     primljeniString = response.body!!.string()
@@ -385,12 +456,22 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
 
             override fun onFailure(e: IOException) {
                 Toster(this@Glavna).toster(resources.getString(R.string.nema_interneta))
-                dugmezaosvezavanje(0,1)
+                dugmezaosvezavanje(0, 1)
             }
         })
     }
 
+    fun podesiNaziv() {
+        if (stanica_naziv.isEmpty())
+            polje.hint=stanica
+        else
+            polje.hint=StringBuilder(stanica + " / " + stanica_naziv)
+        polje.text.clear()
+        polje.clearFocus()
+    }
     private fun stopTajmera() {
+        Internet.zahtev?.cancel()
+
         tajmer?.cancel()
         tajmer?.purge()
         tajmer = null
@@ -403,7 +484,7 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
 
     override fun onResume() {
         if (stanica.isNotEmpty())
-            dugmezaosvezavanje(0,1)
+            dugmezaosvezavanje(0, 1)
         super.onResume()
     }
 }
