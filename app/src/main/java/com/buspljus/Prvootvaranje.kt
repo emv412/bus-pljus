@@ -3,121 +3,59 @@ package com.buspljus
 import android.content.Intent
 import android.os.Bundle
 import android.widget.Button
+import android.widget.ProgressBar
 import androidx.appcompat.app.AppCompatActivity
 import okhttp3.Response
-import okio.BufferedSink
-import okio.buffer
-import okio.sink
 import java.io.File
-import java.io.FileInputStream
-import java.io.FileOutputStream
 import java.io.IOException
-import java.util.zip.ZipEntry
-import java.util.zip.ZipInputStream
-import kotlin.system.exitProcess
 
 
 class Prvootvaranje: AppCompatActivity() {
+
+    private lateinit var postotak : ProgressBar
+    private lateinit var preuzimanje : Button
     override fun onCreate(SavedInstanceState: Bundle?) {
         super.onCreate(SavedInstanceState)
         setContentView(R.layout.prvootvaranje)
-        val preuzimanje = findViewById<Button>(R.id.preuzmi)
-        //val postotak = findViewById<ProgressBar>(R.id.postotak) //mrzi me sad
+        preuzimanje = findViewById(R.id.preuzmi)
+        postotak = findViewById(R.id.postotak)
 
+        proveraprisustvafajlova()
 
-        if (File(filesDir,"beograd.map").exists()) {
-            try {
-                startActivity(Intent(this, Glavna::class.java))
-                finish()
-            } catch (g: Exception) {
-                Toster(this).toster("greska: "+g)
-                exitProcess(0)
-            }
-        }
         preuzimanje.setOnClickListener {
-            skidanjeMape()
-            preuzimanje.isClickable=false
             preuzimanje.isEnabled=false
+            skidanjeMapeibaze(2)
+            skidanjeMapeibaze(3)
         }
-
     }
 
-    fun skidanjeMape() {
-        Internet().zahtevPremaInternetu(null,0,object: Internet.ApiResponseCallback {
+    fun skidanjeMapeibaze(arg: Int) {
+        Internet().zahtevPremaInternetu(null,arg,object: Internet.ApiResponseCallback {
             override fun onSuccess(response: Response) {
-                val downloadedFile = File(cacheDir, "beograd.zip")
-                val sink: BufferedSink = downloadedFile.sink().buffer()
-                sink.writeAll(response.body!!.source())
-                sink.close()
-                try {
-                    unzip(downloadedFile,filesDir)
-                    try {
-                        //Kopiranje a onda brisanje fajla stanice.db. Dok se ne osmisli nesto bolje (premestanje)!
-                        File(filesDir,"stanice.db").copyTo(File(getDatabasePath("stanice.db").path),true)
-                        File(filesDir,"stanice.db").delete()
-                        File(cacheDir,"beograd.zip").delete()
-                        startActivity(Intent(this@Prvootvaranje, Glavna::class.java))
-                        finish()
-
+                val preuzeto = response.body!!.source().inputStream()
+                when (arg) {
+                    2 -> {
+                        Internet().gunzip(preuzeto,File(filesDir,"beograd.map"))
+                        postotak.progress=50
                     }
-                    catch(e: Exception) {
-                        Toster(this@Prvootvaranje).toster(resources.getString(R.string.greska_baza))
+                    3 -> {
+                        Internet().gunzip(preuzeto, File(getDatabasePath("stanice.db").path))
+                        postotak.progress=100
                     }
-
                 }
-                catch (e: Exception){
-                    Toster(this@Prvootvaranje).toster(resources.getString(R.string.greska_zip))
-                }
+                proveraprisustvafajlova()
             }
 
             override fun onFailure(e: IOException) {
                 Toster(this@Prvootvaranje).toster(resources.getString(R.string.nema_interneta))
             }
-
         })
     }
 
-    fun unzip(zipFile: File, destinationDir: File) {
-        if (!destinationDir.exists()) {
-            destinationDir.mkdirs()
-        }
-
-        val buffer = ByteArray(1024)
-
-        try {
-            // Create a ZipInputStream to read the ZIP file
-            val zipInputStream = ZipInputStream(FileInputStream(zipFile))
-
-            var entry: ZipEntry? = zipInputStream.nextEntry
-
-            while (entry != null) {
-                val entryFile = File(destinationDir, entry.name)
-                if (entry.isDirectory) {
-                    entryFile.mkdirs()
-                } else {
-                    // Create parent directories if they don't exist
-                    entryFile.parentFile?.mkdirs()
-
-                    // Create an output stream to write the entry content
-                    val outputStream = FileOutputStream(entryFile)
-
-                    var len: Int
-                    while (zipInputStream.read(buffer).also { len = it } > 0) {
-                        outputStream.write(buffer, 0, len)
-                    }
-
-                    outputStream.close()
-                }
-
-                entry = zipInputStream.nextEntry
-            }
-
-            // Close the ZipInputStream
-            zipInputStream.close()
-        } catch (e: Exception) {
-            e.printStackTrace()
+    fun proveraprisustvafajlova() {
+        if (File(filesDir,"beograd.map").exists() and File(getDatabasePath("stanice.db").path).exists()) {
+            startActivity(Intent(this, Glavna::class.java))
+            finish()
         }
     }
-
-
 }
