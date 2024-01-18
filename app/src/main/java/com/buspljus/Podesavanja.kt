@@ -53,7 +53,7 @@ class Podesavanja : AppCompatActivity() {
                     override fun onSuccess(response: Response) {
                         if (response.isSuccessful) {
                             val odgovor = JSONObject(response.body!!.string())
-                            if (odgovor.getString("name").toDouble() >= verzija.toDouble()) {
+                            if (odgovor.getString("name").toDouble() > verzija.toDouble()) {
 
                                 val prozorZaNadogradnju = context?.let {
                                     AlertDialog.Builder(it)

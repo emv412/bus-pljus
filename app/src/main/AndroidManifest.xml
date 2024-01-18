@@ -6,7 +6,7 @@
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 
-    <application
+<application
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -16,6 +16,11 @@
         android:usesCleartextTraffic="true"
         tools:targetApi="34"
         android:theme="@style/Theme.AppCompat">
+
+    <service
+        android:name="Glavna"
+        android:foregroundServiceType="location">
+    </service>
 
         <activity
             android:name=".Prvootvaranje"

@@ -19,7 +19,7 @@ class AlertDialog(private val context: Context): AlertDialog(context) {
             Builder(context)
                 .setTitle(context.resources.getString(R.string.prihvatiti_stanicu))
                 .setMessage(pronadjeneStanice[0])
-                .setPositiveButton(context.resources.getString(R.string.da)) { dialog, which ->
+                .setPositiveButton(context.resources.getString(R.string.da)) { dialog, _ ->
                     callback.korak1(pronadjeneStanice[0])
                     dialog.dismiss()
                 }

@@ -19,11 +19,9 @@ class Internet : OkHttpClient() {
     }
 
     companion object {
-        const val POLOZAJ_AZURE = "http://buspljus.azurewebsites.net/broj_stanice?st="
         const val POLOZAJ_FLY = "http://buspljus.fly.dev/broj_stanice?st="
-        const val PREUZIMANJE_ZIP = "https://github.com/emv412/buspljus-materijal/raw/main/za_app.zip"
         const val MAPA_GZ = "https://github.com/emv412/buspljus-materijal/raw/main/beograd.map.gz"
-        const val STANICE_GZ = "https://github.com/emv412/buspljus-materijal/raw/main/stanice.db.gz"
+        const val SVIPODACI_GZ = "https://github.com/emv412/buspljus-materijal/raw/main/svi_podaci.db.gz"
         const val NADOGRADNJA = "https://api.github.com/repos/emv412/bus-pljus/releases/latest"
         val adresa = Request.Builder()
         var zahtev: Call? = null
@@ -31,11 +29,10 @@ class Internet : OkHttpClient() {
 
     fun zahtevPremaInternetu(stanica: String?, argument: Int, callback: ApiResponseCallback) {
         when (argument) {
-            0 -> adresa.url(PREUZIMANJE_ZIP)
             1 -> if (stanica != null)
                 adresa.url(POLOZAJ_FLY + stanica)
             2 -> adresa.url(MAPA_GZ)
-            3 -> adresa.url(STANICE_GZ)
+            3 -> adresa.url(SVIPODACI_GZ)
             4 -> adresa.url(NADOGRADNJA)
         }
         zahtev = newCall(adresa.build())

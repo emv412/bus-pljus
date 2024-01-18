@@ -8,18 +8,23 @@
         <item name="vozilo">#ffffff</item>
     </style>
     <style name="Autobus">
-        <item name="vozilo">#4769a6</item>
+        <item name="vozilo">@color/autobus</item>
     </style>
     <style name="Tramvaj">
-        <item name="vozilo">#c90a0a</item>
+        <item name="vozilo">@color/tramvaj</item>
     </style>
     <style name="Trolejbus">
-        <item name="vozilo">#ad6007</item>
+        <item name="vozilo">@color/elektrobus</item>
     </style>
 
     <style name="prvastavka" parent="@android:style/TextAppearance">
         <item name="android:textColor">#FFFFFF</item>
     </style>
+
+    <color name="siva_boja">#aaaaaa</color>
+    <color name="tramvaj">#c90a0a</color>
+    <color name="autobus">#4769a6</color>
+    <color name="elektrobus">#ad6007</color>
 
 
 </resources>

@@ -8,7 +8,8 @@ import org.oscim.core.GeoPoint
 
 class SQLcitac(private val context: Context) : SQLiteOpenHelper(context,IME_BAZE,null,VERZIJA_BAZE) {
     companion object {
-        private const val IME_BAZE = "stanice.db"
+        const val IME_BAZE = "svi_podaci.db"
+        const val CIR_KOLONA = "naziv_cir"
         private const val VERZIJA_BAZE = 1
         val pronadjeneStanice = mutableListOf<String>()
     }
@@ -28,9 +29,11 @@ class SQLcitac(private val context: Context) : SQLiteOpenHelper(context,IME_BAZE
     fun SQLzahtev(rad: Int, niz: Array<String>): Cursor {
         when (rad) {
             0 -> str = "select lt,lg from stanice where _id=?"
-            1 -> str = "select _id,naziv from stanice where round(lt,?) = round(?, ?) and round(lg,?) = round(?, ?)"
-            2 -> str = "select _id,naziv,staju from stanice where _id like ?"
-            3 -> str = "select _id,naziv,staju from stanice where naziv like ?"
+            1 -> str = "select _id,naziv_cir from stanice where round(lt,?) = round(?, ?) and round(lg,?) = round(?, ?)"
+            2 -> str = "select _id,naziv_cir,staju from stanice where _id like ?"
+            3 -> str = "select _id,naziv_cir,staju from stanice where naziv_ascii like" +
+                    "? or naziv_cir like ? or naziv_lat like ?"
+            4 -> str = "select _id, od, do, stajalista, redvoznje from linije where _id=? and stajalista like ?"
         }
         return readableDatabase.rawQuery(str,niz)
     }
@@ -71,8 +74,13 @@ class SQLcitac(private val context: Context) : SQLiteOpenHelper(context,IME_BAZE
         kursor = if (trazenjepobroju == true) {
             SQLzahtev(2,arrayOf("$rec%"))
         } else {
-            SQLzahtev(3,arrayOf("%$rec%"))
+            SQLzahtev(3,arrayOf("%$rec%","%$rec%","%$rec%"))
         }
+        return kursor
+    }
+
+    fun redvoznjeKliknavozilo(linija: String, stanica: String): Cursor {
+        kursor = SQLzahtev(4, arrayOf(linija,"%$stanica%"))
         return kursor
     }
 }

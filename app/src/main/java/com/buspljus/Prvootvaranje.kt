@@ -24,36 +24,38 @@ class Prvootvaranje: AppCompatActivity() {
 
         preuzimanje.setOnClickListener {
             preuzimanje.isEnabled=false
-            skidanjeMapeibaze(2)
-            skidanjeMapeibaze(3)
+            skidanjeMapeibaze()
         }
     }
 
-    fun skidanjeMapeibaze(arg: Int) {
-        Internet().zahtevPremaInternetu(null,arg,object: Internet.ApiResponseCallback {
-            override fun onSuccess(response: Response) {
-                val preuzeto = response.body!!.source().inputStream()
-                when (arg) {
-                    2 -> {
-                        Internet().gunzip(preuzeto,File(filesDir,"beograd.map"))
-                        postotak.progress=50
+    fun skidanjeMapeibaze() {
+        for (i in 2 .. 3){
+            Internet().zahtevPremaInternetu(null,i,object: Internet.ApiResponseCallback {
+                override fun onSuccess(response: Response) {
+                    val preuzeto = response.body!!.source().inputStream()
+                    when (i) {
+                        2 -> {
+                            Internet().gunzip(preuzeto,File(filesDir,"beograd.map"))
+                            postotak.progress=50
+                        }
+                        3 -> {
+                            Internet().gunzip(preuzeto, File(getDatabasePath(SQLcitac.IME_BAZE).path))
+                            postotak.progress=100
+                        }
                     }
-                    3 -> {
-                        Internet().gunzip(preuzeto, File(getDatabasePath("stanice.db").path))
-                        postotak.progress=100
-                    }
+                    proveraprisustvafajlova()
                 }
-                proveraprisustvafajlova()
-            }
 
-            override fun onFailure(e: IOException) {
-                Toster(this@Prvootvaranje).toster(resources.getString(R.string.nema_interneta))
-            }
-        })
+                override fun onFailure(e: IOException) {
+                    Toster(this@Prvootvaranje).toster(resources.getString(R.string.nema_interneta))
+                }
+            })
+        }
+
     }
 
     fun proveraprisustvafajlova() {
-        if (File(filesDir,"beograd.map").exists() and File(getDatabasePath("stanice.db").path).exists()) {
+        if (File(filesDir,"beograd.map").exists() and File(getDatabasePath(SQLcitac.IME_BAZE).path).exists()) {
             startActivity(Intent(this, Glavna::class.java))
             finish()
         }
