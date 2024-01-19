@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="Tip_vozila">
+        <attr name="vozilo" format="color" />
+    </declare-styleable>
+
+    <style name="Stanica">
+        <item name="vozilo">#ffffff</item>
+    </style>
+    <style name="Autobus">
+        <item name="vozilo">@color/autobus</item>
+    </style>
+    <style name="Tramvaj">
+        <item name="vozilo">@color/tramvaj</item>
+    </style>
+    <style name="Trolejbus">
+        <item name="vozilo">@color/elektrobus</item>
+    </style>
+
+    <style name="prvastavka" parent="@android:style/TextAppearance">
+        <item name="android:textColor">#FFFFFF</item>
+    </style>
+
+    <color name="siva_boja">#aaaaaa</color>
+    <color name="tramvaj">#c90a0a</color>
+    <color name="autobus">#4769a6</color>
+    <color name="elektrobus">#ad6007</color>
+
+
+</resources>

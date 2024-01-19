@@ -4,22 +4,21 @@ import android.content.Context
 import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
-import android.util.Log
-import com.buspljus.Glavna.Companion.kursor
-import org.oscim.android.canvas.AndroidBitmap
 import org.oscim.core.GeoPoint
-import org.oscim.layers.marker.MarkerItem
-import org.oscim.layers.marker.MarkerSymbol
 
-class SQLcitac(context: Context) : SQLiteOpenHelper(context,IME_BAZE,null,VERZIJA_BAZE) {
+class SQLcitac(private val context: Context) : SQLiteOpenHelper(context,IME_BAZE,null,VERZIJA_BAZE) {
     companion object {
-        private const val IME_BAZE = "stanice.db"
+        const val IME_BAZE = "svi_podaci.db"
+        const val CIR_KOLONA = "naziv_cir"
         private const val VERZIJA_BAZE = 1
-        lateinit var komanda : String
-        lateinit var pomeranjemapekursor : Cursor
-        var niz = arrayOf<String>()
+        val pronadjeneStanice = mutableListOf<String>()
     }
+    lateinit var kursor : Cursor
+    lateinit var str : String
 
+    interface Callback {
+        fun korak1(s: String)
+    }
     override fun onCreate(bz: SQLiteDatabase?) {
     }
 
@@ -27,43 +26,61 @@ class SQLcitac(context: Context) : SQLiteOpenHelper(context,IME_BAZE,null,VERZIJ
 
     }
 
-    fun pozahtevu(sifra: String): GeoPoint {
-        val podatak = readableDatabase.rawQuery("select lt,lg from stanice where _id=?", arrayOf(sifra))
-        podatak.moveToFirst()
-        val ltlg = GeoPoint(podatak.getString(podatak.getColumnIndexOrThrow("lt")).toDouble(),podatak.getString(podatak.getColumnIndexOrThrow("lg")).toDouble())
-        podatak.close()
+    fun SQLzahtev(rad: Int, niz: Array<String>): Cursor {
+        when (rad) {
+            0 -> str = "select lt,lg from stanice where _id=?"
+            1 -> str = "select _id,naziv_cir from stanice where round(lt,?) = round(?, ?) and round(lg,?) = round(?, ?)"
+            2 -> str = "select _id,naziv_cir,staju from stanice where _id like ?"
+            3 -> str = "select _id,naziv_cir,staju from stanice where naziv_ascii like" +
+                    "? or naziv_cir like ? or naziv_lat like ?"
+            4 -> str = "select _id, od, do, stajalista, redvoznje from linije where _id=? and stajalista like ?"
+        }
+        return readableDatabase.rawQuery(str,niz)
+    }
+
+    fun pozahtevu_jednastanica(sifra: String): GeoPoint {
+        kursor = SQLzahtev(0, arrayOf(sifra))
+        kursor.moveToFirst()
+        val ltlg = GeoPoint(kursor.getString(kursor.getColumnIndexOrThrow("lt")).toDouble(),
+            kursor.getString(kursor.getColumnIndexOrThrow("lg")).toDouble())
+        kursor.close()
         return ltlg
     }
 
-    fun prikazstanicapopomeranjumape(minlt: String, maxlt: String, minlg: String, maxlg: String): ArrayList<MarkerItem> {
-        val rezultat = MarkerItem(null,null,null)
-        val lista = arrayListOf(rezultat)
-        pomeranjemapekursor = readableDatabase.rawQuery("select * from stanice where lt>? and lt<? and lg>? and lg<?",
-            arrayOf(minlt,maxlt,minlg,maxlg)
-        )
-
-        while (pomeranjemapekursor.moveToNext()) {
-            rezultat.title=pomeranjemapekursor.getString(pomeranjemapekursor.getColumnIndexOrThrow("_id"))
-            rezultat.geoPoint=GeoPoint(pomeranjemapekursor.getString(pomeranjemapekursor.getColumnIndexOrThrow("lt")).toDouble(),
-                pomeranjemapekursor.getString(pomeranjemapekursor.getColumnIndexOrThrow("lg")).toDouble())
-            lista.add(rezultat)
+    fun pretragabaze_kliknamapu(lat: String, lng: String, callback: Callback) {
+        val preciznost = if (lat.length-3 > lng.length-3){
+            lat.length-3
+        } else {
+            lng.length-3
         }
 
-        return lista
+        pronadjeneStanice.clear()
 
+        for (brojac in preciznost downTo 3) {
+            kursor = SQLzahtev(1,arrayOf(brojac.toString(),lat,brojac.toString(),brojac.toString(),lng,brojac.toString()))
 
+            if (kursor.count > 0) {
+                while (kursor.moveToNext()) {
+                    pronadjeneStanice.add(kursor.getString(kursor.getColumnIndexOrThrow("_id")))
+                }
+                AlertDialog(context).pronadjeneStaniceAlertDialog(callback)
+                break
+            }
+        }
+        kursor.close()
     }
 
     fun dobavisifre(rec: CharSequence?, trazenjepobroju: Boolean?): Cursor {
-        if (trazenjepobroju == true) {
-            komanda = "select _id,naziv from stanice where _id like ?"
-            niz = arrayOf("$rec%")
+        kursor = if (trazenjepobroju == true) {
+            SQLzahtev(2,arrayOf("$rec%"))
         } else {
-            komanda = "select _id,naziv from stanice where naziv like ?"
-            niz = arrayOf("%$rec%")
+            SQLzahtev(3,arrayOf("%$rec%","%$rec%","%$rec%"))
         }
+        return kursor
+    }
 
-        kursor = readableDatabase.rawQuery(komanda,niz)
+    fun redvoznjeKliknavozilo(linija: String, stanica: String): Cursor {
+        kursor = SQLzahtev(4, arrayOf(linija,"%\"$stanica\"%"))
         return kursor
     }
 }

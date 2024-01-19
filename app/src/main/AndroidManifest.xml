@@ -3,19 +3,23 @@
     xmlns:tools="http://schemas.android.com/tools" >
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 
-    <application
+<application
         android:allowBackup="true"
-        android:dataExtractionRules="@xml/data_extraction_rules"
-        android:fullBackupContent="@xml/backup_rules"
-        android:icon="@mipmap/ic_launcher"
+        android:icon="@drawable/logo"
         android:label="@string/app_name"
-        android:roundIcon="@mipmap/ic_launcher_round"
-
         android:supportsRtl="true"
-        android:theme="@android:style/Theme.DeviceDefault.NoActionBar"
         android:usesCleartextTraffic="true"
-        tools:targetApi="34" >
+        tools:targetApi="34"
+        android:theme="@style/Theme.AppCompat">
+
+    <service
+        android:name=".Glavna"
+        android:foregroundServiceType="location">
+    </service>
+
         <activity
             android:name=".Prvootvaranje"
             android:exported="true"
@@ -27,11 +31,29 @@
         </activity>
         <activity
             android:name=".Glavna"
-            android:launchMode="singleTask"
+            android:theme="@style/Theme.AppCompat.NoActionBar"
+            android:launchMode="singleTop"
             android:screenOrientation="portrait"
             android:windowSoftInputMode="adjustResize"
-            android:exported="true" >
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.SEARCH" />
+            </intent-filter>
+            <meta-data
+                android:name="android.app.searchable"
+                android:resource="@xml/pretraga" />
         </activity>
+        <activity
+            android:name=".Podesavanja"
+            android:launchMode="singleTop"
+            android:screenOrientation="portrait"
+            android:exported="false">
+        </activity>
+        <activity
+            android:name=".OProgramu"
+            android:launchMode="singleTop"
+            android:screenOrientation="portrait"
+            android:exported="false"/>
     </application>
 
 </manifest>
