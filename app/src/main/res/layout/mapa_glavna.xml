@@ -123,7 +123,7 @@
         android:clickable="true"
         android:contentDescription="GPS"
         android:focusable="true"
-        app:backgroundTint="@color/siva_boja"
+        app:backgroundTint="@color/siva"
         app:fabCustomSize="48dp"
         app:layout_constraintBottom_toBottomOf="@id/mapa"
         app:layout_constraintEnd_toEndOf="@id/mapa"

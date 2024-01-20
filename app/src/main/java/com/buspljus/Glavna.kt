@@ -22,7 +22,6 @@ import android.widget.ImageButton
 import android.widget.ListView
 import android.widget.ProgressBar
 import android.widget.SimpleCursorAdapter
-import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.content.res.AppCompatResources
@@ -31,10 +30,8 @@ import androidx.core.content.ContextCompat
 import androidx.core.graphics.drawable.toBitmap
 import androidx.preference.PreferenceManager
 import androidx.vectordrawable.graphics.drawable.VectorDrawableCompat
-import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import okhttp3.Response
-import org.json.JSONArray
 import org.json.JSONObject
 import org.oscim.android.MapView
 import org.oscim.android.canvas.AndroidBitmap
@@ -48,7 +45,6 @@ import org.oscim.layers.Layer
 import org.oscim.layers.marker.ItemizedLayer
 import org.oscim.layers.marker.MarkerInterface
 import org.oscim.layers.marker.MarkerItem
-import org.oscim.layers.marker.MarkerRenderer
 import org.oscim.layers.marker.MarkerSymbol
 import org.oscim.layers.tile.bitmap.BitmapTileLayer
 import org.oscim.layers.tile.buildings.BuildingLayer
@@ -58,11 +54,6 @@ import org.oscim.tiling.source.mapfile.MapFileTileSource
 import java.io.File
 import java.io.FileInputStream
 import java.io.IOException
-import java.math.BigDecimal
-import java.math.RoundingMode
-import java.time.LocalDate
-import java.time.LocalTime
-import java.time.format.DateTimeFormatter
 import java.util.Timer
 import kotlin.concurrent.schedule
 
@@ -142,18 +133,6 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
         val promenaunosa = findViewById<Button>(R.id.promenaunosa)
 
         gpsdugme.setOnClickListener{
-            if (lociranje) {
-                lociranje = false
-                gpsdugme.backgroundTintList=AppCompatResources.getColorStateList(this, R.color.siva_boja)
-                slobodnopomeranjemape = true
-                pozicijaPesakaSloj.removeAllItems()
-            }
-            else {
-                lociranje = true
-                gpsdugme.backgroundTintList=AppCompatResources.getColorStateList(this, R.color.tramvaj)
-                slobodnopomeranjemape = false
-            }
-
             pozicijaPesakaSloj.removeAllItems()
 
             when {
@@ -172,6 +151,18 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
                                 mapa.updateMap()
                             }
                         })
+                    }
+
+                    if (lociranje) {
+                        lociranje = false
+                        gpsdugme.backgroundTintList=AppCompatResources.getColorStateList(this, R.color.siva)
+                        slobodnopomeranjemape = true
+                        pozicijaPesakaSloj.removeAllItems()
+                    }
+                    else {
+                        lociranje = true
+                        gpsdugme.backgroundTintList=AppCompatResources.getColorStateList(this, R.color.crvena)
+                        slobodnopomeranjemape = false
                     }
                 }
 
@@ -484,110 +475,6 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
 
     override fun onItemSingleTapUp(index: Int, item: MarkerInterface?): Boolean {
         val markerItem = item as MarkerItem
-        /*
-        val rastojanjedostanice = markerItem.geoPoint.sphericalDistance(
-            GeoPoint(
-                odabranoStajalisteMarker.geoPoint.latitude,
-                odabranoStajalisteMarker.geoPoint.longitude
-            )
-        ).div(1000)
-        val rastojanjeprer = BigDecimal(rastojanjedostanice).setScale(1, RoundingMode.HALF_EVEN).toString() + " km"
-
-        val kr = SQLcitac(this@Glavna).redvoznjeKliknavozilo(markerItem.title,stanica_id)
-        if (kr.count > 0) {
-            val trenutnovreme = LocalTime.now()
-
-            val danunedelji = when (LocalDate.now().dayOfWeek.value) {
-                    in 1 .. 5 -> 0
-                    6 -> 1
-                    7 -> 2
-                    else -> 0
-                }
-
-            val dialog = BottomSheetDialog(this@Glavna)
-            dialog.setContentView(R.layout.prozor_redvoznje)
-
-            val linijarv = dialog.findViewById<TextView>(R.id.linija_rv)
-            val linijarel = dialog.findViewById<TextView>(R.id.linija_relacija)
-            val garBroj = dialog.findViewById<TextView>(R.id.gb_redv)
-            val rastojanje = dialog.findViewById<TextView>(R.id.rastojanje)
-
-            kr.moveToFirst()
-            try {
-                var relacijaLinije = kr.getString(kr.getColumnIndexOrThrow("od"))+" - "+kr.getString(kr.getColumnIndexOrThrow("do"))
-                val polasci = JSONObject(kr.getString(kr.getColumnIndexOrThrow("redvoznje")))
-
-                val okretnica = JSONArray(kr.getString(kr.getColumnIndexOrThrow("stajalista"))).get(0).toString()
-
-                if (okretnica == stanica_id)
-                    relacijaLinije = kr.getString(kr.getColumnIndexOrThrow("do"))+" - "+kr.getString(kr.getColumnIndexOrThrow("od"))
-
-                if (SQLcitac(this).pozahtevu_jednastanica(okretnica).sphericalDistance(markerItem.geoPoint) < 150) {
-                    val sati = polasci.getJSONObject("rv")
-                    val sati_k = sati.keys()
-                    var brojacDvaPolaska = 0
-                    var dobijenoVreme: String
-
-                    val prvipol = dialog.findViewById<TextView>(R.id.prvipolazak)
-                    val drugipol = dialog.findViewById<TextView>(R.id.drugipolazak)
-                    val redvoznje = dialog.findViewById<TextView>(R.id.redvoznje)
-                    val datum_rv = dialog.findViewById<TextView>(R.id.datum_rv)
-                    val sledeciPolasci = dialog.findViewById<TextView>(R.id.polasci_textview)
-                    val danunedelji_textview = dialog.findViewById<TextView>(R.id.rdsn)
-                    val prethodnipol = dialog.findViewById<TextView>(R.id.prethodnipol)
-
-                    prvipol?.visibility=View.VISIBLE
-                    drugipol?.visibility=View.VISIBLE
-                    redvoznje?.visibility=View.VISIBLE
-                    sledeciPolasci?.visibility=View.VISIBLE
-                    datum_rv?.visibility=View.VISIBLE
-                    prethodnipol?.visibility=View.VISIBLE
-                    danunedelji_textview?.visibility=View.VISIBLE
-
-                    when (danunedelji) {
-                        0 -> danunedelji_textview?.text="радни дан"
-                        1 -> danunedelji_textview?.text="субота"
-                        2 -> danunedelji_textview?.text="недеља"
-                        else -> {}
-                    }
-
-                    with (polasci.getJSONArray("datum")) {
-                        val datumRedaVoznje = this.getString(0)+". "+this.getString(1)+". "+this.getString(2)
-                        datum_rv?.text=datumRedaVoznje
-                    }
-
-                    while (sati_k.hasNext()) {
-                        val sat = sati_k.next()
-                        for (k in 0 .. sati.getJSONArray(sat).getJSONArray(danunedelji).length()-1) {
-                            dobijenoVreme = sat+":"+sati.getJSONArray(sat).getJSONArray(danunedelji)[k]
-                            if (LocalTime.parse(dobijenoVreme,DateTimeFormatter.ofPattern("HH:mm")).isBefore(trenutnovreme) and (brojacDvaPolaska == 0)) {
-                                prethodnipol?.text=dobijenoVreme
-                            }
-                            else if (LocalTime.parse(dobijenoVreme,DateTimeFormatter.ofPattern("HH:mm")).isAfter(trenutnovreme) and (brojacDvaPolaska < 2)) {
-                                if (brojacDvaPolaska == 0)
-                                    prvipol?.text=dobijenoVreme
-                                else if (brojacDvaPolaska == 1)
-                                    drugipol?.text=dobijenoVreme
-                                brojacDvaPolaska += 1
-                            }
-                        }
-                    }
-                }
-
-                linijarv?.text=markerItem.title
-                linijarel?.text=relacijaLinije
-                garBroj?.text=markerItem.description
-                rastojanje?.text=rastojanjeprer
-
-                dialog.show()
-            }
-            catch(e:Exception) {
-                Log.d("DEBAG",""+e)
-            }
-        }
-        return true
-
-         */
         RedVoznje(this@Glavna).redvoznjeKliknaVozilo(markerItem, odabranoStajalisteMarker, stanica_id)
         return true
     }

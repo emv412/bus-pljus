@@ -16,6 +16,6 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "Bus Pljus!"
+rootProject.name = "bus-pljus"
 include(":app")
 

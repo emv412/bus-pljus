@@ -175,7 +175,7 @@
         android:layout_marginEnd="24dp"
         android:layout_marginBottom="8dp"
         android:text="-:--"
-        android:textColor="@color/siva_boja"
+        android:textColor="@color/siva"
         android:textSize="16sp"
         android:textStyle="bold"
         android:visibility="invisible"

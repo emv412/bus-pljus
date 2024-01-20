@@ -7,7 +7,6 @@
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 
 <application
-        android:allowBackup="true"
         android:icon="@drawable/logo"
         android:label="@string/app_name"
         android:supportsRtl="true"
@@ -15,14 +14,10 @@
         tools:targetApi="34"
         android:theme="@style/Theme.AppCompat">
 
-    <service
-        android:name=".Glavna"
-        android:foregroundServiceType="location">
-    </service>
-
         <activity
             android:name=".Prvootvaranje"
             android:exported="true"
+            android:launchMode="singleInstance"
             android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -32,7 +27,7 @@
         <activity
             android:name=".Glavna"
             android:theme="@style/Theme.AppCompat.NoActionBar"
-            android:launchMode="singleTop"
+            android:launchMode="singleInstance"
             android:screenOrientation="portrait"
             android:windowSoftInputMode="adjustResize"
             android:exported="false">
@@ -45,13 +40,11 @@
         </activity>
         <activity
             android:name=".Podesavanja"
-            android:launchMode="singleTop"
             android:screenOrientation="portrait"
             android:exported="false">
         </activity>
         <activity
             android:name=".OProgramu"
-            android:launchMode="singleTop"
             android:screenOrientation="portrait"
             android:exported="false"/>
     </application>
