@@ -22,14 +22,16 @@ class Selektor: SimpleCursorAdapter.ViewBinder {
         if (nazivi_stanica != null) {
             if (cursor != null) {
                 nazivi_stanica.text=cursor.getString(cursor.getColumnIndexOrThrow(SQLcitac.CIR_KOLONA))
-                nazivi_stanica.isSelected=true
                 return true
             }
         }
         if (odredista != null) {
             if (cursor != null) {
                 odredista.text=cursor.getString(cursor.getColumnIndexOrThrow("staju"))
-                odredista.isSelected=true
+                odredista.setOnLongClickListener {
+                    it.isSelected=true
+                    true
+                }
                 return true
             }
         }

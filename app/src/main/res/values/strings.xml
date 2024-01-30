@@ -36,4 +36,5 @@
     <string name="subota">Субота</string>
     <string name="nedelja">Недеља</string>
     <string name="praznik_nedelja">Недеља (празник)</string>
+    <string name="debug">bus-pljus!</string>
 </resources>

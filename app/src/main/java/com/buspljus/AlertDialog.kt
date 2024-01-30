@@ -10,7 +10,7 @@ class AlertDialog(private val context: Context): AlertDialog(context) {
             Builder(context)
                 .setTitle(context.resources.getString(R.string.pronadjene_stanice))
                 .setItems(pronadjeneStanice.toTypedArray()) { dialog, which ->
-                    callback.korak1(pronadjeneStanice[which])
+                    callback.korak(pronadjeneStanice[which])
                     dialog.dismiss()
                 }
                 .show()
@@ -20,7 +20,7 @@ class AlertDialog(private val context: Context): AlertDialog(context) {
                 .setTitle(context.resources.getString(R.string.prihvatiti_stanicu))
                 .setMessage(pronadjeneStanice[0])
                 .setPositiveButton(context.resources.getString(R.string.da)) { dialog, _ ->
-                    callback.korak1(pronadjeneStanice[0])
+                    callback.korak(pronadjeneStanice[0])
                     dialog.dismiss()
                 }
                 .show()
