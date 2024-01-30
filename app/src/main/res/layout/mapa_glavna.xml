@@ -25,7 +25,7 @@
             android:maxLength="4"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toStartOf="@id/promenaunosa"
-            app:layout_constraintStart_toEndOf="@id/podesavanja"
+            app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
         <Button
@@ -35,7 +35,7 @@
             android:text="1"
             android:textAlignment="center"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/podesavanja"
             app:layout_constraintStart_toEndOf="@id/polje_za_unos"
             app:layout_constraintTop_toTopOf="parent" />
 
@@ -44,8 +44,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:src="@android:drawable/ic_menu_manage"
-            app:layout_constraintEnd_toStartOf="@+id/polje_za_unos"
-            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@id/promenaunosa"
             app:layout_constraintTop_toTopOf="parent" />
 
 
@@ -88,16 +88,16 @@
     <ListView
         android:id="@+id/lista"
         android:layout_width="0dp"
-        android:layout_height="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="42dp"
         android:background="#000000"
         android:divider="#bab5a8"
         android:dividerHeight="1dp"
         android:visibility="gone"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toStartOf="@id/napredak"
+        app:layout_constraintEnd_toStartOf="@id/gps"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/tasteri"
-        tools:visibility="gone">
+        tools:visibility="visible">
 
     </ListView>
 
@@ -110,7 +110,8 @@
         android:src="@android:drawable/ic_popup_sync"
         android:visibility="gone"
         app:layout_constraintStart_toEndOf="@id/mapa"
-        app:layout_constraintTop_toBottomOf="@id/tasteri" />
+        app:layout_constraintTop_toBottomOf="@id/tasteri"
+        tools:visibility="visible" />
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/gps"

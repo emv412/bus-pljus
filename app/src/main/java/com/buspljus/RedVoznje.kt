@@ -12,6 +12,7 @@ import org.oscim.layers.marker.MarkerItem
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import kotlin.properties.Delegates
@@ -21,6 +22,8 @@ class RedVoznje(private val context: Context) {
     private lateinit var sati : JSONObject
 
     private var brojacDvaPolaska by Delegates.notNull<Int>()
+    private var prethodnoVreme = "-:--"
+
     private lateinit var dobijenoVreme: String
 
     private lateinit var prvipol : TextView
@@ -75,10 +78,9 @@ class RedVoznje(private val context: Context) {
                 if (okretnica == stanica_id)
                     relacijaLinije = kr.getString(kr.getColumnIndexOrThrow("do"))+" - "+kr.getString(kr.getColumnIndexOrThrow("od"))
 
-                if (SQLcitac(context).pozahtevu_jednastanica(okretnica).sphericalDistance(markerItem.geoPoint) < 150) {
+                if (SQLcitac(context).pozahtevu_jednastanica(okretnica).sphericalDistance(markerItem.geoPoint) < 100) {
 
                     sati = polasci.getJSONObject("rv")
-                    val sati_k = sati.keys()
                     brojacDvaPolaska = 0
 
                     prvipol = dialog.findViewById(R.id.prvipolazak)!!
@@ -90,12 +92,12 @@ class RedVoznje(private val context: Context) {
                     prethodnipol = dialog.findViewById(R.id.prethodnipol)!!
 
                     prvipol.visibility = View.VISIBLE
-                    drugipol.visibility= View.VISIBLE
-                    redvoznje.visibility= View.VISIBLE
-                    sledeciPolasci.visibility= View.VISIBLE
-                    datum_rv.visibility= View.VISIBLE
-                    prethodnipol.visibility= View.VISIBLE
-                    danunedelji_textview.visibility= View.VISIBLE
+                    drugipol.visibility = View.VISIBLE
+                    redvoznje.visibility = View.VISIBLE
+                    sledeciPolasci.visibility = View.VISIBLE
+                    datum_rv.visibility = View.VISIBLE
+                    prethodnipol.visibility = View.VISIBLE
+                    danunedelji_textview.visibility = View.VISIBLE
 
                     when (danunedelji) {
                         0 -> danunedelji_textview.text=context.resources.getString(R.string.radni_dan)
@@ -105,18 +107,19 @@ class RedVoznje(private val context: Context) {
                     }
 
                     with (polasci.getJSONArray("datum")) {
-                        val datumRedaVoznje = this.getString(0)+". "+this.getString(1)+". "+this.getString(2)
+                        val datumRedaVoznje = this.getString(0)+". "+this.getString(1)+". "+this.getString(2)+"."
                         datum_rv.text=datumRedaVoznje
                     }
 
-                    while (sati_k.hasNext()) {
-                        val sat = sati_k.next()
+                    for (i in 0 .. sati.length()-1) {
+                        val prviPolazak = sati.keys().asSequence().elementAt(0)
+                        val sat = sati.keys().asSequence().elementAt(i)
                         for (k in 0 .. sati.getJSONArray(sat).getJSONArray(danunedelji).length()-1) {
                             dobijenoVreme = sat+":"+sati.getJSONArray(sat).getJSONArray(danunedelji)[k]
-                            if (LocalTime.parse(dobijenoVreme, DateTimeFormatter.ofPattern("HH:mm")).isBefore(trenutnovreme) and (brojacDvaPolaska == 0)) {
-                                prethodnipol.text=dobijenoVreme
+                            if (LocalTime.parse(dobijenoVreme, DateTimeFormatter.ofPattern("HH:mm")).isBefore(trenutnovreme.minusMinutes(1)) and (brojacDvaPolaska == 0)) {
+                                prethodnoVreme = dobijenoVreme
                             }
-                            else if (LocalTime.parse(dobijenoVreme, DateTimeFormatter.ofPattern("HH:mm")).isAfter(trenutnovreme) and (brojacDvaPolaska < 2)) {
+                            else if (LocalTime.parse(dobijenoVreme, DateTimeFormatter.ofPattern("HH:mm")).isAfter(trenutnovreme.minusMinutes(1)) and (brojacDvaPolaska < 2)) {
                                 if (brojacDvaPolaska == 0)
                                     prvipol.text=dobijenoVreme
                                 else if (brojacDvaPolaska == 1)
@@ -124,7 +127,21 @@ class RedVoznje(private val context: Context) {
                                 brojacDvaPolaska += 1
                             }
                         }
+                        if ((i == sati.length()-1) and (prviPolazak == "00")) {
+                            try {
+                                val ponoc = prviPolazak+":"+sati.getJSONArray(prviPolazak).getJSONArray(danunedelji)[0]
+                                when (brojacDvaPolaska) {
+                                    0 -> prvipol.text=ponoc
+                                    1 -> drugipol.text=ponoc
+                                }
+                            }
+                            catch(e: Exception) {
+                                Log.d(context.resources.getString(R.string.debug),"Greska: "+e)
+                            }
+
+                        }
                     }
+                    prethodnipol.text=prethodnoVreme
                 }
 
                 linijarv.text=markerItem.title
@@ -135,8 +152,9 @@ class RedVoznje(private val context: Context) {
                 dialog.show()
             }
             catch(e:Exception) {
-                Log.d("DEBAG",""+e)
+                Log.d(context.resources.getString(R.string.debug),""+e)
             }
+            kr.close()
         }
         return true
     }

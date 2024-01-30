@@ -2,6 +2,7 @@ package com.buspljus
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.widget.Button
 import android.widget.ProgressBar
 import androidx.appcompat.app.AppCompatActivity
@@ -36,11 +37,13 @@ class Prvootvaranje: AppCompatActivity() {
                     when (i) {
                         2 -> {
                             Internet().gunzip(preuzeto,File(filesDir,"beograd.map"))
-                            postotak.progress=50
+                            Log.d(resources.getString(R.string.debug),"Skinut beograd.map")
+                            postotak.progress=100
                         }
                         3 -> {
                             Internet().gunzip(preuzeto, File(getDatabasePath(SQLcitac.IME_BAZE).path))
-                            postotak.progress=100
+                            Log.d(resources.getString(R.string.debug),"Skinuti svi_podaci.db")
+                            postotak.progress=50
                         }
                     }
                     proveraprisustvafajlova()
@@ -56,6 +59,7 @@ class Prvootvaranje: AppCompatActivity() {
 
     fun proveraprisustvafajlova() {
         if (File(filesDir,"beograd.map").exists() and File(getDatabasePath(SQLcitac.IME_BAZE).path).exists()) {
+            Log.d(resources.getString(R.string.debug),"Prisutna oba fajla")
             startActivity(Intent(this, Glavna::class.java))
             finish()
         }

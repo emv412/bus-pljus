@@ -3,30 +3,25 @@ package com.buspljus
 import android.content.Context
 import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
-import android.database.sqlite.SQLiteOpenHelper
 import org.oscim.core.GeoPoint
+import java.io.File
 
-class SQLcitac(private val context: Context) : SQLiteOpenHelper(context,IME_BAZE,null,VERZIJA_BAZE) {
+class SQLcitac(private val context: Context) {
     companion object {
         const val IME_BAZE = "svi_podaci.db"
         const val CIR_KOLONA = "naziv_cir"
-        private const val VERZIJA_BAZE = 1
         val pronadjeneStanice = mutableListOf<String>()
+        lateinit var kursor : Cursor
+        lateinit var baza : SQLiteDatabase
+        lateinit var str : String
     }
-    lateinit var kursor : Cursor
-    lateinit var str : String
 
     interface Callback {
-        fun korak1(s: String)
-    }
-    override fun onCreate(bz: SQLiteDatabase?) {
-    }
-
-    override fun onUpgrade(bz: SQLiteDatabase?, p1: Int, p2: Int) {
-
+        fun korak(s: String)
     }
 
     fun SQLzahtev(rad: Int, niz: Array<String>): Cursor {
+        baza = SQLiteDatabase.openDatabase(File(context.getDatabasePath(IME_BAZE).absolutePath).toString(),null,0)
         when (rad) {
             0 -> str = "select lt,lg from stanice where _id=?"
             1 -> str = "select _id,naziv_cir from stanice where round(lt,?) = round(?, ?) and round(lg,?) = round(?, ?)"
@@ -35,7 +30,7 @@ class SQLcitac(private val context: Context) : SQLiteOpenHelper(context,IME_BAZE
                     "? or naziv_cir like ? or naziv_lat like ?"
             4 -> str = "select _id, od, do, stajalista, redvoznje from linije where _id=? and stajalista like ?"
         }
-        return readableDatabase.rawQuery(str,niz)
+        return baza.rawQuery(str,niz)
     }
 
     fun pozahtevu_jednastanica(sifra: String): GeoPoint {
