@@ -268,8 +268,8 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
     fun ukucanastanica(context: Context, stanica: String, stajalisteSloj: ItemizedLayer, stajaliste: MarkerItem, animacija: Boolean) {
         try {
             sklonitastaturu()
+
             SQLcitac.baza.close()
-            adapter.cursor.close()
 
             markeriVozila.removeAllItems()
             prviput = true

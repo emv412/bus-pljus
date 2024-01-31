@@ -28,9 +28,8 @@ class Selektor: SimpleCursorAdapter.ViewBinder {
         if (odredista != null) {
             if (cursor != null) {
                 odredista.text=cursor.getString(cursor.getColumnIndexOrThrow("staju"))
-                odredista.setOnLongClickListener {
-                    it.isSelected=true
-                    true
+                odredista.setOnClickListener {
+                    it.isSelected = !it.isSelected
                 }
                 return true
             }
