@@ -1,18 +1,20 @@
 package com.buspljus
 
 import android.content.Context
+import android.database.Cursor
 import android.util.Log
 import android.view.View
 import android.widget.TextView
 import com.google.android.material.bottomsheet.BottomSheetDialog
+import okhttp3.Response
 import org.json.JSONArray
 import org.json.JSONObject
 import org.oscim.core.GeoPoint
 import org.oscim.layers.marker.MarkerItem
+import java.io.IOException
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.time.LocalDate
-import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import kotlin.properties.Delegates
@@ -21,7 +23,7 @@ class RedVoznje(private val context: Context) {
 
     private lateinit var sati : JSONObject
 
-    private var brojacDvaPolaska by Delegates.notNull<Int>()
+    private var brojacDvaPolaska = 0
     private var prethodnoVreme = "-:--"
 
     private lateinit var dobijenoVreme: String
@@ -40,6 +42,15 @@ class RedVoznje(private val context: Context) {
 
     val dialog = BottomSheetDialog(context)
 
+    val danunedelji = when (LocalDate.now().dayOfWeek.value) {
+        in 1 .. 5 -> 0
+        6 -> 1
+        7 -> 2
+        else -> 0
+    }
+
+    val trenutnovreme = LocalTime.now()
+
     fun redvoznjeKliknaVozilo(item: MarkerItem, odabranoStajalisteMarker: MarkerItem, stanica_id: String) : Boolean {
         val markerItem = item
         val rastojanjedostanice = markerItem.geoPoint.sphericalDistance(
@@ -52,15 +63,6 @@ class RedVoznje(private val context: Context) {
 
         val kr = SQLcitac(context).redvoznjeKliknavozilo(markerItem.title,stanica_id)
         if (kr.count > 0) {
-            val trenutnovreme = LocalTime.now()
-
-            val danunedelji = when (LocalDate.now().dayOfWeek.value) {
-                in 1 .. 5 -> 0
-                6 -> 1
-                7 -> 2
-                else -> 0
-            }
-
             dialog.setContentView(R.layout.prozor_redvoznje)
 
             linijarv = dialog.findViewById(R.id.linija_rv)!!
@@ -70,18 +72,13 @@ class RedVoznje(private val context: Context) {
 
             kr.moveToFirst()
             try {
-                var relacijaLinije = kr.getString(kr.getColumnIndexOrThrow("od"))+" - "+kr.getString(kr.getColumnIndexOrThrow("do"))
+                val relacijaLinije = kr.getString(kr.getColumnIndexOrThrow("od"))+" - "+kr.getString(kr.getColumnIndexOrThrow("do"))
                 val polasci = JSONObject(kr.getString(kr.getColumnIndexOrThrow("redvoznje")))
 
                 val okretnica = JSONArray(kr.getString(kr.getColumnIndexOrThrow("stajalista"))).get(0).toString()
 
-                if (okretnica == stanica_id)
-                    relacijaLinije = kr.getString(kr.getColumnIndexOrThrow("do"))+" - "+kr.getString(kr.getColumnIndexOrThrow("od"))
-
                 if (SQLcitac(context).pozahtevu_jednastanica(okretnica).sphericalDistance(markerItem.geoPoint) < 100) {
-
                     sati = polasci.getJSONObject("rv")
-                    brojacDvaPolaska = 0
 
                     prvipol = dialog.findViewById(R.id.prvipolazak)!!
                     drugipol = dialog.findViewById(R.id.drugipolazak)!!
@@ -159,4 +156,60 @@ class RedVoznje(private val context: Context) {
         return true
     }
 
+    fun redVoznjeKliknaStanicu(kursor: Cursor) {
+        kursor.moveToFirst()
+        dialog.setContentView(R.layout.prozor_stredvoznje)
+        val ime_okretnice = dialog.findViewById<TextView>(R.id.ime_okretnice)
+        val prvi_polazak_odrediste = dialog.findViewById<TextView>(R.id.linija1_odrediste)
+        val prvi_polazak_vreme = dialog.findViewById<TextView>(R.id.linija1_polazak)
+        val drugi_polazak_odrediste = dialog.findViewById<TextView>(R.id.linija2_odrediste)
+        val drugi_polazak_vreme = dialog.findViewById<TextView>(R.id.linija2_polazak)
+        val treci_polazak_odrediste = dialog.findViewById<TextView>(R.id.linija3_odrediste)
+        val treci_polazak_vreme = dialog.findViewById<TextView>(R.id.linija3_polazak)
+
+        ime_okretnice?.text=kursor.getString(1)
+
+        // Potrebna optimizacija
+
+        val rv = JSONObject(kursor.getString(kursor.getColumnIndexOrThrow("redvoznje"))).getJSONObject(danunedelji.toString())
+        val rezultat = mutableListOf<List<String>>()
+
+        for (sifra_odredisne_stanice in rv.keys().iterator()) {
+            val desifrovana_st = SQLcitac(context).SQLzahtev(6, arrayOf(sifra_odredisne_stanice))
+            desifrovana_st.moveToFirst()
+            for (satnica in rv.getJSONObject(sifra_odredisne_stanice).keys().iterator()) {
+                for (minutaza in 0 until rv.getJSONObject(sifra_odredisne_stanice).getJSONArray(satnica).length()) {
+                    dobijenoVreme = satnica + ":" + rv.getJSONObject(sifra_odredisne_stanice).getJSONArray(satnica).getJSONObject(minutaza).keys().next()
+                    rezultat.add(listOf(desifrovana_st.getString(0), dobijenoVreme))
+                }
+            }
+        }
+
+        val rezultat2 = rezultat.sortedBy { it[1] }
+
+        for (n in 0 until rezultat2.size) {
+            if (LocalTime.parse(rezultat2[n][1], DateTimeFormatter.ofPattern("HH:mm")).isBefore(trenutnovreme.minusMinutes(1)) and (brojacDvaPolaska == 0)) {
+                prvi_polazak_odrediste?.text=rezultat2[n][0]
+                prvi_polazak_vreme?.text=rezultat2[n][1]
+            }
+            else {
+                with (rezultat2[n][0]) {
+                    if (brojacDvaPolaska == 0)
+                        drugi_polazak_odrediste?.text=this
+                    else if (brojacDvaPolaska == 1)
+                        treci_polazak_odrediste?.text=this
+                }
+                with (rezultat2[n][1]) {
+                    if (brojacDvaPolaska == 0)
+                        drugi_polazak_vreme?.text=this
+                    else if (brojacDvaPolaska == 1)
+                        treci_polazak_vreme?.text=this
+                }
+                brojacDvaPolaska += 1
+            }
+        }
+
+        kursor.close()
+        dialog.show()
+    }
 }

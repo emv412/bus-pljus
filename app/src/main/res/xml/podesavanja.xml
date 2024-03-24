@@ -23,14 +23,27 @@
 </PreferenceCategory>
 
     <PreferenceCategory
-        android:title="@string/program">
+        android:title="@string/nadogradnja_sekcija">
+        <Preference
+            android:title="@string/mapa_nadogradnja"
+            android:key="nadogradimapu"
+            android:enabled="false">
+        </Preference>
+        <Preference
+            android:title="@string/stanice_nadogradnja"
+            android:key="nadogradistanice"
+            android:enabled="false">
+        </Preference>
+        <Preference
+            android:title="@string/program_nadogradnja"
+            android:key="nadogradi_program"
+            android:summary="@string/provera_ver">
+        </Preference>
     </PreferenceCategory>
 
-    <Preference
-        android:title="@string/nadogradnja_programa"
-        android:key="nadogradnja"
-        android:summary="@string/provera_ver">
-    </Preference>
+    <PreferenceCategory
+        android:title="@string/program">
+    </PreferenceCategory>
 
     <Preference
         android:title="@string/o_programu"

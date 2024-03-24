@@ -13,38 +13,43 @@ import java.util.zip.GZIPInputStream
 
 class Internet : OkHttpClient() {
 
-    interface ApiResponseCallback {
-        fun onSuccess(response: Response)
-        fun onFailure(e: IOException)
+    interface odgovorSaInterneta {
+        fun uspesanOdgovor(response: Response)
+        fun neuspesanOdgovor(e: IOException)
     }
 
     companion object {
-        const val POLOZAJ_FLY = "http://buspljus.fly.dev/broj_stanice?st="
-        const val MAPA_GZ = "https://github.com/emv412/buspljus-materijal/raw/main/beograd.map.gz"
-        const val SVIPODACI_GZ = "https://github.com/emv412/buspljus-materijal/raw/main/svi_podaci.db.gz"
-        const val NADOGRADNJA = "https://api.github.com/repos/emv412/bus-pljus/releases/latest"
+        const val POLOZAJ_FLY = "http://buspljus.fly.dev/?st="
+        const val MAPA_GZ = "https://raw.githubusercontent.com/emv412/buspljus-materijal/main/beograd.map.gz"
+        const val SVIPODACI_GZ = "https://raw.githubusercontent.com/emv412/buspljus-materijal/main/svi_podaci.db.gz"
+        const val NADOGRADNJA_PROGRAMA = "https://api.github.com/repos/emv412/bus-pljus/releases/latest"
+        const val UPIT_STANICA_LINIJE = "&linija="
         val adresa = Request.Builder()
         var zahtev: Call? = null
     }
 
-    fun zahtevPremaInternetu(stanica: String?, argument: Int, callback: ApiResponseCallback) {
+    fun zahtevPremaInternetu(stanica: String?, linija: String?, argument: Int, callback: odgovorSaInterneta) {
         when (argument) {
-            1 -> if (stanica != null)
+            1 -> if (linija == null) {
                 adresa.url(POLOZAJ_FLY + stanica)
+            }
+            else {
+                adresa.url(POLOZAJ_FLY + stanica + UPIT_STANICA_LINIJE + linija)
+            }
             2 -> adresa.url(MAPA_GZ)
             3 -> adresa.url(SVIPODACI_GZ)
-            4 -> adresa.url(NADOGRADNJA)
+            4 -> adresa.url(NADOGRADNJA_PROGRAMA)
         }
         zahtev = newCall(adresa.build())
         if (!zahtev?.isExecuted()!!) {
             zahtev?.enqueue(object : Callback {
 
                 override fun onFailure(call: Call, e: IOException) {
-                    callback.onFailure(e)
+                    callback.neuspesanOdgovor(e)
                 }
 
                 override fun onResponse(call: Call, response: Response) {
-                    callback.onSuccess(response)
+                    callback.uspesanOdgovor(response)
                 }
             })
         }

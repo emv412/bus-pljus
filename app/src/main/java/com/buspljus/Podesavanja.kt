@@ -6,14 +6,17 @@ import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.preference.CheckBoxPreference
 import androidx.preference.Preference
+import androidx.preference.Preference.OnPreferenceClickListener
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.PreferenceManager
 import okhttp3.Response
 import org.json.JSONObject
+import java.io.File
 import java.io.IOException
 
 
@@ -30,7 +33,7 @@ class Podesavanja : AppCompatActivity() {
             .commit()
     }
 
-    class SettingsFragment: PreferenceFragmentCompat(),Preference.OnPreferenceChangeListener {
+    class SettingsFragment: PreferenceFragmentCompat(),Preference.OnPreferenceChangeListener,OnPreferenceClickListener {
         private var stalanprikazgb : Boolean = false
         var auto : Boolean = true
 
@@ -38,7 +41,9 @@ class Podesavanja : AppCompatActivity() {
             setPreferencesFromResource(R.xml.podesavanja, rootKey)
             val prikazgb2: CheckBoxPreference? = findPreference("prikazgb")
             val autounos: CheckBoxPreference? = findPreference("automatskiunos")
-            val nadogradnja: Preference? = findPreference("nadogradnja")
+            val nadogradnjaPrograma: Preference? = findPreference("nadogradi_program")
+            val nadogradnjaMape: Preference? = findPreference("nadogradimapu")
+            val nadogradnjaStanica: Preference? = findPreference("nadogradistanice")
             val oProgramu: Preference? = findPreference("o_programu")
 
             deljenapodesavanja = PreferenceManager.getDefaultSharedPreferences(requireContext())
@@ -48,9 +53,9 @@ class Podesavanja : AppCompatActivity() {
             prikazgb2?.onPreferenceChangeListener = this
             autounos?.onPreferenceChangeListener = this
 
-            nadogradnja?.onPreferenceClickListener = Preference.OnPreferenceClickListener { _ : Preference? ->
-                Internet().zahtevPremaInternetu(null,4,object: Internet.ApiResponseCallback{
-                    override fun onSuccess(response: Response) {
+            nadogradnjaPrograma?.onPreferenceClickListener = OnPreferenceClickListener { _ : Preference? ->
+                Internet().zahtevPremaInternetu(null, null,4, object: Internet.odgovorSaInterneta {
+                    override fun uspesanOdgovor(response: Response) {
                         if (response.isSuccessful) {
                             val odgovor = JSONObject(response.body!!.string())
                             if (odgovor.getString("name").toDouble() > verzija.toDouble()) {
@@ -74,14 +79,14 @@ class Podesavanja : AppCompatActivity() {
                         }
                     }
 
-                    override fun onFailure(e: IOException) {
+                    override fun neuspesanOdgovor(e: IOException) {
                         context?.let {Toster(it).toster(resources.getString(R.string.nema_interneta))}
                     }
                 })
                 true
             }
 
-            oProgramu?.onPreferenceClickListener = Preference.OnPreferenceClickListener { _ : Preference? ->
+            oProgramu?.onPreferenceClickListener = OnPreferenceClickListener { _ : Preference? ->
                 startActivity(Intent(context, OProgramu::class.java))
                 true
             }
@@ -100,5 +105,40 @@ class Podesavanja : AppCompatActivity() {
             }
             return false
         }
+        override fun onPreferenceClick(preference: Preference): Boolean {
+            Log.d("bus-pljus",""+preference.key)
+            when (preference.key) {
+                "nadogradimapu" -> {
+                    Internet().zahtevPremaInternetu(null, null,2, object : Internet.odgovorSaInterneta {
+                        override fun uspesanOdgovor(response: Response) {
+                            val preuzeto = response.body!!.source().inputStream()
+                            Internet().gunzip(preuzeto, File(preference.context.filesDir, "beograd.map"))
+                        }
+
+                        override fun neuspesanOdgovor(e: IOException) {
+                            Toster(preference.context).toster(resources.getString(R.string.nema_interneta))
+                        }
+                    })
+                }
+                "nadogradistanice" -> {
+                    Internet().zahtevPremaInternetu(null, null,3, object : Internet.odgovorSaInterneta {
+                        override fun uspesanOdgovor(response: Response) {
+                            val preuzeto = response.body!!.source().inputStream()
+                            preference.context.getDatabasePath(SQLcitac.IME_BAZE)?.path?.let { File(it) }?.let {
+                                Internet().gunzip(preuzeto,
+                                    it
+                                )
+                            }
+                        }
+                        override fun neuspesanOdgovor(e: IOException) {
+                            Toster(preference.context).toster(resources.getString(R.string.nema_interneta))
+                        }
+                    })
+                }
+            }
+            return true
+        }
     }
+
+
 }

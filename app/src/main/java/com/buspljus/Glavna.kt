@@ -60,6 +60,10 @@ import kotlin.concurrent.schedule
 
 class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInterface> {
 
+    companion object {
+        lateinit var mapa: Map
+    }
+
     private lateinit var odabranoStajalisteSloj: ItemizedLayer
     private lateinit var pozicijaPesakaSloj: ItemizedLayer
     private lateinit var markeriVozila: ItemizedLayer
@@ -85,7 +89,7 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
     private var boja = 1
 
     private var najbliziAutobusRastojanje = 100000.0
-    private lateinit var najbliziAutobusMarker: MarkerItem
+    private var najbliziAutobusMarker = MarkerItem(null,null,null,null)
 
     lateinit var menadzerLokacije: LocationManager
 
@@ -98,7 +102,7 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
     private var prviput: Boolean = true
 
     private lateinit var adapter : SimpleCursorAdapter
-    private lateinit var mapa: Map
+
     private var tajmer: Timer? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -133,7 +137,7 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
         //val mreznaLok = menadzerLokacije.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
         var omogucenoLociranje = false
 
-        gpsdugme.setOnClickListener{
+        gpsdugme.setOnClickListener {
             pozicijaPesakaSloj.removeAllItems()
 
             when {
@@ -143,6 +147,7 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
                             LocationListener {
                             override fun onLocationChanged(location: Location) {
                                 pozicijaPesakaMarker.geoPoint=GeoPoint(location.latitude,location.longitude)
+
                                 if (!slobodnopomeranjemape)
                                     mapa.setMapPosition(location.latitude,location.longitude,70000.0)
 
@@ -213,6 +218,7 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
                 }
             }
             unosteksta()
+            izbacitastaturu()
         }
 
         lista.adapter = adapter
@@ -398,6 +404,7 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
                     val marker = MarkerItem(null, null, null)
 
                     // funkcija za prikaz garaznog broja vozila
+                    marker.title=linija
                     marker.description = json.getJSONArray(linija).getJSONObject(i).getString("g")
                     if ((marker.description.toString()
                             .startsWith("P9")) or (marker.description.toString().startsWith("P8"))
@@ -409,28 +416,30 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
                                 if (marker.description.toString()[2] == '0' || marker.description.toString()[2] == '1')
                                     2 //tramvaj
                                 else 3 //trolejbus
+                            if (marker.description.toString()[2] == '0')
+                                marker.description = marker.description.replaceFirst("0","2")
                         }
                         if (marker.description.toString()[2] == '0')
                             marker.description = marker.description.drop(3)
                         else marker.description = marker.description.drop(2)
                     } else boja = 1
 
-                    if (Podesavanja.deljenapodesavanja.getBoolean("prikazgb", false))
-                        marker.title = linija + " (" + marker.description + ")"
-                    else marker.title = linija
-
                     marker.geoPoint = GeoPoint(
                         (json.getJSONArray(linija).getJSONObject(i).getDouble("lt")),
                         json.getJSONArray(linija).getJSONObject(i).getDouble("lg")
                     )
                     marker.marker = (MarkerSymbol(
-                        AndroidBitmap(tekstubitmap().getBitmapFromTitle(marker.title, this, boja)),
+                        AndroidBitmap(tekstubitmap().getBitmapFromTitle(
+                            when (Podesavanja.deljenapodesavanja.getBoolean("prikazgb", false)) {
+                                true -> marker.title + " (" + marker.description + ")"
+                                false -> marker.title
+                            }, this, boja)),
                         MarkerSymbol.HotspotPlace.BOTTOM_CENTER, true
                     ))
                     markeriVozila.addItem(marker)
 
-                    if (odabranoStajalisteMarker.geoPoint.sphericalDistance(
-                            GeoPoint(marker.geoPoint.latitude, marker.geoPoint.longitude)) < najbliziAutobusRastojanje) {
+                    if ((odabranoStajalisteMarker.geoPoint.sphericalDistance(GeoPoint(marker.geoPoint.latitude, marker.geoPoint.longitude)) < najbliziAutobusRastojanje)
+                        and ((odabranoStajalisteMarker.geoPoint.sphericalDistance(GeoPoint(marker.geoPoint.latitude, marker.geoPoint.longitude))>100))) {
 
                         najbliziAutobusRastojanje =
                             odabranoStajalisteMarker.geoPoint.sphericalDistance(
@@ -465,11 +474,11 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
 
         } catch (e: Exception) {
             with(Toster(this@Glavna)) {
-                if (odgovor == "0\n")
+                if (odgovor == "0")
                     this.toster(resources.getString(R.string.nema_vozila))
                 else {
                     this.toster(odgovor)
-                    Log.d(resources.getString(R.string.debug), "" + odgovor)
+                    Log.d(resources.getString(R.string.debug), "" + odgovor,e)
                 }
             }
             dugmezaosvezavanje(0, 1)
@@ -517,15 +526,15 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
 
     private fun zahtevZaPozicijuVozila() {
         dugmezaosvezavanje(1, 0)
-        Internet().zahtevPremaInternetu(stanicaId, 1, object : Internet.ApiResponseCallback {
-            override fun onSuccess(response: Response) {
+        Internet().zahtevPremaInternetu(stanicaId, null, 1,  object : Internet.odgovorSaInterneta {
+            override fun uspesanOdgovor(response: Response) {
                 if (response.isSuccessful) {
                     primljeniString = response.body!!.string()
                     crtanjemarkera(primljeniString)
                 }
             }
 
-            override fun onFailure(e: IOException) {
+            override fun neuspesanOdgovor(e: IOException) {
                 if (Internet.zahtev?.isCanceled() == false)
                     Toster(this@Glavna).toster(resources.getString(R.string.nema_interneta))
                 dugmezaosvezavanje(0, 1)

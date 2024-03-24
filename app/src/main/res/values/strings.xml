@@ -18,7 +18,6 @@
     <string name="greska_baza">Грешка при отварању базе станица</string>
     <string name="greska_zip">Грешка при распакивању ЗИП фајла</string>
     <string name="uvecaj_mapu">Увећајте мапу</string>
-    <string name="nadogradnja_programa">Надоградња програма</string>
     <string name="provera_ver">Провера доступности нове верзије на GitHub-у</string>
     <string name="opis_programa">Мала, брза апликација за преглед положаја возила градског превоза у Београду. Користи OpenStreetMap податке, док за графичко исцртавање користи VTM.</string>
     <string name="odabir_servera">Сервер за положаје возила</string>
@@ -37,4 +36,11 @@
     <string name="nedelja">Недеља</string>
     <string name="praznik_nedelja">Недеља (празник)</string>
     <string name="debug">bus-pljus!</string>
+    <string name="mapa_nadogradnja">Мапе Београда</string>
+    <string name="stanice_nadogradnja">Базе станица, линија и реда вожње</string>
+    <string name="program_nadogradnja">Програма</string>
+    <string name="nadogradnja_sekcija">Надоградња…</string>
+    <string name="skinuta_mapa">Преузета мапа</string>
+    <string name="skinute_stanice">Преузете станице</string>
+    <string name="ka_stanici">Ка станици:</string>
 </resources>
