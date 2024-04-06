@@ -5,6 +5,7 @@ import android.content.Context
 import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 import okhttp3.Response
+import okhttp3.internal.notify
 import org.json.JSONArray
 import org.json.JSONObject
 import org.oscim.core.GeoPoint
@@ -32,9 +33,12 @@ class SQLcitac(private val context: Context) {
             2 -> str = "select _id,naziv_cir,staju from stanice where _id like ?"
             3 -> str = "select _id,naziv_cir,staju from stanice where naziv_ascii like" + "? or naziv_cir like ? or naziv_lat like ?"
             4 -> str = "select * from linije where _id=? and stajalista like ?"
+            // BG voz
             5 -> str = "select _id,naziv,redvoznje from bgvoz where round(lt,?) = round(?,?) and round(lg,?) = round(?,?)"
             6 -> str = "select naziv from bgvoz where _id=?"
+            // Praznici
             7 -> str = "select * from praznici"
+            //
         }
         return baza.rawQuery(str,niz)
     }
@@ -61,7 +65,8 @@ class SQLcitac(private val context: Context) {
 
             kursor = SQLzahtev(5,tacka)
             if (kursor.count > 0) {
-                RedVoznje(context).redVoznjeKliknaStanicu(kursor)
+                kursor.moveToFirst()
+                RedVoznje(context).redVoznjeKliknaStanicu()
                 break
             }
 
@@ -92,7 +97,6 @@ class SQLcitac(private val context: Context) {
     fun redvoznjeKliknavozilo(linija: String, stanica: String): Cursor {
         kursor = SQLzahtev(4, arrayOf(linija,"%\"$stanica\"%"))
         if (kursor.count == 0) {
-            Toster(context).toster("Linija nema azurirana stajalista u bazi")
             Internet().zahtevPremaInternetu(stanica,linija,1, object : Internet.odgovorSaInterneta{
                 override fun uspesanOdgovor(response: Response) {
                     try {
@@ -111,6 +115,8 @@ class SQLcitac(private val context: Context) {
                                         if (brojUpisanihRedova > 0) {
                                             Toster(context).toster("OK")
                                         }
+                                        josjedankursor.close()
+                                        kursor = SQLzahtev(4, arrayOf(linija,"%\"$stanica\"%"))
                                         break@spoljnapetlja
                                     }
                                 }
@@ -119,7 +125,7 @@ class SQLcitac(private val context: Context) {
                         }
                     }
                     catch (g: Exception) {
-                        Toster(context).toster("greska")
+                        Toster(context).toster(g.toString())
                     }
                 }
 

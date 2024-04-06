@@ -15,30 +15,17 @@
         android:textStyle="bold"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        tools:text="Борча 3" />
+        tools:text="Овча" />
 
     <TextView
         android:id="@+id/tip_stanice"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="24dp"
-        android:layout_marginTop="8dp"
-        app:layout_constraintBottom_toTopOf="@id/ka_stanici"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/ime_okretnice" />
-
-    <TextView
-        android:id="@+id/linija1"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="16dp"
-        android:textSize="24sp"
-        android:textStyle="bold"
+        android:layout_marginTop="24dp"
         android:visibility="gone"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/ime_okretnice"
-        tools:text="95" />
+        app:layout_constraintTop_toBottomOf="@id/ime_okretnice" />
 
     <TextView
         android:id="@+id/linija1_odrediste"
@@ -46,57 +33,47 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
         android:layout_marginTop="16dp"
+        android:layout_marginBottom="16dp"
         android:ellipsize="marquee"
         android:text="---"
         android:textColor="@color/siva"
         android:textSize="16sp"
         android:textStyle="bold"
         android:visibility="visible"
-        app:layout_constraintStart_toEndOf="@+id/linija1"
-        app:layout_constraintTop_toBottomOf="@id/ka_stanici"
+        app:layout_constraintBottom_toTopOf="@+id/linija2_odrediste"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tip_stanice"
         tools:text="---" />
 
     <TextView
         android:id="@+id/linija1_polazak"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
         android:layout_marginEnd="16dp"
         android:text="-:--"
         android:textColor="@color/siva"
         android:textSize="16sp"
         android:textStyle="bold"
         android:visibility="visible"
+        app:layout_constraintBottom_toBottomOf="@+id/linija1_odrediste"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/ka_stanici"
+        app:layout_constraintTop_toTopOf="@+id/linija1_odrediste"
         tools:visibility="visible" />
-
-    <TextView
-        android:id="@+id/linija2"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="8dp"
-        android:textSize="24sp"
-        android:textStyle="bold"
-        android:visibility="gone"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/linija1"
-        tools:text="95" />
 
     <TextView
         android:id="@+id/linija2_odrediste"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
-        android:layout_marginTop="8dp"
+        android:layout_marginBottom="16dp"
         android:ellipsize="marquee"
         android:text="---"
         android:textSize="20sp"
         android:textStyle="bold"
         android:visibility="visible"
-        app:layout_constraintStart_toEndOf="@+id/linija1"
-        app:layout_constraintTop_toBottomOf="@id/linija1_odrediste"
+        app:layout_constraintBottom_toTopOf="@id/linija3_odrediste"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/linija1_odrediste"
         tools:text="---"
         tools:visibility="visible" />
 
@@ -104,41 +81,28 @@
         android:id="@+id/linija2_polazak"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
         android:layout_marginEnd="16dp"
         android:text="-:--"
         android:textSize="20sp"
         android:textStyle="bold"
         android:visibility="visible"
+        app:layout_constraintBottom_toBottomOf="@+id/linija2_odrediste"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/linija1_polazak"
+        app:layout_constraintTop_toTopOf="@+id/linija2_odrediste"
         tools:visibility="visible" />
-
-    <TextView
-        android:id="@+id/linija3"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="8dp"
-        android:textSize="24sp"
-        android:textStyle="bold"
-        android:visibility="gone"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/linija2"
-        tools:text="95" />
 
     <TextView
         android:id="@+id/linija3_odrediste"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="16dp"
         android:ellipsize="marquee"
         android:text="---"
         android:textSize="20sp"
         android:textStyle="bold"
         android:visibility="visible"
-        app:layout_constraintStart_toEndOf="@+id/linija1"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/linija2_odrediste"
         tools:text="---"
         tools:visibility="visible" />
@@ -147,14 +111,44 @@
         android:id="@+id/linija3_polazak"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
         android:layout_marginEnd="16dp"
         android:text="-:--"
         android:textSize="20sp"
         android:textStyle="bold"
         android:visibility="visible"
+        app:layout_constraintBottom_toBottomOf="@+id/linija3_odrediste"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/linija2_polazak"
+        app:layout_constraintTop_toTopOf="@+id/linija3_odrediste"
+        tools:visibility="visible" />
+
+    <TextView
+        android:id="@+id/linija4_odrediste"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="16dp"
+        android:ellipsize="marquee"
+        android:text="---"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:visibility="visible"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/linija3_odrediste"
+        tools:text="---"
+        tools:visibility="visible" />
+
+    <TextView
+        android:id="@+id/linija4_polazak"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="16dp"
+        android:text="-:--"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:visibility="visible"
+        app:layout_constraintBottom_toBottomOf="@+id/linija4_odrediste"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/linija4_odrediste"
         tools:visibility="visible" />
 
     <View
@@ -162,20 +156,23 @@
         android:layout_width="409dp"
         android:layout_height="1dp"
         android:layout_marginStart="1dp"
-        android:layout_marginTop="24dp"
+        android:layout_marginTop="16dp"
         android:background="?android:attr/listDivider"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/linija3_polazak" />
+        app:layout_constraintTop_toBottomOf="@id/linija4_odrediste" />
 
-    <TextView
-        android:id="@+id/ka_stanici"
+    <CheckBox
+        android:id="@+id/samobgvoz"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="8dp"
-        android:text="@string/ka_stanici"
-        android:textSize="16sp"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/tip_stanice" />
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="8dp"
+        android:minHeight="48dp"
+        android:text="Само БГ:Воз"
+        android:visibility="gone"
+        app:layout_constraintBottom_toTopOf="@+id/linija1_polazak"
+        app:layout_constraintEnd_toEndOf="parent"
+        tools:text="Само БГ:Воз"
+        tools:visibility="gone" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

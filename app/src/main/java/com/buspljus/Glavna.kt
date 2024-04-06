@@ -368,6 +368,22 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
             mapa.layers().add(redvoznjeProzor)
             mapa.layers().add(pozicijaPesakaSloj)
 
+            // PRIVREMENO
+            /*
+            val test = MarkerItem("105L", "test", GeoPoint(44.821,20.471))
+            test.marker = (MarkerSymbol(
+                AndroidBitmap(tekstubitmap().getBitmapFromTitle(
+                    when (Podesavanja.deljenapodesavanja.getBoolean("prikazgb", false)) {
+                        true -> test.title + " (" + test.description + ")"
+                        false -> test.title
+                    }, this, boja)),
+                MarkerSymbol.HotspotPlace.BOTTOM_CENTER, true
+            ))
+            markeriVozila.addItem(test)
+
+             */
+            // PRIVREMENO
+
             izbacitastaturu()
 
             mapa.events.bind(Map.UpdateListener { e, mapPosition ->
