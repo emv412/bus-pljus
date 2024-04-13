@@ -10,11 +10,9 @@ import android.widget.Button
 import android.widget.CheckBox
 import android.widget.Spinner
 import android.widget.TextView
-import androidx.compose.ui.unit.sp
 import androidx.constraintlayout.widget.ConstraintLayout
 import com.buspljus.SQLcitac.Companion.kursor
 import com.google.android.material.bottomsheet.BottomSheetDialog
-import okhttp3.internal.notify
 import org.json.JSONArray
 import org.json.JSONObject
 import org.oscim.core.GeoPoint
@@ -108,7 +106,8 @@ class RedVoznje(private val context: Context) {
                 }
                 for (c in sveStaniceLinije_lista.indexOf(stanica_id) until sveStaniceLinije_lista.size) {
                     val jednaKoordinata = SQLcitac(context).pozahtevu_jednastanica(sveStaniceLinije_lista[c])
-                    zs = SQLcitac(context).SQLzahtev(5, arrayOf("2", jednaKoordinata.latitude.toString(), "2", "2", jednaKoordinata.longitude.toString(), "2"))
+                    zs = SQLcitac(context).SQLzahtev("bgvoz",arrayOf("_id","naziv","redvoznje"),"round(lt,?) = round(?,?) and round(lg,?) = round(?,?)",
+                        arrayOf(jednaKoordinata.latitude.toString(),jednaKoordinata.longitude.toString()),null)
                     if (zs.count > 0) {
                         zs.moveToFirst()
                         zs.use {
@@ -161,21 +160,19 @@ class RedVoznje(private val context: Context) {
                 ) {
                     sati = polasci.getJSONObject("rv")
 
-                    prvipol = dialog.findViewById(R.id.prvipolazak)!!
-                    drugipol = dialog.findViewById(R.id.drugipolazak)!!
-                    redvoznje_textview = dialog.findViewById(R.id.redvoznje_textview)!!
-                    datum_rv = dialog.findViewById(R.id.datum_rv)!!
-                    sledeciPolasci = dialog.findViewById(R.id.polasci_textview)!!
-                    danunedelji_textview = dialog.findViewById(R.id.rdsn)!!
-                    prethodnipol = dialog.findViewById(R.id.prethodnipol)!!
+                    with (dialog) {
+                        prvipol = findViewById(R.id.prvipolazak)!!
+                        drugipol = findViewById(R.id.drugipolazak)!!
+                        redvoznje_textview = findViewById(R.id.redvoznje_textview)!!
+                        datum_rv = findViewById(R.id.datum_rv)!!
+                        sledeciPolasci = findViewById(R.id.polasci_textview)!!
+                        danunedelji_textview = findViewById(R.id.rdsn)!!
+                        prethodnipol = findViewById(R.id.prethodnipol)!!
+                    }
 
-                    prvipol.visibility = View.VISIBLE
-                    drugipol.visibility = View.VISIBLE
-                    redvoznje_textview.visibility = View.VISIBLE
-                    sledeciPolasci.visibility = View.VISIBLE
-                    datum_rv.visibility = View.VISIBLE
-                    prethodnipol.visibility = View.VISIBLE
-                    danunedelji_textview.visibility = View.VISIBLE
+                    val view = listOf(prvipol,drugipol,redvoznje_textview,sledeciPolasci,datum_rv,prethodnipol,danunedelji_textview)
+                    for (j in view)
+                        j.visibility = View.VISIBLE
 
                     when (danunedelji) {
                         0 -> danunedelji_textview.text =
@@ -286,12 +283,15 @@ class RedVoznje(private val context: Context) {
         // Potrebna optimizacija, ne treba da se otvara i zatvara kursor 100 puta
 
         for (sifra_odredisne_stanice in rv.keys().iterator()) {
-            SQLcitac(context).SQLzahtev(6, arrayOf(sifra_odredisne_stanice)).use {
-                it.moveToFirst()
-                for (satnica in rv.getJSONObject(sifra_odredisne_stanice).keys().iterator()) {
-                    for (minutaza in 0 until rv.getJSONObject(sifra_odredisne_stanice).getJSONArray(satnica).length()) {
-                        dobijenoVreme = satnica + ":" + rv.getJSONObject(sifra_odredisne_stanice).getJSONArray(satnica).getJSONObject(minutaza).keys().next()
-                        rezultat.add(listOf(it.getString(0), dobijenoVreme))
+            val zahtev = SQLcitac(context).SQLzahtev("bgvoz",arrayOf("naziv"),"_id = ?",arrayOf(sifra_odredisne_stanice),null)
+            if (zahtev.count > 0) {
+                zahtev.moveToFirst()
+                zahtev.use {
+                    for (satnica in rv.getJSONObject(sifra_odredisne_stanice).keys().iterator()) {
+                        for (minutaza in 0 until rv.getJSONObject(sifra_odredisne_stanice).getJSONArray(satnica).length()) {
+                            dobijenoVreme = satnica + ":" + rv.getJSONObject(sifra_odredisne_stanice).getJSONArray(satnica).getJSONObject(minutaza).keys().next()
+                            rezultat.add(listOf(it.getString(0), dobijenoVreme))
+                        }
                     }
                 }
             }

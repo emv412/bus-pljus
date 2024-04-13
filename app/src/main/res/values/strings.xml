@@ -44,4 +44,7 @@
     <string name="skinute_stanice">Преузете станице</string>
     <string name="ka_stanici">Ка станици:</string>
     <string name="presedanjebgvoz">Преседање на БГ:Воз</string>
+    <string name="sacuvaj">Сачувај</string>
+    <string name="stanicasacuvana">Сачувана</string>
+    <string name="stanicaobrisana">Уклоњена</string>
 </resources>

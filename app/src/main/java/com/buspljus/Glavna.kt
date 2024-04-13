@@ -16,12 +16,12 @@ import android.util.Log
 import android.view.View
 import android.view.WindowManager
 import android.view.inputmethod.InputMethodManager
+import android.widget.AdapterView
 import android.widget.AutoCompleteTextView
 import android.widget.Button
 import android.widget.ImageButton
 import android.widget.ListView
 import android.widget.ProgressBar
-import android.widget.SimpleCursorAdapter
 import androidx.activity.ComponentActivity
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
@@ -62,6 +62,7 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
 
     companion object {
         lateinit var mapa: Map
+        lateinit var adapter : KursorAdapter
     }
 
     private lateinit var odabranoStajalisteSloj: ItemizedLayer
@@ -78,6 +79,7 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
     private lateinit var lista: ListView
     private lateinit var osvezi: ImageButton
     private lateinit var pregledmape: MapView
+    private lateinit var promenaunosa: Button
 
     private lateinit var gpsdugme: FloatingActionButton
 
@@ -101,8 +103,6 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
     private var pozicija = MapPosition()
     private var prviput: Boolean = true
 
-    private lateinit var adapter : SimpleCursorAdapter
-
     private var tajmer: Timer? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -118,15 +118,28 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
         osvezi = findViewById(R.id.osvezi)
         podesavanje = findViewById(R.id.podesavanja)
         gpsdugme = findViewById(R.id.gps)
+        promenaunosa = findViewById(R.id.promenaunosa)
 
         mapa = pregledmape.map()
 
-        val fromColumns = arrayOf("_id", SQLcitac.CIR_KOLONA, "staju")
-        val toViews = intArrayOf(R.id.sifra_stanice, R.id.naziv_stanice, R.id.odredista_sa_stanice)
-        adapter = SimpleCursorAdapter(this, R.layout.probna_lista, null, fromColumns, toViews, 0)
-        adapter.viewBinder = Selektor()
+        adapter = KursorAdapter(this,null)
+        lista.adapter = adapter
 
-        val promenaunosa = findViewById<Button>(R.id.promenaunosa)
+        lista.onItemClickListener = object : AdapterView.OnItemClickListener {
+            override fun onItemClick(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+                adapter.cursor?.apply {
+                    moveToPosition(position)
+                    stanicaId = getString(getColumnIndexOrThrow("_id"))
+                    stanicaNaziv = getString(getColumnIndexOrThrow(SQLcitac.CIR_KOLONA))
+                }
+                if (!trazenjepobroju)
+                    promenaunosa.callOnClick()
+                kliknalistu = true
+                ukucanastanica(this@Glavna, stanicaId, odabranoStajalisteSloj, odabranoStajalisteMarker, true)
+                podesiNaziv()
+                pokazilistu(0)
+            }
+        }
 
         val requestPermissionLauncher = ComponentActivity().registerForActivityResult(
             ActivityResultContracts.RequestPermission()) {
@@ -220,8 +233,12 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
             unosteksta()
             izbacitastaturu()
         }
+        
+        polje.setOnClickListener {
+            adapter.changeCursor(SQLcitac(this).SQLzahtev("stanice", arrayOf("_id","naziv_cir","staju","sacuvana"),"sacuvana = ?",arrayOf("1"),null))
+            pokazilistu(1)
+        }
 
-        lista.adapter = adapter
         polje.addTextChangedListener(object : TextWatcher {
 
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
@@ -229,28 +246,33 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
             }
 
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-                runOnUiThread { lista.visibility = View.VISIBLE }
+                pokazilistu(1)
                 tastaturasklonjena = false
                 if (polje.length() > 0) {
-                    adapter.changeCursor(
-                    SQLcitac(this@Glavna).dobavisifre(s.toString(), trazenjepobroju)
-                    )
+                    adapter.changeCursor(SQLcitac(this@Glavna).dobavisifre(s.toString(), trazenjepobroju))
+                    lista.setSelection(0)
+
                     if ((trazenjepobroju) and //Trazenje po broju, a ne imenu stanice
                         (adapter.cursor.count == 1) and // U listi je ostala jedna stanica
                         (!kliknalistu) and // Na stanicu nije kliknuto na listi, vec se odabira samo kucanjem
-                        (Podesavanja.deljenapodesavanja.getBoolean("automatskiunos", true))
-                    ) { //Podesavanje ukljuceno/iskljuceno
+                        (Podesavanja.deljenapodesavanja.getBoolean("automatskiunos", true)))
+                    { //Podesavanje ukljuceno/iskljuceno
 
-                        adapter.cursor.moveToFirst()
-                        stanicaId = adapter.cursor.getString(adapter.cursor.getColumnIndexOrThrow("_id"))
-                        stanicaNaziv = adapter.cursor.getString(adapter.cursor.getColumnIndexOrThrow(SQLcitac.CIR_KOLONA))
+                        with (adapter.cursor) {
+                            moveToFirst()
+                            stanicaId = getString(getColumnIndexOrThrow("_id"))
+                            stanicaNaziv = getString(getColumnIndexOrThrow(SQLcitac.CIR_KOLONA))
+                        }
+
+
+
                         ukucanastanica(this@Glavna, stanicaId, odabranoStajalisteSloj, odabranoStajalisteMarker, true)
+
                         podesiNaziv()
                     }
                     kliknalistu = false
-                } else {
-                    lista.visibility = View.GONE
-                }
+                } else
+                    pokazilistu(0)
             }
 
             override fun afterTextChanged(s: Editable?) {
@@ -259,15 +281,7 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
         }
         )
 
-        lista.setOnItemClickListener { _, _, _, _ ->
-            stanicaId = adapter.cursor.getString(adapter.cursor.getColumnIndexOrThrow("_id"))
-            stanicaNaziv = adapter.cursor.getString(adapter.cursor.getColumnIndexOrThrow(SQLcitac.CIR_KOLONA))
-            if (!trazenjepobroju)
-                promenaunosa.callOnClick()
-            kliknalistu = true
-            ukucanastanica(this@Glavna, stanicaId, odabranoStajalisteSloj, odabranoStajalisteMarker, true)
-            podesiNaziv()
-        }
+
         otvoriMapu()
     }
 
@@ -368,23 +382,7 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
             mapa.layers().add(redvoznjeProzor)
             mapa.layers().add(pozicijaPesakaSloj)
 
-            // PRIVREMENO
-            /*
-            val test = MarkerItem("105L", "test", GeoPoint(44.821,20.471))
-            test.marker = (MarkerSymbol(
-                AndroidBitmap(tekstubitmap().getBitmapFromTitle(
-                    when (Podesavanja.deljenapodesavanja.getBoolean("prikazgb", false)) {
-                        true -> test.title + " (" + test.description + ")"
-                        false -> test.title
-                    }, this, boja)),
-                MarkerSymbol.HotspotPlace.BOTTOM_CENTER, true
-            ))
-            markeriVozila.addItem(test)
-
-             */
-            // PRIVREMENO
-
-            izbacitastaturu()
+            //izbacitastaturu()
 
             mapa.events.bind(Map.UpdateListener { e, mapPosition ->
 
@@ -393,12 +391,14 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
                 if (e == Map.ANIM_END) {
                     if (!tastaturasklonjena)
                         sklonitastaturu()
+                    pokazilistu(0)
                     slobodnopomeranjemape = true
                 }
             })
 
             mapa.setTheme(AssetsRenderTheme(assets, "", "osmarender.xml"))
             mapa.setMapPosition(44.821, 20.471, 2500.0)
+            polje.callOnClick()
 
         } catch (e: Exception) {
             Log.d(resources.getString(R.string.debug), "" + e)
@@ -517,7 +517,7 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
             currentFocus?.windowToken,
             0
         )
-        runOnUiThread { lista.visibility = View.GONE }
+        pokazilistu(1)
         tastaturasklonjena = true
     }
 
@@ -529,14 +529,8 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
 
     fun dugmezaosvezavanje(kruzic: Int, taster: Int) {
         runOnUiThread {
-            when (kruzic) {
-                0 -> ucitavanje.visibility = View.INVISIBLE
-                1 -> ucitavanje.visibility = View.VISIBLE
-            }
-            when (taster) {
-                0 -> osvezi.visibility = View.INVISIBLE
-                1 -> osvezi.visibility = View.VISIBLE
-            }
+            ucitavanje.visibility = (if (kruzic == 0) View.INVISIBLE else View.VISIBLE)
+            osvezi.visibility = (if (taster == 0) View.INVISIBLE else View.VISIBLE)
         }
     }
 
@@ -559,10 +553,7 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
     }
 
     fun podesiNaziv() {
-        if (stanicaNaziv.isEmpty())
-            polje.hint=stanicaId
-        else
-            polje.hint=StringBuilder("$stanicaId - $stanicaNaziv")
+        polje.hint=(if (stanicaNaziv.isEmpty()) stanicaId else StringBuilder("$stanicaId - $stanicaNaziv"))
         polje.text.clear()
         polje.clearFocus()
     }
@@ -572,6 +563,13 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
         tajmer?.cancel()
         tajmer?.purge()
         tajmer = null
+    }
+
+    private fun pokazilistu(prikaz: Int) {
+        runOnUiThread {
+            lista.visibility = (if (prikaz == 0) View.GONE else View.VISIBLE)
+            gpsdugme.visibility = (if (prikaz == 0) View.VISIBLE else View.GONE)
+        }
     }
 
     override fun onStop() {

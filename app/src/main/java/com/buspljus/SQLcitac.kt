@@ -5,9 +5,7 @@ import android.content.Context
 import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 import okhttp3.Response
-import okhttp3.internal.notify
 import org.json.JSONArray
-import org.json.JSONObject
 import org.oscim.core.GeoPoint
 import java.io.IOException
 
@@ -18,38 +16,39 @@ class SQLcitac(private val context: Context) {
         val pronadjeneStanice = mutableListOf<String>()
         lateinit var kursor : Cursor
         lateinit var baza : SQLiteDatabase
-        lateinit var str : String
+        var globalQueryData: SqlQueryData? = null
     }
 
     interface Callback {
         fun korak(s: String)
     }
 
-    fun SQLzahtev(rad: Int, niz: Array<String>): Cursor {
+    data class SqlQueryData(
+        val tabela: String,
+        val kolone: Array<String>,
+        val odabir: String,
+        val parametri: Array<String>,
+        val redjanjepo: String?
+    )
+
+    fun ponoviupit(): Cursor {
+        return SQLzahtev(globalQueryData!!.tabela, globalQueryData!!.kolone, globalQueryData!!.odabir, globalQueryData!!.parametri, globalQueryData!!.redjanjepo)
+    }
+
+    fun SQLzahtev(tabela: String, kolone: Array<String>, odabir: String, parametri: Array<String>, redjanjepo: String?): Cursor {
         baza = SQLiteDatabase.openDatabase(context.getDatabasePath(IME_BAZE).absolutePath, null, 0)
-        when (rad) {
-            0 -> str = "select lt,lg from stanice where _id=?"
-            1 -> str = "select _id,naziv_cir from stanice where round(lt,?) = round(?,?) and round(lg,?) = round(?,?)"
-            2 -> str = "select _id,naziv_cir,staju from stanice where _id like ?"
-            3 -> str = "select _id,naziv_cir,staju from stanice where naziv_ascii like" + "? or naziv_cir like ? or naziv_lat like ?"
-            4 -> str = "select * from linije where _id=? and stajalista like ?"
-            // BG voz
-            5 -> str = "select _id,naziv,redvoznje from bgvoz where round(lt,?) = round(?,?) and round(lg,?) = round(?,?)"
-            6 -> str = "select naziv from bgvoz where _id=?"
-            // Praznici
-            7 -> str = "select * from praznici"
-            //
-        }
-        return baza.rawQuery(str,niz)
+        globalQueryData = SqlQueryData(tabela, kolone, odabir, parametri, redjanjepo)
+        return baza.query(tabela, kolone, odabir, parametri,null,null, redjanjepo+" LIMIT 50")
     }
 
     fun pozahtevu_jednastanica(sifra: String): GeoPoint {
-        kursor = SQLzahtev(0, arrayOf(sifra))
+        kursor = SQLzahtev("stanice",arrayOf("lt,lg"),"_id = ?", arrayOf(sifra),null)
         kursor.moveToFirst()
-        val ltlg = GeoPoint(kursor.getString(kursor.getColumnIndexOrThrow("lt")).toDouble(),
-            kursor.getString(kursor.getColumnIndexOrThrow("lg")).toDouble())
-        kursor.close()
-        return ltlg
+        kursor.use {
+            it.moveToFirst()
+            return GeoPoint(kursor.getString(kursor.getColumnIndexOrThrow("lt")).toDouble(),
+                kursor.getString(kursor.getColumnIndexOrThrow("lg")).toDouble())
+        }
     }
 
     fun pretragabaze_kliknamapu(lat: String, lng: String, callback: Callback) {
@@ -63,7 +62,7 @@ class SQLcitac(private val context: Context) {
         for (brojac in preciznost downTo 3) {
             val tacka = arrayOf(brojac.toString(),lat,brojac.toString(),brojac.toString(),lng,brojac.toString())
 
-            kursor = SQLzahtev(5,tacka)
+            kursor = SQLzahtev("bgvoz", arrayOf("_id","naziv","redvoznje"),"round(lt,?) = round(?,?) and round(lg,?) = round(?,?)", tacka,null)
             if (kursor.count > 0) {
                 kursor.moveToFirst()
                 RedVoznje(context).redVoznjeKliknaStanicu()
@@ -71,7 +70,7 @@ class SQLcitac(private val context: Context) {
             }
 
             if (Glavna.mapa.mapPosition.zoomLevel>=16) {
-                kursor = SQLzahtev(1,tacka)
+                kursor = SQLzahtev("stanice", arrayOf("_id","naziv_cir"),"round(lt,?) = round(?,?) and round(lg,?) = round(?,?)", tacka,null)
 
                 if (kursor.count > 0) {
                     while (kursor.moveToNext()) {
@@ -87,22 +86,37 @@ class SQLcitac(private val context: Context) {
 
     fun dobavisifre(rec: CharSequence?, trazenjepobroju: Boolean?): Cursor {
         kursor = if (trazenjepobroju == true) {
-            SQLzahtev(2,arrayOf("$rec%"))
+            SQLzahtev("stanice",arrayOf("_id","naziv_cir","staju","sacuvana"),"_id like ?",arrayOf("$rec%"),"sacuvana"+" DESC")
         } else {
-            SQLzahtev(3,arrayOf("%$rec%","%$rec%","%$rec%"))
+            SQLzahtev("stanice",arrayOf("_id","naziv_cir","staju","sacuvana"),"naziv_ascii like ? or naziv_cir like ? or naziv_lat like ?",arrayOf("%$rec%","%$rec%","%$rec%"),
+                "sacuvana"+" DESC")
         }
         return kursor
     }
 
+    fun sacuvajStanicu(stanica: String, cuvanjeilibrisanje: Int) {
+        val stanicazacuvanje = ContentValues()
+        stanicazacuvanje.put("sacuvana", cuvanjeilibrisanje)
+        val uspesnoiline = baza.update("stanice", stanicazacuvanje, "_id=?", arrayOf(stanica))
+        if (uspesnoiline > 0)
+            Toster(context).toster(
+                if (cuvanjeilibrisanje == 0)
+                    context.resources.getString(R.string.stanicaobrisana)
+                else
+                    context.resources.getString(R.string.stanicasacuvana)
+            )
+    }
+
     fun redvoznjeKliknavozilo(linija: String, stanica: String): Cursor {
-        kursor = SQLzahtev(4, arrayOf(linija,"%\"$stanica\"%"))
+        //kursor = SQLzahtev(4, arrayOf(linija,"%\"$stanica\"%"))
+        kursor = SQLzahtev("linije",arrayOf("*"),"_id = ? and stajalista like ?",arrayOf(linija, "%\"$stanica\"%"), null)
         if (kursor.count == 0) {
             Internet().zahtevPremaInternetu(stanica,linija,1, object : Internet.odgovorSaInterneta{
                 override fun uspesanOdgovor(response: Response) {
                     try {
                         val jsonOdOdgovora = JSONArray(response.body!!.string())
                         spoljnapetlja@ for (i in 0 until jsonOdOdgovora.length()) {
-                            val josjedankursor = SQLzahtev(4, arrayOf(linija,"%\"${jsonOdOdgovora.getString(i)}\"%"))
+                            val josjedankursor = SQLzahtev("linije",arrayOf("*"),"_id = ? and stajalista like ?",arrayOf(linija, "%\"${jsonOdOdgovora.getString(i)}\"%"), null)
                             if (josjedankursor.count == 1) {
                                 josjedankursor.moveToFirst()
                                 val nizStanicaUBazi = JSONArray(josjedankursor.getString(josjedankursor.getColumnIndexOrThrow("stajalista")))
@@ -116,7 +130,7 @@ class SQLcitac(private val context: Context) {
                                             Toster(context).toster("OK")
                                         }
                                         josjedankursor.close()
-                                        kursor = SQLzahtev(4, arrayOf(linija,"%\"$stanica\"%"))
+                                        kursor = SQLzahtev("linije",arrayOf("*"),"_id = ? and stajalista like ?",arrayOf(linija, "%\"$stanica\"%"), "sacuvana")
                                         break@spoljnapetlja
                                     }
                                 }
