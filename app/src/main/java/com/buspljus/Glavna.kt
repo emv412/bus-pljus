@@ -14,6 +14,7 @@ import android.text.InputType
 import android.text.TextWatcher
 import android.util.Log
 import android.view.View
+import android.view.Window
 import android.view.WindowManager
 import android.view.inputmethod.InputMethodManager
 import android.widget.AdapterView
@@ -29,6 +30,7 @@ import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.drawable.toBitmap
+import androidx.core.view.size
 import androidx.preference.PreferenceManager
 import androidx.vectordrawable.graphics.drawable.VectorDrawableCompat
 import com.google.android.material.floatingactionbutton.FloatingActionButton
@@ -233,11 +235,6 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
             unosteksta()
             izbacitastaturu()
         }
-        
-        polje.setOnClickListener {
-            adapter.changeCursor(SQLcitac(this).SQLzahtev("stanice", arrayOf("_id","naziv_cir","staju","sacuvana"),"sacuvana = ?",arrayOf("1"),null))
-            pokazilistu(1)
-        }
 
         polje.addTextChangedListener(object : TextWatcher {
 
@@ -264,8 +261,6 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
                             stanicaNaziv = getString(getColumnIndexOrThrow(SQLcitac.CIR_KOLONA))
                         }
 
-
-
                         ukucanastanica(this@Glavna, stanicaId, odabranoStajalisteSloj, odabranoStajalisteMarker, true)
 
                         podesiNaziv()
@@ -288,8 +283,6 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
     fun ukucanastanica(context: Context, stanica: String, stajalisteSloj: ItemizedLayer, stajaliste: MarkerItem, animacija: Boolean) {
         try {
             sklonitastaturu()
-
-            SQLcitac.baza.close()
 
             markeriVozila.removeAllItems()
             prviput = true
@@ -382,8 +375,6 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
             mapa.layers().add(redvoznjeProzor)
             mapa.layers().add(pozicijaPesakaSloj)
 
-            //izbacitastaturu()
-
             mapa.events.bind(Map.UpdateListener { e, mapPosition ->
 
                 pozicija = mapPosition
@@ -398,7 +389,12 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
 
             mapa.setTheme(AssetsRenderTheme(assets, "", "osmarender.xml"))
             mapa.setMapPosition(44.821, 20.471, 2500.0)
-            polje.callOnClick()
+
+            adapter.changeCursor(SQLcitac(this).SQLzahtev("stanice", arrayOf("_id","naziv_cir","staju","sacuvana"),"sacuvana = ?",arrayOf("1"),null))
+            if (adapter.cursor.count > 0)
+                pokazilistu(1)
+            else
+                izbacitastaturu()
 
         } catch (e: Exception) {
             Log.d(resources.getString(R.string.debug), "" + e)
@@ -517,13 +513,12 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
             currentFocus?.windowToken,
             0
         )
-        pokazilistu(1)
         tastaturasklonjena = true
     }
 
     private fun izbacitastaturu() {
         polje.requestFocus()
-        window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE)
+        window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
         tastaturasklonjena = false
     }
 

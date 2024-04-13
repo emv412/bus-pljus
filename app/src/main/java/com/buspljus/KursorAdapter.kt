@@ -33,7 +33,7 @@ class KursorAdapter(context: Context, kursor: Cursor?): CursorAdapter(context, k
 
             fun ikonica(sacuvana: Int) {
                 when (sacuvana) {
-                    0 -> dugmeSacuvaj.setImageDrawable(ContextCompat.getDrawable(view.context, android.R.drawable.ic_input_add))
+                    0 -> dugmeSacuvaj.setImageDrawable(ContextCompat.getDrawable(view.context, android.R.drawable.ic_menu_save))
                     1 -> dugmeSacuvaj.setImageDrawable(ContextCompat.getDrawable(view.context, android.R.drawable.ic_delete))
                 }
             }

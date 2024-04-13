@@ -107,7 +107,7 @@ class RedVoznje(private val context: Context) {
                 for (c in sveStaniceLinije_lista.indexOf(stanica_id) until sveStaniceLinije_lista.size) {
                     val jednaKoordinata = SQLcitac(context).pozahtevu_jednastanica(sveStaniceLinije_lista[c])
                     zs = SQLcitac(context).SQLzahtev("bgvoz",arrayOf("_id","naziv","redvoznje"),"round(lt,?) = round(?,?) and round(lg,?) = round(?,?)",
-                        arrayOf(jednaKoordinata.latitude.toString(),jednaKoordinata.longitude.toString()),null)
+                        arrayOf("2", jednaKoordinata.latitude.toString(), "2", "2", jednaKoordinata.longitude.toString(), "2"),null)
                     if (zs.count > 0) {
                         zs.moveToFirst()
                         zs.use {
@@ -230,7 +230,8 @@ class RedVoznje(private val context: Context) {
                 garBroj.text = markerItem.description
                 rastojanje.text = rastojanjeprer
 
-                dialog.show()
+                if (!dialog.isShowing)
+                    dialog.show()
             }
         } catch (e:Exception) {
             Log.d(context.resources.getString(R.string.debug),""+e)
@@ -280,17 +281,16 @@ class RedVoznje(private val context: Context) {
 
          */
 
-        // Potrebna optimizacija, ne treba da se otvara i zatvara kursor 100 puta
-
         for (sifra_odredisne_stanice in rv.keys().iterator()) {
-            val zahtev = SQLcitac(context).SQLzahtev("bgvoz",arrayOf("naziv"),"_id = ?",arrayOf(sifra_odredisne_stanice),null)
-            if (zahtev.count > 0) {
-                zahtev.moveToFirst()
-                zahtev.use {
-                    for (satnica in rv.getJSONObject(sifra_odredisne_stanice).keys().iterator()) {
-                        for (minutaza in 0 until rv.getJSONObject(sifra_odredisne_stanice).getJSONArray(satnica).length()) {
-                            dobijenoVreme = satnica + ":" + rv.getJSONObject(sifra_odredisne_stanice).getJSONArray(satnica).getJSONObject(minutaza).keys().next()
-                            rezultat.add(listOf(it.getString(0), dobijenoVreme))
+            with (SQLcitac(context).SQLzahtev("bgvoz",arrayOf("naziv"),"_id = ?",arrayOf(sifra_odredisne_stanice),null)) {
+                if (this.count > 0) {
+                    moveToFirst()
+                    use {
+                        for (satnica in rv.getJSONObject(sifra_odredisne_stanice).keys().iterator()) {
+                            for (minutaza in 0 until rv.getJSONObject(sifra_odredisne_stanice).getJSONArray(satnica).length()) {
+                                dobijenoVreme = satnica + ":" + rv.getJSONObject(sifra_odredisne_stanice).getJSONArray(satnica).getJSONObject(minutaza).keys().next()
+                                rezultat.add(listOf(it.getString(0), dobijenoVreme))
+                            }
                         }
                     }
                 }
@@ -327,7 +327,8 @@ class RedVoznje(private val context: Context) {
         }
         if (pozivodfn == 0) {
             ime_okretnice.text=imestanice
-            dialog.show()
+            if (!dialog.isShowing)
+                dialog.show()
         }
         else {
             ime_okretnice.visibility = View.GONE

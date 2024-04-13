@@ -59,7 +59,6 @@ class Prvootvaranje: AppCompatActivity() {
 
     fun proveraprisustvafajlova() {
         if (File(filesDir,"beograd.map").exists() and File(getDatabasePath(SQLcitac.IME_BAZE).path).exists()) {
-            Log.d(resources.getString(R.string.debug),"Prisutna oba fajla")
             startActivity(Intent(this, Glavna::class.java))
             finish()
         }
