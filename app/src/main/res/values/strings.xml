@@ -26,6 +26,7 @@
     <string name="pronadjene_stanice">Пронађене станице</string>
     <string name="prihvatiti_stanicu">Послати упит за ову станицу?</string>
     <string name="nije_omoguceno_lociranje">Није дозвољено лоцирање</string>
+    <string name="ukljucigps">Укључите лоцирање у подешавањима система</string>
     <string name="da">Да</string>
     <string name="red_voznje_od">Ред вожње од:</string>
     <string name="gar_broj">ГБ возила:</string>

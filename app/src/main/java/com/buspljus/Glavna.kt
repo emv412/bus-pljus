@@ -1,20 +1,25 @@
 package com.buspljus
 
+import android.Manifest.permission.ACCESS_COARSE_LOCATION
+import android.Manifest.permission.ACCESS_FINE_LOCATION
 import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
+import android.content.pm.PackageManager.PERMISSION_GRANTED
 import android.location.Location
 import android.location.LocationListener
 import android.location.LocationManager
+import android.location.LocationManager.GPS_PROVIDER
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.text.Editable
 import android.text.InputFilter
 import android.text.InputType
+import android.text.InputType.TYPE_CLASS_NUMBER
+import android.text.InputType.TYPE_CLASS_TEXT
 import android.text.TextWatcher
 import android.util.Log
 import android.view.View
-import android.view.Window
 import android.view.WindowManager
 import android.view.inputmethod.InputMethodManager
 import android.widget.AdapterView
@@ -25,12 +30,12 @@ import android.widget.ListView
 import android.widget.ProgressBar
 import androidx.activity.ComponentActivity
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.drawable.toBitmap
-import androidx.core.view.size
 import androidx.preference.PreferenceManager
 import androidx.vectordrawable.graphics.drawable.VectorDrawableCompat
 import com.google.android.material.floatingactionbutton.FloatingActionButton
@@ -90,12 +95,14 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
 
     private var tastaturasklonjena: Boolean = true
     private var kliknalistu: Boolean = false
+    private var omogucenoLociranje = false
     private var boja = 1
 
     private var najbliziAutobusRastojanje = 100000.0
     private var najbliziAutobusMarker = MarkerItem(null,null,null,null)
 
     lateinit var menadzerLokacije: LocationManager
+    lateinit var pratilacLokacije: LocationListener
 
     var slobodnopomeranjemape = true
     var primljeniString = ""
@@ -124,7 +131,7 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
 
         mapa = pregledmape.map()
 
-        adapter = KursorAdapter(this,null)
+        adapter = KursorAdapter(this,SQLcitac(this).SQLzahtev("stanice", arrayOf("_id","naziv_cir","staju","sacuvana"),"sacuvana = ?",arrayOf("1"),null))
         lista.adapter = adapter
 
         lista.onItemClickListener = object : AdapterView.OnItemClickListener {
@@ -143,60 +150,49 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
             }
         }
 
-        val requestPermissionLauncher = ComponentActivity().registerForActivityResult(
-            ActivityResultContracts.RequestPermission()) {
-        }
-
-        menadzerLokacije = getSystemService(Context.LOCATION_SERVICE) as LocationManager
-        val gpsLok = menadzerLokacije.isProviderEnabled(LocationManager.GPS_PROVIDER)
-        //val mreznaLok = menadzerLokacije.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
-        var omogucenoLociranje = false
-
         gpsdugme.setOnClickListener {
-            pozicijaPesakaSloj.removeAllItems()
+            menadzerLokacije = getSystemService(Context.LOCATION_SERVICE) as LocationManager
+            //val mreznaLok = menadzerLokacije.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
 
-            when {
-                ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED -> {
-                    if (gpsLok) {
-                        menadzerLokacije.requestLocationUpdates(LocationManager.GPS_PROVIDER, 5000, 0F, object:
-                            LocationListener {
-                            override fun onLocationChanged(location: Location) {
-                                pozicijaPesakaMarker.geoPoint=GeoPoint(location.latitude,location.longitude)
+            if (ContextCompat.checkSelfPermission(this, ACCESS_FINE_LOCATION) == PERMISSION_GRANTED) {
+                if (omogucenoLociranje) {
+                    omogucenoLociranje = false
+                    gpsdugme.backgroundTintList=AppCompatResources.getColorStateList(this, R.color.siva)
+                    slobodnopomeranjemape = true
+                    pozicijaPesakaSloj.removeAllItems()
+                    menadzerLokacije.removeUpdates(pratilacLokacije)
+                }
+                else {
+                    omogucenoLociranje = true
+                    gpsdugme.backgroundTintList=AppCompatResources.getColorStateList(this, R.color.crvena)
+                    slobodnopomeranjemape = false
+                        if (menadzerLokacije.isProviderEnabled(GPS_PROVIDER)) {
+                            pratilacLokacije = object: LocationListener {
+                                override fun onLocationChanged(location: Location) {
+                                    with (gpsdugme) {
+                                        backgroundTintList=AppCompatResources.getColorStateList(this@Glavna,R.color.plava)
+                                        setOnLongClickListener {
+                                            mapa.setMapPosition(location.latitude,location.longitude,70000.0)
+                                            true
+                                        }
+                                    }
 
-                                if (!slobodnopomeranjemape)
-                                    mapa.setMapPosition(location.latitude,location.longitude,70000.0)
+                                    if (!slobodnopomeranjemape)
+                                        mapa.setMapPosition(location.latitude,location.longitude,70000.0)
 
-                                pozicijaPesakaSloj.addItem(pozicijaPesakaMarker)
-
-                                if (!omogucenoLociranje)
-                                    menadzerLokacije.removeUpdates(this)
-                                mapa.updateMap()
+                                    pozicijaPesakaMarker.geoPoint=GeoPoint(location.latitude,location.longitude)
+                                    pozicijaPesakaSloj.addItem(pozicijaPesakaMarker)
+                                }
                             }
-                        })
-                    }
-
-                    if (omogucenoLociranje) {
-                        omogucenoLociranje = false
-                        gpsdugme.backgroundTintList=AppCompatResources.getColorStateList(this, R.color.siva)
-                        slobodnopomeranjemape = true
-                        pozicijaPesakaSloj.removeAllItems()
-                    }
-                    else {
-                        omogucenoLociranje = true
-                        gpsdugme.backgroundTintList=AppCompatResources.getColorStateList(this, R.color.crvena)
-                        slobodnopomeranjemape = false
-                    }
+                            menadzerLokacije.requestLocationUpdates(GPS_PROVIDER, 5000, 0F, pratilacLokacije)
+                        }
+                        else Toster(this).toster(resources.getString(R.string.ukljucigps))
                 }
-
-                ActivityCompat.shouldShowRequestPermissionRationale(
-                    this, android.Manifest.permission.ACCESS_FINE_LOCATION
-                ) -> {
-                    Toster(this).toster(resources.getString(R.string.nije_omoguceno_lociranje))
-                }
-
-                else -> {
-                    requestPermissionLauncher.launch(android.Manifest.permission.ACCESS_FINE_LOCATION)
-                }
+                mapa.updateMap()
+            }
+            else {
+                Toster(this).toster(resources.getString(R.string.nije_omoguceno_lociranje))
+                ActivityCompat.requestPermissions(this,arrayOf(ACCESS_COARSE_LOCATION, ACCESS_FINE_LOCATION),99)
             }
         }
 
@@ -215,24 +211,14 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
         }
 
         promenaunosa.setOnClickListener {
-            fun unosteksta() {
-                if (promenaunosa.text == "A") {
-                    promenaunosa.text = "1"
-                    polje.filters = arrayOf(InputFilter.LengthFilter(4))
-                    trazenjepobroju = true
-                    polje.inputType = InputType.TYPE_CLASS_NUMBER
-                    polje.text.clear()
-                    polje.hint = resources.getString(R.string.broj_stanice)
-                } else {
-                    promenaunosa.text = "A"
-                    polje.filters = arrayOf()
-                    trazenjepobroju = false
-                    polje.inputType = InputType.TYPE_CLASS_TEXT
-                    polje.text.clear()
-                    polje.hint = resources.getString(R.string.naziv_stanice)
-                }
+            with (polje) {
+                filters = (if (trazenjepobroju) arrayOf() else arrayOf(InputFilter.LengthFilter(4)))
+                inputType = (if (trazenjepobroju) TYPE_CLASS_TEXT else TYPE_CLASS_NUMBER)
+                hint = (if (trazenjepobroju) resources.getString(R.string.naziv_stanice) else resources.getString(R.string.broj_stanice))
+                text.clear()
             }
-            unosteksta()
+            promenaunosa.text = (if (trazenjepobroju) "A" else "1")
+            trazenjepobroju = (if (trazenjepobroju) false else true)
             izbacitastaturu()
         }
 
@@ -390,7 +376,6 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
             mapa.setTheme(AssetsRenderTheme(assets, "", "osmarender.xml"))
             mapa.setMapPosition(44.821, 20.471, 2500.0)
 
-            adapter.changeCursor(SQLcitac(this).SQLzahtev("stanice", arrayOf("_id","naziv_cir","staju","sacuvana"),"sacuvana = ?",arrayOf("1"),null))
             if (adapter.cursor.count > 0)
                 pokazilistu(1)
             else
@@ -518,7 +503,7 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
 
     private fun izbacitastaturu() {
         polje.requestFocus()
-        window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
+        window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN)
         tastaturasklonjena = false
     }
 
