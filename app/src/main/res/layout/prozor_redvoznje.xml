@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content">
+    android:layout_height="match_parent">
 
     <TextView
         android:id="@+id/rastojanje"
@@ -33,9 +33,9 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
         android:visibility="gone"
-        app:layout_constraintBottom_toBottomOf="@+id/rdsn"
+        app:layout_constraintBottom_toBottomOf="@+id/redvoznje_textview"
         app:layout_constraintStart_toEndOf="@+id/redvoznje_textview"
-        app:layout_constraintTop_toTopOf="@+id/rdsn"
+        app:layout_constraintTop_toTopOf="@+id/redvoznje_textview"
         tools:text="16. 9. 2023."
         tools:visibility="visible" />
 
@@ -118,9 +118,11 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
         android:layout_marginEnd="8dp"
+        android:layout_marginBottom="7dp"
         android:visibility="invisible"
+        app:layout_constraintBottom_toBottomOf="@+id/datum_rv"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/divider2"
+        app:layout_constraintTop_toTopOf="@+id/datum_rv"
         tools:text="Радни дан"
         tools:visibility="visible" />
 
@@ -185,20 +187,21 @@
         android:drawableStart="@drawable/voz"
         android:drawablePadding="10sp"
         android:text="@string/presedanjebgvoz"
-        android:textAlignment="viewStart"
+        android:textAlignment="textStart"
         android:visibility="gone"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/redvoznje_textview"
+        app:layout_constraintTop_toBottomOf="@id/redvoznje_textview"
         tools:visibility="visible" />
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/prosirena_sekcija"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="wrap_content"
         android:visibility="gone"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/presedanjebgvoz"
+        app:layout_constraintTop_toBottomOf="@+id/presedanjebgvoz"
         tools:visibility="visible">
 
         <TextView
@@ -206,11 +209,11 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
+            android:layout_marginTop="8dp"
             android:text="Преко станице:"
             android:textSize="16sp"
-            app:layout_constraintBottom_toBottomOf="@+id/stanicepadajucalista"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="@+id/stanicepadajucalista"
+            app:layout_constraintTop_toTopOf="parent"
             tools:text="Преко станице:" />
 
         <Spinner
@@ -218,33 +221,20 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
-            android:layout_marginBottom="16dp"
             android:minHeight="48dp"
-            app:layout_constraintBottom_toTopOf="@+id/include"
-            app:layout_constraintStart_toEndOf="@+id/odaberistanicu_textview" />
-
-        <CheckBox
-            android:id="@+id/samobgvoz"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginEnd="8dp"
-            android:checked="true"
-            android:enabled="false"
-            android:minHeight="48dp"
-            android:text="Само БГ:Воз"
-            android:visibility="gone"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            tools:text="Само БГ:Воз" />
+            app:layout_constraintBottom_toBottomOf="@+id/odaberistanicu_textview"
+            app:layout_constraintStart_toEndOf="@+id/odaberistanicu_textview"
+            app:layout_constraintTop_toTopOf="@+id/odaberistanicu_textview" />
 
         <include
             android:id="@+id/include"
             layout="@layout/prozor_bgvoz"
-            android:layout_width="0dp"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:layout_constraintBottom_toBottomOf="parent"
+            android:layout_marginTop="8dp"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent" />
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/stanicepadajucalista" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

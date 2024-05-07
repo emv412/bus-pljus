@@ -10,11 +10,9 @@ import android.location.LocationListener
 import android.location.LocationManager
 import android.location.LocationManager.GPS_PROVIDER
 import android.net.Uri
-import android.os.Build
 import android.os.Bundle
 import android.text.Editable
 import android.text.InputFilter
-import android.text.InputType
 import android.text.InputType.TYPE_CLASS_NUMBER
 import android.text.InputType.TYPE_CLASS_TEXT
 import android.text.TextWatcher
@@ -28,9 +26,6 @@ import android.widget.Button
 import android.widget.ImageButton
 import android.widget.ListView
 import android.widget.ProgressBar
-import androidx.activity.ComponentActivity
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.app.ActivityCompat
@@ -69,7 +64,7 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
 
     companion object {
         lateinit var mapa: Map
-        lateinit var adapter : KursorAdapter
+        lateinit var adapter : KursorAdapterAutobus
     }
 
     private lateinit var odabranoStajalisteSloj: ItemizedLayer
@@ -119,6 +114,7 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
         setContentView(R.layout.mapa_glavna)
 
         Podesavanja.deljenapodesavanja = PreferenceManager.getDefaultSharedPreferences(this)
+        SQLcitac.inicijalizacija(this)
 
         pregledmape = findViewById(R.id.mapa)
         ucitavanje = findViewById(R.id.napredak)
@@ -131,7 +127,7 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
 
         mapa = pregledmape.map()
 
-        adapter = KursorAdapter(this,SQLcitac(this).SQLzahtev("stanice", arrayOf("_id","naziv_cir","staju","sacuvana"),"sacuvana = ?",arrayOf("1"),null))
+        adapter = KursorAdapterAutobus(this,SQLcitac(this).SQLzahtev("stanice", arrayOf("_id","naziv_cir","staju","sacuvana"),"sacuvana = ?",arrayOf("1"),null))
         lista.adapter = adapter
 
         lista.onItemClickListener = object : AdapterView.OnItemClickListener {
@@ -166,27 +162,30 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
                     omogucenoLociranje = true
                     gpsdugme.backgroundTintList=AppCompatResources.getColorStateList(this, R.color.crvena)
                     slobodnopomeranjemape = false
-                        if (menadzerLokacije.isProviderEnabled(GPS_PROVIDER)) {
-                            pratilacLokacije = object: LocationListener {
-                                override fun onLocationChanged(location: Location) {
-                                    with (gpsdugme) {
-                                        backgroundTintList=AppCompatResources.getColorStateList(this@Glavna,R.color.plava)
-                                        setOnLongClickListener {
-                                            mapa.setMapPosition(location.latitude,location.longitude,70000.0)
-                                            true
-                                        }
-                                    }
 
-                                    if (!slobodnopomeranjemape)
+                    if (menadzerLokacije.isProviderEnabled(GPS_PROVIDER)) {
+                        pratilacLokacije = object: LocationListener {
+                            override fun onLocationChanged(location: Location) {
+                                with (gpsdugme) {
+                                    backgroundTintList=AppCompatResources.getColorStateList(this@Glavna,R.color.plava)
+                                    setOnLongClickListener {
                                         mapa.setMapPosition(location.latitude,location.longitude,70000.0)
-
-                                    pozicijaPesakaMarker.geoPoint=GeoPoint(location.latitude,location.longitude)
-                                    pozicijaPesakaSloj.addItem(pozicijaPesakaMarker)
+                                        slobodnopomeranjemape = false
+                                        true
+                                    }
                                 }
+
+                                if (!slobodnopomeranjemape)
+                                    mapa.setMapPosition(location.latitude,location.longitude,70000.0)
+
+                                pozicijaPesakaMarker.geoPoint=GeoPoint(location.latitude,location.longitude)
+                                pozicijaPesakaSloj.addItem(pozicijaPesakaMarker)
+                                mapa.updateMap()
                             }
-                            menadzerLokacije.requestLocationUpdates(GPS_PROVIDER, 5000, 0F, pratilacLokacije)
                         }
-                        else Toster(this).toster(resources.getString(R.string.ukljucigps))
+                        menadzerLokacije.requestLocationUpdates(GPS_PROVIDER, 5000, 0F, pratilacLokacije)
+                    }
+                    else Toster(this).toster(resources.getString(R.string.ukljucigps))
                 }
                 mapa.updateMap()
             }
@@ -319,21 +318,17 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
                                 podesiNaziv()
                                 ukucanastanica(this@Glavna, s, odabranoStajalisteSloj, odabranoStajalisteMarker, false)
                             }
-                        })
+
+                            override fun koloneBGVOZ(lista: List<String>) {
+                            }
+                        },0)
                     }
                     return false
                 }
             }
 
             val tileSource = MapFileTileSource()
-            val fis = contentResolver.openInputStream(
-                Uri.fromFile(
-                    (File(
-                        filesDir,
-                        "beograd.map"
-                    ))
-                )
-            ) as FileInputStream?
+            val fis = contentResolver.openInputStream(Uri.fromFile((File(filesDir, "beograd.map")))) as FileInputStream?
 
             tileSource.setMapFileInputStream(fis)
 
@@ -352,14 +347,19 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
                     resources,R.drawable.glisa,theme)!!.toBitmap()),
                 MarkerSymbol.HotspotPlace.BOTTOM_CENTER,true)
 
-            mapa.layers().add(BitmapTileLayer(mapa, tileSource))
-            mapa.layers().add(BuildingLayer(mapa, tileLayer))
-            mapa.layers().add(LabelLayer(mapa, tileLayer))
-            mapa.layers().add(Kliknamapu())
-            mapa.layers().add(markeriVozila)
-            mapa.layers().add(odabranoStajalisteSloj)
-            mapa.layers().add(redvoznjeProzor)
-            mapa.layers().add(pozicijaPesakaSloj)
+            with (mapa.layers()) {
+                val listaSlojeva = listOf(
+                    BitmapTileLayer(mapa, tileSource),
+                    BuildingLayer(mapa, tileLayer),
+                    LabelLayer(mapa, tileLayer),Kliknamapu(),
+                    markeriVozila,
+                    odabranoStajalisteSloj,
+                    redvoznjeProzor,
+                    pozicijaPesakaSloj
+                )
+                for (d in listaSlojeva)
+                    add(d)
+            }
 
             mapa.events.bind(Map.UpdateListener { e, mapPosition ->
 
