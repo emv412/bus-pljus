@@ -1,17 +1,17 @@
 package com.buspljus
 
 import android.content.Context
-import android.database.Cursor
 import android.util.Log
 import android.view.View
+import android.view.WindowManager
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.Button
-import android.widget.CheckBox
+import android.widget.ExpandableListView
 import android.widget.Spinner
 import android.widget.TextView
 import androidx.constraintlayout.widget.ConstraintLayout
-import com.buspljus.SQLcitac.Companion.kursor
+import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import org.json.JSONArray
 import org.json.JSONObject
@@ -24,45 +24,42 @@ import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 
 class RedVoznje(private val context: Context) {
+    companion object {
+        val danunedelji = when (LocalDate.now().dayOfWeek.value) {
+            in 1 .. 5 -> 0
+            6 -> 1
+            7 -> 2
+            else -> 0
+        }
+        val trenutnovreme = LocalTime.now()
+    }
 
     private lateinit var sati : JSONObject
 
     private var brojacDvaPolaska = 0
     private var prethodnoVreme = "-:--"
 
-    private lateinit var dobijenoVreme: String
     private lateinit var dobijenoVreme_lt : LocalTime
+    lateinit var prvipol : TextView
+    lateinit var drugipol : TextView
+    lateinit var redvoznje_textview : TextView
+    lateinit var datum_rv : TextView
+    lateinit var sledeciPolasci : TextView
+    lateinit var danunedelji_textview : TextView
+    lateinit var prethodnipol : TextView
+    lateinit var linijarv : TextView
+    lateinit var linijarel : TextView
+    lateinit var garBroj : TextView
+    lateinit var rastojanje : TextView
+    lateinit var prosirena_sekcija : ConstraintLayout
+    lateinit var stanicepadajucalista : Spinner
+    lateinit var presedanjebgvoz : Button
+    lateinit var prosirivalista : ExpandableListView
+    lateinit var ime_okretnice : TextView
 
     val dialog = BottomSheetDialog(context)
 
-    val danunedelji = when (LocalDate.now().dayOfWeek.value) {
-        in 1 .. 5 -> 0
-        6 -> 1
-        7 -> 2
-        else -> 0
-    }
-
-    val trenutnovreme = LocalTime.now()
-
     fun redvoznjeKliknaVozilo(item: MarkerItem, odabranoStajalisteMarker: MarkerItem, stanica_id: String) : Boolean {
-        lateinit var prvipol : TextView
-        lateinit var drugipol : TextView
-        lateinit var redvoznje_textview : TextView
-        lateinit var datum_rv : TextView
-        lateinit var sledeciPolasci : TextView
-        lateinit var danunedelji_textview : TextView
-        lateinit var prethodnipol : TextView
-        lateinit var linijarv : TextView
-        lateinit var linijarel : TextView
-        lateinit var garBroj : TextView
-        lateinit var rastojanje : TextView
-        lateinit var prosirena_sekcija : ConstraintLayout
-        lateinit var odaberistanicu_textview : TextView
-        lateinit var samobgvoz : CheckBox
-        lateinit var stanicepadajucalista : Spinner
-        lateinit var presedanjebgvoz : Button
-        lateinit var zs : Cursor
-
         val markerItem = item
         val rastojanjedostanice = markerItem.geoPoint.sphericalDistance(
             GeoPoint(
@@ -72,54 +69,48 @@ class RedVoznje(private val context: Context) {
         ).div(1000)
 
         val rastojanjeprer = BigDecimal(rastojanjedostanice).setScale(1, RoundingMode.HALF_EVEN).toString() + " km"
-        val rvKursor = SQLcitac(context).redvoznjeKliknavozilo(markerItem.title, stanica_id)
+        val dobijenaLista = SQLcitac(context).redvoznjeKliknavozilo(markerItem.title, stanica_id)
 
         try {
-            if (rvKursor.count > 0) {
-                dialog.setContentView(R.layout.prozor_redvoznje)
-
-                linijarv = dialog.findViewById(R.id.linija_rv)!!
-                linijarel = dialog.findViewById(R.id.linija_relacija)!!
-                garBroj = dialog.findViewById(R.id.gb_redv)!!
-                rastojanje = dialog.findViewById(R.id.rastojanje)!!
-                presedanjebgvoz = dialog.findViewById(R.id.presedanjebgvoz)!!
-
-                rvKursor.moveToFirst()
-
-                var relacijaLinije: String
-                var polasci: JSONObject
-                var sveStaniceLinije: JSONArray
-                var datum : JSONArray
-                rvKursor.use {
-                    val pol = it.getString(it.getColumnIndexOrThrow("od"))
-                    val odr = it.getString(it.getColumnIndexOrThrow("do"))
-                    relacijaLinije = "$pol - $odr"
-                    sveStaniceLinije = JSONArray(it.getString(it.getColumnIndexOrThrow("stajalista")))
-                    polasci = JSONObject(it.getString(it.getColumnIndexOrThrow("redvoznje")))
-                    datum = JSONArray(it.getString(it.getColumnIndexOrThrow("datumrv")))
+            if (dobijenaLista.isNotEmpty()) {
+                with (dialog) {
+                    setContentView(R.layout.prozor_redvoznje)
+                    linijarv = findViewById(R.id.linija_rv)!!
+                    linijarel = findViewById(R.id.linija_relacija)!!
+                    garBroj = findViewById(R.id.gb_redv)!!
+                    rastojanje = findViewById(R.id.rastojanje)!!
+                    presedanjebgvoz = findViewById(R.id.presedanjebgvoz)!!
                 }
+
+                val pol = dobijenaLista[0]
+                val odr = dobijenaLista[1]
+
+                val sveStaniceLinije = JSONArray(dobijenaLista[2])
+                val polasci = JSONObject(dobijenaLista[3])
+                val datum = JSONArray(dobijenaLista[4])
+
+                val relacijaLinije = "$pol - $odr"
 
                 val sveStaniceLinije_lista = mutableListOf<String>()
                 val zeleznickeStaniceZaListu = mutableMapOf<String,List<String>>()
+
                 for (b in 0 until sveStaniceLinije.length()) {
                     sveStaniceLinije_lista.add(sveStaniceLinije[b].toString())
                 }
+
                 for (c in sveStaniceLinije_lista.indexOf(stanica_id) until sveStaniceLinije_lista.size) {
                     val jednaKoordinata = SQLcitac(context).pozahtevu_jednastanica(sveStaniceLinije_lista[c])
-                    zs = SQLcitac(context).SQLzahtev("bgvoz",arrayOf("_id","naziv","redvoznje"),"round(lt,?) = round(?,?) and round(lg,?) = round(?,?)",
-                        arrayOf("2", jednaKoordinata.latitude.toString(), "2", "2", jednaKoordinata.longitude.toString(), "2"),null)
-                    if (zs.count > 0) {
-                        zs.moveToFirst()
-                        zs.use {
-                            val id = it.getString(it.getColumnIndexOrThrow("_id"))
-                            val naziv = it.getString(it.getColumnIndexOrThrow("naziv"))
-                            val redvoznje = it.getString(it.getColumnIndexOrThrow("redvoznje"))
-                            zeleznickeStaniceZaListu.put(id,listOf(naziv,redvoznje))
+                    SQLcitac(context).pretragabaze_kliknamapu(jednaKoordinata.latitude.toString(),jednaKoordinata.longitude.toString(),object: SQLcitac.Callback {
+                        override fun korak(s: String) {
                         }
-                    }
+
+                        override fun koloneBGVOZ(lista: List<String>) {
+                            zeleznickeStaniceZaListu[lista[0]] = listOf(lista[1],lista[2])
+                        }
+                    },1)
                 }
 
-                if (zeleznickeStaniceZaListu.size > 0) {
+                if (zeleznickeStaniceZaListu.isNotEmpty()) {
                     presedanjebgvoz.visibility = View.VISIBLE
 
                     presedanjebgvoz.setOnClickListener {
@@ -128,9 +119,7 @@ class RedVoznje(private val context: Context) {
                             prosirena_sekcija.visibility = View.GONE
                         } else {
                             with(dialog) {
-                                odaberistanicu_textview = findViewById(R.id.odaberistanicu_textview)!!
                                 stanicepadajucalista = findViewById(R.id.stanicepadajucalista)!!
-                                samobgvoz = findViewById(R.id.samobgvoz)!!
                                 prosirena_sekcija.visibility = View.VISIBLE
                             }
 
@@ -142,7 +131,7 @@ class RedVoznje(private val context: Context) {
                                 object : AdapterView.OnItemSelectedListener {
                                     override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
                                         pregledPolaskaVozova(zeleznickeStaniceZaListu.map { it.value[0] }[position],
-                                            JSONObject(zeleznickeStaniceZaListu.map { it.value[1] }[position]).getJSONObject(danunedelji.toString()),1)
+                                            zeleznickeStaniceZaListu.map { it.value[1] }[position], 1)
                                     }
 
                                     override fun onNothingSelected(parent: AdapterView<*>?) {
@@ -236,103 +225,33 @@ class RedVoznje(private val context: Context) {
         } catch (e:Exception) {
             Log.d(context.resources.getString(R.string.debug),""+e)
         }
-        finally {
-            rvKursor.close()
-        }
         return true
     }
 
-    fun redVoznjeKliknaStanicu() {
-        dialog.setContentView(R.layout.prozor_bgvoz)
-        pregledPolaskaVozova(kursor.getString(kursor.getColumnIndexOrThrow("naziv")),JSONObject(
-            kursor.getString(kursor.getColumnIndexOrThrow("redvoznje"))).getJSONObject(danunedelji.toString()),0)
-    }
-
-    fun pregledPolaskaVozova(imestanice: String, rv: JSONObject, pozivodfn: Int) {
-        lateinit var ime_okretnice : TextView
-        lateinit var prvi_polazak_odrediste : TextView
-        lateinit var prvi_polazak_vreme : TextView
-        lateinit var drugi_polazak_odrediste : TextView
-        lateinit var drugi_polazak_vreme : TextView
-        lateinit var treci_polazak_odrediste : TextView
-        lateinit var treci_polazak_vreme : TextView
-        lateinit var cetvrti_polazak_odrediste : TextView
-        lateinit var cetvrti_polazak_vreme : TextView
-
+    fun pregledPolaskaVozova(imestanice: String, rv: String, pozivodfn: Int) {
         with (dialog) {
+            behavior.state=BottomSheetBehavior.STATE_EXPANDED
+            if (pozivodfn == 0)
+                setContentView(R.layout.prozor_bgvoz)
             ime_okretnice = findViewById(R.id.ime_okretnice)!!
-            prvi_polazak_odrediste = findViewById(R.id.linija1_odrediste)!!
-            prvi_polazak_vreme = findViewById(R.id.linija1_polazak)!!
-            drugi_polazak_odrediste = findViewById(R.id.linija2_odrediste)!!
-            drugi_polazak_vreme = findViewById(R.id.linija2_polazak)!!
-            treci_polazak_odrediste = findViewById(R.id.linija3_odrediste)!!
-            treci_polazak_vreme = findViewById(R.id.linija3_polazak)!!
-            cetvrti_polazak_odrediste = findViewById(R.id.linija4_odrediste)!!
-            cetvrti_polazak_vreme = findViewById(R.id.linija4_polazak)!!
-        }
 
-
-        val rezultat = mutableListOf<List<String>>()
-
-        /*
-        val lista = dialog.findViewById<ExpandableListView>(R.id.lista)
-
-        val ladapter = SimpleExpandableListAdapter()
-
-         */
-
-        for (sifra_odredisne_stanice in rv.keys().iterator()) {
-            with (SQLcitac(context).SQLzahtev("bgvoz",arrayOf("naziv"),"_id = ?",arrayOf(sifra_odredisne_stanice),null)) {
-                if (this.count > 0) {
-                    moveToFirst()
-                    use {
-                        for (satnica in rv.getJSONObject(sifra_odredisne_stanice).keys().iterator()) {
-                            for (minutaza in 0 until rv.getJSONObject(sifra_odredisne_stanice).getJSONArray(satnica).length()) {
-                                dobijenoVreme = satnica + ":" + rv.getJSONObject(sifra_odredisne_stanice).getJSONArray(satnica).getJSONObject(minutaza).keys().next()
-                                rezultat.add(listOf(it.getString(0), dobijenoVreme))
-                            }
-                        }
-                    }
-                }
+            with (ime_okretnice) {
+                text = if (pozivodfn == 0) imestanice else null
+                visibility = if (pozivodfn != 0) View.GONE else View.VISIBLE
             }
+
+            if (!isShowing)
+                show()
+
+            prosirivalista = findViewById(R.id.prosirenje)!!
+            if (pozivodfn == 0)
+                prosirivalista.layoutParams.height= WindowManager.LayoutParams.WRAP_CONTENT
+            behavior.isDraggable=false
         }
 
-        val rezultat2 = rezultat.sortedBy { it[1] }
-        brojacDvaPolaska = 0
+        val rezultat = SQLcitac(context).preradaRVJSON(JSONObject(rv), null,null)
 
-        for (n in 0 until rezultat2.size) {
-            dobijenoVreme_lt = LocalTime.parse(rezultat2[n][1], DateTimeFormatter.ofPattern("HH:mm"))
-            if (dobijenoVreme_lt.isBefore(trenutnovreme.minusMinutes(1)) and (brojacDvaPolaska == 0)) {
-                prvi_polazak_odrediste.text=rezultat2[n][0]
-                prvi_polazak_vreme.text=rezultat2[n][1]
-            }
-            else if (brojacDvaPolaska < 3) {
-                with (rezultat2[n][0]) {
-                    when (brojacDvaPolaska) {
-                        0 -> drugi_polazak_odrediste.text = this
-                        1 -> treci_polazak_odrediste.text = this
-                        2 -> cetvrti_polazak_odrediste.text = this
-                    }
-                }
-                with (rezultat2[n][1]) {
-                    when (brojacDvaPolaska) {
-                        0 -> drugi_polazak_vreme.text=this
-                        1 -> treci_polazak_vreme.text=this
-                        2 -> cetvrti_polazak_vreme.text=this
-                    }
-                }
-                brojacDvaPolaska += 1
-            }
-            else break
-        }
-        if (pozivodfn == 0) {
-            ime_okretnice.text=imestanice
-            if (!dialog.isShowing)
-                dialog.show()
-        }
-        else {
-            ime_okretnice.visibility = View.GONE
-        }
-
+        if (rezultat.size > 0)
+            prosirivalista.setAdapter(KursorAdapterVoz(context, rezultat.sortedBy { it[1] },prosirivalista))
     }
 }

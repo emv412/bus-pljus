@@ -9,9 +9,8 @@ import android.widget.CursorAdapter
 import android.widget.ImageButton
 import android.widget.TextView
 import androidx.core.content.ContextCompat
-import okhttp3.internal.notify
 
-class KursorAdapter(context: Context, kursor: Cursor?): CursorAdapter(context, kursor,0) {
+class KursorAdapterAutobus(context: Context, kursor: Cursor?): CursorAdapter(context, kursor,0) {
         override fun newView(context: Context?, cursor: Cursor?, parent: ViewGroup?): View {
             return LayoutInflater.from(context).inflate(R.layout.spisak_stanica, parent,false);
         }
