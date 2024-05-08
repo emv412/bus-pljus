@@ -253,7 +253,8 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
         polje.setOnClickListener {
             if (polje.length() == 0) {
                 prikazSacuvanihStanica()
-                prikaziListu(1)
+                if (lista.adapter.count > 0)
+                    prikaziListu(1)
             }
         }
         otvoriMapu()

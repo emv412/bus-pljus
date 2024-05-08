@@ -31,12 +31,12 @@ class RedVoznje(private val context: Context) {
             7 -> 2
             else -> 0
         }
-        val trenutnovreme = LocalTime.now()
     }
 
     private lateinit var sati : JSONObject
 
     private var brojacDvaPolaska = 0
+    private var zadovoljenUslov = false
     private var prethodnoVreme = "-:--"
 
     private lateinit var dobijenoVreme_lt : LocalTime
@@ -106,11 +106,13 @@ class RedVoznje(private val context: Context) {
 
                         override fun koloneBGVOZ(lista: List<String>) {
                             zeleznickeStaniceZaListu[lista[0]] = listOf(lista[1],lista[2])
+                            if (SQLcitac(context).preradaRVJSON(JSONObject(lista[2]), null, null).isNotEmpty())
+                                zadovoljenUslov = true
                         }
                     },1)
                 }
 
-                if (zeleznickeStaniceZaListu.isNotEmpty()) {
+                if ((zeleznickeStaniceZaListu.isNotEmpty()) and (zadovoljenUslov)) {
                     presedanjebgvoz.visibility = View.VISIBLE
 
                     presedanjebgvoz.setOnClickListener {
@@ -164,14 +166,9 @@ class RedVoznje(private val context: Context) {
                         j.visibility = View.VISIBLE
 
                     when (danunedelji) {
-                        0 -> danunedelji_textview.text =
-                            context.resources.getString(R.string.radni_dan)
-
-                        1 -> danunedelji_textview.text =
-                            context.resources.getString(R.string.subota)
-
-                        2 -> danunedelji_textview.text =
-                            context.resources.getString(R.string.nedelja)
+                        0 -> danunedelji_textview.text = context.resources.getString(R.string.radni_dan)
+                        1 -> danunedelji_textview.text = context.resources.getString(R.string.subota)
+                        2 -> danunedelji_textview.text = context.resources.getString(R.string.nedelja)
 
                         else -> {}
                     }
@@ -186,10 +183,10 @@ class RedVoznje(private val context: Context) {
                         val sat = sati.keys().asSequence().elementAt(i)
                         for (k in 0 until sati.getJSONArray(sat).getJSONArray(danunedelji).length()) {
                             dobijenoVreme_lt = LocalTime.parse(sat + ":" + sati.getJSONArray(sat).getJSONArray(danunedelji)[k], DateTimeFormatter.ofPattern("HH:mm"))
-                            if (dobijenoVreme_lt.isBefore(trenutnovreme.minusMinutes(1)) and (brojacDvaPolaska == 0)
+                            if (dobijenoVreme_lt.isBefore(LocalTime.now().minusMinutes(1)) and (brojacDvaPolaska == 0)
                             ) {
                                 prethodnoVreme = dobijenoVreme_lt.toString()
-                            } else if (dobijenoVreme_lt.isAfter(trenutnovreme.minusMinutes(1)) and (brojacDvaPolaska < 2)
+                            } else if (dobijenoVreme_lt.isAfter(LocalTime.now().minusMinutes(1)) and (brojacDvaPolaska < 2)
                             ) {
                                 if (brojacDvaPolaska == 0)
                                     prvipol.text = dobijenoVreme_lt.toString()
@@ -253,5 +250,6 @@ class RedVoznje(private val context: Context) {
 
         if (rezultat.size > 0)
             prosirivalista.setAdapter(KursorAdapterVoz(context, rezultat.sortedBy { it[1] },prosirivalista))
+
     }
 }

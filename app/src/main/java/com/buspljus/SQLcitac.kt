@@ -191,7 +191,7 @@ class SQLcitac(private val context: Context) {
                                             val polazak = "$sat:$minut"
 
                                             if (vecaLista) {
-                                                if (LocalTime.parse(polazak).isAfter(RedVoznje.trenutnovreme.minusMinutes(3)))
+                                                if (LocalTime.parse(polazak).isAfter(LocalTime.now().minusMinutes(3)))
                                                     rezultat.add(listOf(ime_stanice, polazak, dolazak, brVoza, sifraos)) else
                                                         Log.d("DEBAG","Raniji polazak...")
                                             }
