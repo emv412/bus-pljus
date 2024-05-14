@@ -34,7 +34,7 @@ class KursorAdapterVoz(var context: Context, var spoljnalista: List<List<String>
     }
 
     override fun getChildrenCount(groupPosition: Int): Int {
-        lista = SQLcitac(context).preradaRVJSON(null, spoljnalista[groupPosition][3], spoljnalista[groupPosition][4])
+        lista = SQLcitac(context).preradaRVJSON(null, spoljnalista[groupPosition][3], spoljnalista[groupPosition][4], 0, null)
         lista.add(listOf(spoljnalista[groupPosition][0], spoljnalista[groupPosition][2]))
         novalista = lista.sortedBy { it[1] }
 

@@ -44,6 +44,7 @@ import org.oscim.event.Gesture
 import org.oscim.event.GestureListener
 import org.oscim.event.MotionEvent
 import org.oscim.layers.Layer
+import org.oscim.layers.PathLayer
 import org.oscim.layers.marker.ItemizedLayer
 import org.oscim.layers.marker.MarkerInterface
 import org.oscim.layers.marker.MarkerItem
@@ -52,6 +53,7 @@ import org.oscim.layers.tile.bitmap.BitmapTileLayer
 import org.oscim.layers.tile.buildings.BuildingLayer
 import org.oscim.layers.tile.vector.labeling.LabelLayer
 import org.oscim.map.Map
+import org.oscim.theme.styles.LineStyle
 import org.oscim.tiling.source.mapfile.MapFileTileSource
 import java.io.File
 import java.io.FileInputStream
@@ -64,6 +66,8 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
     companion object {
         lateinit var mapa: Map
         lateinit var adapter : KursorAdapterAutobus
+        lateinit var putanja : PathLayer
+        lateinit var sveStanice : ItemizedLayer
     }
 
     private lateinit var odabranoStajalisteSloj: ItemizedLayer
@@ -264,7 +268,10 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
         try {
             sklonitastaturu()
 
+            sveStanice.removeAllItems()
             markeriVozila.removeAllItems()
+            putanja.clearPath()
+
             prviput = true
 
             if (tajmer != null)
@@ -338,17 +345,22 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
             odabranoStajalisteMarker = MarkerItem(null, null, null, null)
             pozicijaPesakaSloj = ItemizedLayer(mapa,markersimbol)
             pozicijaPesakaMarker = MarkerItem(null,null,null,null)
+            sveStanice = ItemizedLayer(mapa, markersimbol)
 
             pozicijaPesakaMarker.marker=MarkerSymbol(
                 AndroidBitmap(VectorDrawableCompat.create(
                     resources,R.drawable.glisa,theme)!!.toBitmap()),
                 MarkerSymbol.HotspotPlace.BOTTOM_CENTER,true)
 
+            putanja = PathLayer(mapa,LineStyle(resources.getColor(R.color.crvena),5.0F))
+
             with (mapa.layers()) {
                 val listaSlojeva = listOf(
                     BitmapTileLayer(mapa, tileSource),
                     BuildingLayer(mapa, tileLayer),
                     LabelLayer(mapa, tileLayer),Kliknamapu(),
+                    putanja,
+                    sveStanice,
                     markeriVozila,
                     odabranoStajalisteSloj,
                     redvoznjeProzor,
@@ -481,7 +493,7 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
 
     override fun onItemSingleTapUp(index: Int, item: MarkerInterface?): Boolean {
         val markerItem = item as MarkerItem
-        RedVoznje(this@Glavna).redvoznjeKliknaVozilo(markerItem, odabranoStajalisteMarker, stanicaId)
+        RedVoznje(this@Glavna).redvoznjeKliknaVozilo(markerItem, odabranoStajalisteMarker)
         return true
     }
 

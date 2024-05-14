@@ -48,4 +48,6 @@
     <string name="sacuvaj">Сачувај</string>
     <string name="stanicasacuvana">Сачувана</string>
     <string name="stanicaobrisana">Уклоњена</string>
+    <string name="trasa">Траса</string>
+    <string name="vozilostizeoko">Возило стиже близу ове станице око</string>
 </resources>

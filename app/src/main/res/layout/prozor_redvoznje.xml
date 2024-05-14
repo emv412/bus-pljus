@@ -116,11 +116,10 @@
         android:id="@+id/rdsn"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
         android:layout_marginEnd="8dp"
-        android:layout_marginBottom="7dp"
+        android:layout_marginBottom="8dp"
         android:visibility="invisible"
-        app:layout_constraintBottom_toBottomOf="@+id/datum_rv"
+        app:layout_constraintBottom_toTopOf="@id/prikaztrase"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="@+id/datum_rv"
         tools:text="Радни дан"
@@ -153,10 +152,11 @@
 
     <View
         android:id="@+id/divider2"
-        android:layout_width="409dp"
+        android:layout_width="0dp"
         android:layout_height="1dp"
         android:layout_marginTop="8dp"
         android:background="?android:attr/listDivider"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/rastojanje_textview" />
 
@@ -180,7 +180,7 @@
     <Button
         android:id="@+id/presedanjebgvoz"
         style="@style/Widget.AppCompat.Button.Borderless.Colored"
-        android:layout_width="0dp"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
         android:clickable="true"
@@ -189,10 +189,21 @@
         android:text="@string/presedanjebgvoz"
         android:textAlignment="textStart"
         android:visibility="gone"
-        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/redvoznje_textview"
+        app:layout_constraintTop_toBottomOf="@id/datum_rv"
         tools:visibility="visible" />
+
+    <Button
+        android:id="@+id/prikaztrase"
+        style="@style/Widget.AppCompat.Button.Borderless.Colored"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:drawableLeft="@drawable/trasa"
+        android:drawablePadding="10sp"
+        android:text="@string/trasa"
+        app:layout_constraintBottom_toBottomOf="@+id/presedanjebgvoz"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/presedanjebgvoz" />
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/prosirena_sekcija"
@@ -209,7 +220,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="16dp"
             android:text="Преко станице:"
             android:textSize="16sp"
             app:layout_constraintStart_toStartOf="parent"
@@ -233,6 +244,18 @@
             android:layout_height="0dp"
             android:layout_marginTop="8dp"
             app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/vozilostizetextview" />
+
+        <TextView
+            android:id="@+id/vozilostizetextview"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="8dp"
+            android:text="@string/vozilostizeoko"
+            app:layout_constraintBottom_toTopOf="@id/include"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/stanicepadajucalista" />
 
