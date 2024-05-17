@@ -265,8 +265,9 @@
             android:layout_width="41dp"
             android:layout_height="31dp"
             android:layout_marginTop="8dp"
+            android:layout_marginEnd="16dp"
             app:layout_constraintBottom_toBottomOf="@+id/stanicepadajucalista"
-            app:layout_constraintStart_toEndOf="@+id/stanicepadajucalista"
+            app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="@+id/stanicepadajucalista"
             app:srcCompat="@android:drawable/ic_menu_mylocation" />
 

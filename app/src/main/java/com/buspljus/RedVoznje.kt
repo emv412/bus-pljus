@@ -116,14 +116,12 @@ class RedVoznje(private val context: Context) {
                     fun pojacivacI(x : Double) {
                         if (x > 4000)
                             i += 200
-                        else if (x > 1000)
+                        else if (x > 2000)
                             i += 50
-                        else if (x > 700)
-                            i += 10
                         else i += 1
                     }
 
-                    val gpx = crtanjeTrase(markerItem, odabranoStajalisteMarker, null)
+                    val gpx = SQLcitac(context).prikaziTrasu(markerItem.title, odabranoStajalisteMarker.title)
                     val pozicijaVozila = GeoPoint(item.geoPoint.latitude, item.geoPoint.longitude)
                     var pozicijaGPX : GeoPoint
                     var rastojanjeVozila : Double
@@ -140,18 +138,16 @@ class RedVoznje(private val context: Context) {
                         if (!pronadjenoVozilo) {
                             rastojanjeVozila = pozicijaGPX.sphericalDistance(pozicijaVozila)
 
-                            pojacivacI(rastojanjeVozila)
-
                             if (rastojanjeVozila < 35) { // Pronadjeno vozilo
                                 voziloGPXPozicija = i
                                 pronadjenoVozilo = true
                             }
+
+                            pojacivacI(rastojanjeVozila)
                         }
 
                         if ((pronadjenoVozilo) and (!pronadjenaStanica)) {
                             rastojanjeStanica = pozicijaGPX.sphericalDistance(autoSTGeoPoint)
-
-                            pojacivacI(rastojanjeStanica)
 
                             if (rastojanjeStanica < 45) {
                                 stanicaGPXPozicija = i
@@ -163,6 +159,8 @@ class RedVoznje(private val context: Context) {
                                 )
                                 pronadjenaStanica = true
                             }
+
+                            pojacivacI(rastojanjeStanica)
                         }
                         if ((pronadjenoVozilo) and (pronadjenaStanica))
                             break
@@ -199,10 +197,12 @@ class RedVoznje(private val context: Context) {
                         prosirena_sekcija = dialog.findViewById(R.id.prosirena_sekcija)!!
                         if (prosirena_sekcija.visibility == View.VISIBLE) {
                             prosirena_sekcija.visibility = View.GONE
+                            dialog.behavior.isDraggable=true
                         } else {
                             with(dialog) {
                                 stanicepadajucalista = findViewById(R.id.stanicepadajucalista)!!
                                 prosirena_sekcija.visibility = View.VISIBLE
+                                dialog.behavior.isDraggable=false
                             }
 
                             val adapter = ArrayAdapter(context, R.layout.spinneritem, zeleznickeStaniceZaListu.map { it.value[0] } )
@@ -217,7 +217,8 @@ class RedVoznje(private val context: Context) {
                                             val xy = zeleznickeStaniceZaListu.map {it.value[2]}[position] as GeoPoint
                                             Glavna.mapa.setMapPosition(xy.latitude, xy.longitude, 80000.0)
                                             crtanjeTrase(markerItem, odabranoStajalisteMarker, zeleznickeStaniceZaListu.map { it.value[3] }[position] as String)
-                                            dialog.behavior.state=BottomSheetBehavior.STATE_COLLAPSED
+                                            dialog.behavior.state=BottomSheetBehavior.STATE_HALF_EXPANDED
+                                            dialog.behavior.isDraggable=true
                                         }
 
                                         izracunavanjeVremena(zeleznickeStaniceZaListu.map { it.value[2] }[position] as GeoPoint,
@@ -338,7 +339,6 @@ class RedVoznje(private val context: Context) {
             prosirivalista = findViewById(R.id.prosirenje)!!
             if (pozivodfn == 0)
                 prosirivalista.layoutParams.height= WindowManager.LayoutParams.WRAP_CONTENT
-            behavior.isDraggable=false
         }
 
         val rezultat = SQLcitac(context).preradaRVJSON(JSONObject(rv), null,null, 0, vremeDolaska)
