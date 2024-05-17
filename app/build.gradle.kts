@@ -11,8 +11,8 @@ android {
         applicationId = "com.buspljus"
         minSdk = 21
         targetSdk = 34
-        versionCode = 8
-        versionName = "1.35"
+        versionCode = 9
+        versionName = "1.36"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
