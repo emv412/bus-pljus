@@ -68,11 +68,11 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
         lateinit var adapter : KursorAdapterAutobus
         lateinit var putanja : PathLayer
         lateinit var sveStanice : ItemizedLayer
+        lateinit var markeriVozila: ItemizedLayer
     }
 
     private lateinit var odabranoStajalisteSloj: ItemizedLayer
     private lateinit var pozicijaPesakaSloj: ItemizedLayer
-    private lateinit var markeriVozila: ItemizedLayer
     private lateinit var redvoznjeProzor: ItemizedLayer
     private lateinit var odabranoStajalisteMarker: MarkerItem
     private lateinit var pozicijaPesakaMarker: MarkerItem

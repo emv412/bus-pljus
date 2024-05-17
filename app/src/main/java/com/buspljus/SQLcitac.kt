@@ -90,14 +90,54 @@ class SQLcitac(private val context: Context) {
     }
 
     fun pretragabaze_kliknamapu(lat: String, lng: String, callback: Callback, pozivOdFunkcije: Int) {
-        val pronadjeneStanice = mutableListOf<String>()
-
         var prekiniForPetlju = false
-        val preciznost = if (lat.length - 3 > lng.length - 3) {
-            lat.length - 3
-        } else {
-            lng.length - 3
+
+        var tacka = arrayOf("1", lat, "1", "1", lng, "1")
+        val tackaGeoPoint = GeoPoint(tacka[1].toDouble(),tacka[4].toDouble())
+
+        kursor = SQLzahtev("bgvoz", arrayOf("*"), "round(lt,?) = round(?,?) and round(lg,?) = round(?,?)", tacka, null)
+
+        with (kursor) {
+            if (count > 0) {
+                use {
+                    while (moveToNext()) {
+                        val bazaGeoPoint = GeoPoint(getDouble(getColumnIndexOrThrow("lt")), getDouble(getColumnIndexOrThrow("lg")))
+                        val rastojanje = bazaGeoPoint.sphericalDistance(tackaGeoPoint)
+                        if (rastojanje < if (pozivOdFunkcije == 0) 20 else 400) {
+                            val id = getString(getColumnIndexOrThrow("_id"))
+                            val naziv = getString(getColumnIndexOrThrow("naziv"))
+                            val redvoznje = getString(getColumnIndexOrThrow("redvoznje"))
+                            if (pozivOdFunkcije == 0) {
+                                RedVoznje(context).pregledPolaskaVozova(naziv, redvoznje, 0)
+                            } else if (pozivOdFunkcije == 1) {
+                                callback.koloneBGVOZ(listOf(id, naziv, redvoznje))
+                            }
+                            prekiniForPetlju = true
+                        }
+                    }
+                }
+            }
         }
+
+        if ((Glavna.mapa.mapPosition.zoomLevel >= 16) and (pozivOdFunkcije == 0) and (!prekiniForPetlju)) {
+            val pronadjeneStanice = mutableListOf<String>()
+            tacka = arrayOf("2", lat, "2", "2", lng, "2")
+            kursor = SQLzahtev("stanice", arrayOf("_id", "naziv_cir", "lt", "lg"), "round(lt,?) = round(?,?) and round(lg,?) = round(?,?)", tacka, null)
+
+            with (kursor) {
+                if (count > 0) {
+                    use {
+                        while (moveToNext())
+                            if (GeoPoint(getDouble(getColumnIndexOrThrow("lt")), getDouble(getColumnIndexOrThrow("lg"))).sphericalDistance(tackaGeoPoint) < 20)
+                                pronadjeneStanice.add(getString(getColumnIndexOrThrow("_id")))
+                    }
+                    AlertDialog(context,pronadjeneStanice).pronadjeneStaniceAlertDialog(callback)
+                    prekiniForPetlju = true
+                }
+            }
+        }
+
+        /*
 
         for (brojac in preciznost downTo 3) {
             val x = (if (pozivOdFunkcije == 1) 1 else brojac).toString()
@@ -112,11 +152,11 @@ class SQLcitac(private val context: Context) {
                             val tacka1 = GeoPoint(getDouble(getColumnIndexOrThrow("lt")), getDouble(getColumnIndexOrThrow("lg")))
                             val tacka2 = GeoPoint(tacka[1].toDouble(),tacka[4].toDouble())
                             val tacka3 = tacka1.sphericalDistance(tacka2)
-                            if (tacka3 < 400) {
+                            if (tacka3 < if (pozivOdFunkcije == 2) 50 else 400) {
                                 val id = getString(getColumnIndexOrThrow("_id"))
                                 val naziv = getString(getColumnIndexOrThrow("naziv"))
                                 val redvoznje = getString(getColumnIndexOrThrow("redvoznje"))
-                                if (pozivOdFunkcije == 0) {
+                                if (pozivOdFunkcije == 2) {
                                     RedVoznje(context).pregledPolaskaVozova(naziv, redvoznje, 0)
                                 } else if (pozivOdFunkcije == 1) {
                                     callback.koloneBGVOZ(listOf(id, naziv, redvoznje))
@@ -129,7 +169,7 @@ class SQLcitac(private val context: Context) {
                 }
             }
 
-            if ((Glavna.mapa.mapPosition.zoomLevel >= 16) and (pozivOdFunkcije == 0)) {
+            if ((Glavna.mapa.mapPosition.zoomLevel >= 16) and (pozivOdFunkcije == 2)) {
                 kursor = SQLzahtev("stanice", arrayOf("_id", "naziv_cir"), "round(lt,?) = round(?,?) and round(lg,?) = round(?,?)", tacka, null)
 
                 with (kursor) {
@@ -146,6 +186,8 @@ class SQLcitac(private val context: Context) {
             if (prekiniForPetlju)
                 break
         }
+
+         */
     }
 
     fun dobavisifre(rec: CharSequence?, trazenjepobroju: Boolean?): Cursor {
@@ -311,7 +353,6 @@ class SQLcitac(private val context: Context) {
         val spisakLtLg = ByteArrayOutputStream()
         val bafer = ByteArray(1024)
         var sveStanice = ""
-        val jsonArray : JSONArray
 
         kursor = SQLzahtev("linije", arrayOf("stajalista","trasa"), "_id = ? and stajalista like ?", arrayOf(linija, "%\"$sifraStajalista\"%"), null)
         with (kursor) {
