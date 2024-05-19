@@ -42,9 +42,11 @@ class RedVoznje(private val context: Context) {
 
     private var brojacDvaPolaska = 0
     private var zadovoljenUslov = false
+    private var voziloNaOkretnici = false
     private var prethodnoVreme = "-:--"
 
     private lateinit var dobijenoVreme_lt : LocalTime
+    private lateinit var dobijenoVremePrviPolazak : LocalTime
     lateinit var prvipol : TextView
     lateinit var drugipol : TextView
     lateinit var redvoznje_textview : TextView
@@ -114,10 +116,10 @@ class RedVoznje(private val context: Context) {
                     var i = 0
 
                     fun pojacivacI(x : Double) {
-                        if (x > 4000)
+                        if (x > 5000)
                             i += 200
                         else if (x > 2000)
-                            i += 50
+                            i += 20
                         else i += 1
                     }
 
@@ -128,7 +130,7 @@ class RedVoznje(private val context: Context) {
                     var rastojanjeStanica : Double
                     var voziloGPXPozicija = 0
                     var stanicaGPXPozicija = 0
-
+                    var x : LocalTime
 
                     var pronadjenoVozilo = false
                     var pronadjenaStanica = false
@@ -138,7 +140,7 @@ class RedVoznje(private val context: Context) {
                         if (!pronadjenoVozilo) {
                             rastojanjeVozila = pozicijaGPX.sphericalDistance(pozicijaVozila)
 
-                            if (rastojanjeVozila < 35) { // Pronadjeno vozilo
+                            if (rastojanjeVozila < 55) { // Pronadjeno vozilo
                                 voziloGPXPozicija = i
                                 pronadjenoVozilo = true
                             }
@@ -151,7 +153,13 @@ class RedVoznje(private val context: Context) {
 
                             if (rastojanjeStanica < 45) {
                                 stanicaGPXPozicija = i
-                                vremeDolaska = LocalTime.now().plusMinutes(((stanicaGPXPozicija-voziloGPXPozicija)*4/60).toLong())
+                                if (voziloNaOkretnici) {
+                                    x = dobijenoVremePrviPolazak
+                                }
+                                else {
+                                    x = LocalTime.now()
+                                }
+                                vremeDolaska = x.plusMinutes(((stanicaGPXPozicija-voziloGPXPozicija)*4/60).toLong())
                                 vozilostizeoko.text = StringBuilder(context.resources.getString(R.string.vozilostizeoko) +
                                         " "+LocalTime.parse(vremeDolaska?.hour.toString().padStart(2, '0') + ":" +
                                         vremeDolaska?.minute.toString().padStart(2, '0'), DateTimeFormatter.ofPattern("HH:mm"))+", "+
@@ -197,12 +205,10 @@ class RedVoznje(private val context: Context) {
                         prosirena_sekcija = dialog.findViewById(R.id.prosirena_sekcija)!!
                         if (prosirena_sekcija.visibility == View.VISIBLE) {
                             prosirena_sekcija.visibility = View.GONE
-                            dialog.behavior.isDraggable=true
                         } else {
                             with(dialog) {
                                 stanicepadajucalista = findViewById(R.id.stanicepadajucalista)!!
                                 prosirena_sekcija.visibility = View.VISIBLE
-                                dialog.behavior.isDraggable=false
                             }
 
                             val adapter = ArrayAdapter(context, R.layout.spinneritem, zeleznickeStaniceZaListu.map { it.value[0] } )
@@ -238,9 +244,8 @@ class RedVoznje(private val context: Context) {
                 }
 
                 // Provera da li se vozilo nalazi na do 100 metara vazdusno od okretnice
-                if (SQLcitac(context).pozahtevu_jednastanica(sveStaniceLinije.get(0).toString())
-                        .sphericalDistance(markerItem.geoPoint) < 100
-                ) {
+                if (SQLcitac(context).pozahtevu_jednastanica(sveStaniceLinije.get(0).toString()).sphericalDistance(markerItem.geoPoint) < 100) {
+                    voziloNaOkretnici = true
                     sati = polasci.getJSONObject("rv")
 
                     with (dialog) {
@@ -275,15 +280,16 @@ class RedVoznje(private val context: Context) {
                         val sat = sati.keys().asSequence().elementAt(i)
                         for (k in 0 until sati.getJSONArray(sat).getJSONArray(danunedelji).length()) {
                             dobijenoVreme_lt = LocalTime.parse(sat + ":" + sati.getJSONArray(sat).getJSONArray(danunedelji)[k], DateTimeFormatter.ofPattern("HH:mm"))
-                            if (dobijenoVreme_lt.isBefore(LocalTime.now().minusMinutes(1)) and (brojacDvaPolaska == 0)
-                            ) {
+                            if (dobijenoVreme_lt.isBefore(LocalTime.now().minusMinutes(1)) and (brojacDvaPolaska == 0)) {
                                 prethodnoVreme = dobijenoVreme_lt.toString()
-                            } else if (dobijenoVreme_lt.isAfter(LocalTime.now().minusMinutes(1)) and (brojacDvaPolaska < 2)
-                            ) {
-                                if (brojacDvaPolaska == 0)
+                            } else if (dobijenoVreme_lt.isAfter(LocalTime.now().minusMinutes(1)) and (brojacDvaPolaska < 2)) {
+                                if (brojacDvaPolaska == 0) {
+                                    dobijenoVremePrviPolazak = dobijenoVreme_lt
                                     prvipol.text = dobijenoVreme_lt.toString()
-                                else if (brojacDvaPolaska == 1)
+                                }
+                                else if (brojacDvaPolaska == 1) {
                                     drugipol.text = dobijenoVreme_lt.toString()
+                                }
                                 brojacDvaPolaska += 1
                             }
                         }
@@ -333,19 +339,21 @@ class RedVoznje(private val context: Context) {
                 visibility = if (pozivodfn != 0) View.GONE else View.VISIBLE
             }
 
+            prosirivalista = findViewById(R.id.prosirenje)!!
+
             if (!isShowing)
                 show()
 
-            prosirivalista = findViewById(R.id.prosirenje)!!
+            behavior.isDraggable=false
+
             if (pozivodfn == 0)
-                prosirivalista.layoutParams.height= WindowManager.LayoutParams.WRAP_CONTENT
+                prosirivalista.layoutParams.height=WindowManager.LayoutParams.WRAP_CONTENT
         }
 
         val rezultat = SQLcitac(context).preradaRVJSON(JSONObject(rv), null,null, 0, vremeDolaska)
 
         if (rezultat.size > 0)
             prosirivalista.setAdapter(KursorAdapterVoz(context, rezultat.sortedBy { it[1] },prosirivalista))
-
     }
 
     fun crtanjeTrase(markerVozilo: MarkerItem, markerStanica: MarkerItem, presedackaSt : String?): List<JSONArray> {

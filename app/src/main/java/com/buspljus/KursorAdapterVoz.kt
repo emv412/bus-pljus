@@ -15,7 +15,7 @@ class KursorAdapterVoz(var context: Context, var spoljnalista: List<List<String>
     var poslednjeProsirenaGrupa = -1
 
     init {
-        spisak.setOnGroupClickListener { parent, v, groupPosition, id ->
+        spisak.setOnGroupClickListener { _, _, groupPosition, _ ->
             if ((groupPosition != poslednjeProsirenaGrupa)) {
                 spisak.collapseGroup(poslednjeProsirenaGrupa)
                 poslednjeProsirenaGrupa = groupPosition

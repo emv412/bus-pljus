@@ -156,6 +156,7 @@
         android:layout_height="1dp"
         android:layout_marginTop="8dp"
         android:background="?android:attr/listDivider"
+        android:theme="@android:style/Widget.DeviceDefault.PopupMenu"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/rastojanje_textview" />
@@ -207,9 +208,11 @@
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/prosirena_sekcija"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
         android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/presedanjebgvoz"
@@ -220,12 +223,11 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
-            android:layout_marginTop="16dp"
-            android:text="Преко станице:"
+            android:layout_marginTop="24dp"
+            android:text="@string/zeleznicka_stanica"
             android:textSize="16sp"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            tools:text="Преко станице:" />
+            app:layout_constraintTop_toTopOf="parent" />
 
         <Spinner
             android:id="@+id/stanicepadajucalista"
@@ -241,8 +243,8 @@
             android:id="@+id/include"
             layout="@layout/prozor_bgvoz"
             android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_marginTop="8dp"
+            android:layout_height="300dp"
+            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/vozilostizetextview" />
@@ -252,10 +254,9 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
-            android:layout_marginTop="8dp"
-            android:layout_marginBottom="8dp"
-            android:text="@string/vozilostizeoko"
+            android:layout_marginEnd="16dp"
             app:layout_constraintBottom_toTopOf="@id/include"
+            app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/stanicepadajucalista" />
 
@@ -265,9 +266,8 @@
             android:layout_width="41dp"
             android:layout_height="31dp"
             android:layout_marginTop="8dp"
-            android:layout_marginEnd="16dp"
             app:layout_constraintBottom_toBottomOf="@+id/stanicepadajucalista"
-            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/stanicepadajucalista"
             app:layout_constraintTop_toTopOf="@+id/stanicepadajucalista"
             app:srcCompat="@android:drawable/ic_menu_mylocation" />
 

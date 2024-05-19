@@ -10,6 +10,7 @@
     <string name="prikaz_gb_opis">Приказују се заједно са бројем линије</string>
     <string name="greska_u_programu">Грешка у програму!</string>
     <string name="nema_vozila">Нема возила</string>
+    <string name="zeleznicka_stanica">ЖС:</string>
     <string name="nema_interneta">Нема интернета, или је грешка на серверу</string>
     <string name="broj_stanice">Број станице…</string>
     <string name="naziv_stanice">Назив станице…</string>
@@ -36,7 +37,7 @@
     <string name="subota">Субота</string>
     <string name="nedelja">Недеља</string>
     <string name="praznik_nedelja">Недеља (празник)</string>
-    <string name="debug">bus-pljus!</string>
+    <string name="debug">PLJUS!</string>
     <string name="mapa_nadogradnja">Мапе Београда</string>
     <string name="stanice_nadogradnja">Базе станица, линија и реда вожње</string>
     <string name="program_nadogradnja">Програма</string>
