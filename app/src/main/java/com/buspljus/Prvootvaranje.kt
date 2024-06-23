@@ -31,7 +31,7 @@ class Prvootvaranje: AppCompatActivity() {
 
     fun skidanjeMapeibaze() {
         for (i in 2 .. 3){
-            Internet().zahtevPremaInternetu(null,null, i, object: Internet.odgovorSaInterneta {
+            Internet().zahtevPremaInternetu(null,null, i, object: Interfejs.odgovorSaInterneta {
                 override fun uspesanOdgovor(response: Response) {
                     val preuzeto = response.body!!.source().inputStream()
                     when (i) {

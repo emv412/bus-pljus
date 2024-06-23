@@ -13,11 +13,6 @@ import java.util.zip.GZIPInputStream
 
 class Internet : OkHttpClient() {
 
-    interface odgovorSaInterneta {
-        fun uspesanOdgovor(response: Response)
-        fun neuspesanOdgovor(e: IOException)
-    }
-
     companion object {
         const val POLOZAJ_FLY = "http://buspljus.fly.dev/?st="
         const val MAPA_GZ = "https://raw.githubusercontent.com/emv412/buspljus-materijal/main/beograd.map.gz"
@@ -28,7 +23,7 @@ class Internet : OkHttpClient() {
         var zahtev: Call? = null
     }
 
-    fun zahtevPremaInternetu(stanica: String?, linija: String?, argument: Int, callback: odgovorSaInterneta) {
+    fun zahtevPremaInternetu(stanica: String?, linija: String?, argument: Int, callback: Interfejs.odgovorSaInterneta) {
         when (argument) {
             1 -> if (linija == null) {
                 adresa.url(POLOZAJ_FLY + stanica)

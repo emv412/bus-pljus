@@ -54,7 +54,7 @@ class Podesavanja : AppCompatActivity() {
             autounos?.onPreferenceChangeListener = this
 
             nadogradnjaPrograma?.onPreferenceClickListener = OnPreferenceClickListener { _ : Preference? ->
-                Internet().zahtevPremaInternetu(null, null,4, object: Internet.odgovorSaInterneta {
+                Internet().zahtevPremaInternetu(null, null,4, object: Interfejs.odgovorSaInterneta {
                     override fun uspesanOdgovor(response: Response) {
                         if (response.isSuccessful) {
                             val odgovor = JSONObject(response.body!!.string())
@@ -109,7 +109,7 @@ class Podesavanja : AppCompatActivity() {
             Log.d("bus-pljus",""+preference.key)
             when (preference.key) {
                 "nadogradimapu" -> {
-                    Internet().zahtevPremaInternetu(null, null,2, object : Internet.odgovorSaInterneta {
+                    Internet().zahtevPremaInternetu(null, null,2, object : Interfejs.odgovorSaInterneta {
                         override fun uspesanOdgovor(response: Response) {
                             val preuzeto = response.body!!.source().inputStream()
                             Internet().gunzip(preuzeto, File(preference.context.filesDir, "beograd.map"))
@@ -121,7 +121,7 @@ class Podesavanja : AppCompatActivity() {
                     })
                 }
                 "nadogradistanice" -> {
-                    Internet().zahtevPremaInternetu(null, null,3, object : Internet.odgovorSaInterneta {
+                    Internet().zahtevPremaInternetu(null, null,3, object : Interfejs.odgovorSaInterneta {
                         override fun uspesanOdgovor(response: Response) {
                             val preuzeto = response.body!!.source().inputStream()
                             preference.context.getDatabasePath(SQLcitac.IME_BAZE)?.path?.let { File(it) }?.let {

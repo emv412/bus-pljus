@@ -7,6 +7,7 @@ import android.view.WindowManager
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.Button
+import android.widget.CheckBox
 import android.widget.ExpandableListView
 import android.widget.ImageButton
 import android.widget.Spinner
@@ -14,6 +15,8 @@ import android.widget.TextView
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.graphics.drawable.toBitmap
 import androidx.vectordrawable.graphics.drawable.VectorDrawableCompat
+import com.buspljus.Adapteri.PrikazZStanica
+import com.buspljus.Adapteri.sifraNaziv
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import org.json.JSONArray
@@ -29,6 +32,7 @@ import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 
 class RedVoznje(private val context: Context) {
+
     companion object {
         val danunedelji = when (LocalDate.now().dayOfWeek.value) {
             in 1 .. 5 -> 0
@@ -36,47 +40,77 @@ class RedVoznje(private val context: Context) {
             7 -> 2
             else -> 0
         }
+        private var pozivTrasaInterface: Interfejs.trasa? = null
+
+        var markerVoziloCache : MarkerItem? = null
+        var odabranoStajalisteMarkerCache : MarkerItem? = null
     }
 
     private lateinit var sati : JSONObject
 
-    private var brojacDvaPolaska = 0
-    private var zadovoljenUslov = false
     private var voziloNaOkretnici = false
-    private var prethodnoVreme = "-:--"
+    private var samoBGVBoolean = false
+    private var rezultat = mutableListOf(listOf<String>())
 
-    private lateinit var dobijenoVreme_lt : LocalTime
-    private lateinit var dobijenoVremePrviPolazak : LocalTime
-    lateinit var prvipol : TextView
-    lateinit var drugipol : TextView
-    lateinit var redvoznje_textview : TextView
-    lateinit var datum_rv : TextView
-    lateinit var sledeciPolasci : TextView
-    lateinit var danunedelji_textview : TextView
-    lateinit var prethodnipol : TextView
-    lateinit var linijarv : TextView
-    lateinit var linijarel : TextView
-    lateinit var garBroj : TextView
-    lateinit var rastojanje : TextView
-    lateinit var vozilostizeoko : TextView
-    lateinit var prosirena_sekcija : ConstraintLayout
-    lateinit var stanicepadajucalista : Spinner
-    lateinit var presedanjebgvoz : Button
-    lateinit var trasaDugme : Button
-    lateinit var prosirivalista : ExpandableListView
-    lateinit var ime_okretnice : TextView
+    private lateinit var vreme : String
+    private lateinit var vozoviPosleVremena : LocalTime
+    private lateinit var prviSledeciPolazak : LocalTime
+    private lateinit var prvipol : TextView
+    private lateinit var redvoznjeTextview : TextView
+    private lateinit var datumRv : TextView
+    private lateinit var sledeciPolasci : TextView
+    private lateinit var danunedeljiTextview : TextView
+    private lateinit var linijarv : TextView
+    private lateinit var linijarel : TextView
+    private lateinit var garBroj : TextView
+    private lateinit var rastojanje : TextView
+    private lateinit var vozilostizeoko : TextView
+    private lateinit var prosirenaSekcija : ConstraintLayout
+    private lateinit var stanicepadajucalista : Spinner
+    private lateinit var presedanjebgvoz : Button
+    private lateinit var trasaDugme : Button
+    private lateinit var samoBGVCheckBox : CheckBox
+    private lateinit var prosirivalista : ExpandableListView
+    private lateinit var imeOkretnice : TextView
     lateinit var jednaKoordinata : GeoPoint
     lateinit var prikazilokstanice : ImageButton
 
-    var vremeDolaska : LocalTime? = null
-    val dialog = BottomSheetDialog(context)
+    private val dialog = BottomSheetDialog(context)
+
+    fun registracijaCallback(povratniPZ: Interfejs.trasa) {
+        pozivTrasaInterface = povratniPZ
+    }
 
     fun zaokruzivanje(broj: Double, brojDecimala: Int): Double {
         return BigDecimal(broj).setScale(brojDecimala, RoundingMode.HALF_EVEN).toDouble()
     }
 
+    fun staniceDoKrajaTrase(sveStaniceLinije: JSONArray, odabranoStajalisteMarker: MarkerItem): List<String> {
+        val spisakPreostalihStanica = mutableListOf<String>()
+        var pronadjenoStajaliste = false
+        for (brojac in 0 until sveStaniceLinije.length()) {
+            if ((sveStaniceLinije[brojac] == odabranoStajalisteMarker.title) or (pronadjenoStajaliste)) {
+                if (!pronadjenoStajaliste) {
+                    pronadjenoStajaliste = true
+                    continue
+                }
+                else {
+                    spisakPreostalihStanica.add(sveStaniceLinije[brojac].toString())
+                }
+            }
+        }
+        return spisakPreostalihStanica
+    }
+
+    fun prikaziDatumRV(datum: JSONArray): String {
+        with(datum) {
+            return this.getString(0) + ". " + this.getString(1) + ". " + this.getString(2) + "."
+        }
+    }
+
     fun redvoznjeKliknaVozilo(item: MarkerItem, odabranoStajalisteMarker: MarkerItem) : Boolean {
         val markerItem = item
+        vreme = Regex("(?<= ).+").find(markerItem.description)?.value.toString()
         val rastojanjedostanice = markerItem.geoPoint.sphericalDistance(
             GeoPoint(
                 odabranoStajalisteMarker.geoPoint.latitude,
@@ -85,12 +119,12 @@ class RedVoznje(private val context: Context) {
         ).div(1000)
 
         val rastojanjeprer = zaokruzivanje(rastojanjedostanice,1).toString() + " km"
-        val dobijenaLista = SQLcitac(context).redvoznjeKliknavozilo(markerItem.title, odabranoStajalisteMarker.title)
+        val dobijenaLista = SQLcitac(context).kliknavozilo(markerItem.title, odabranoStajalisteMarker.title)
 
         try {
             if (dobijenaLista.isNotEmpty()) {
                 with (dialog) {
-                    setContentView(R.layout.prozor_redvoznje)
+                    setContentView(R.layout.info_o_vozilu)
                     linijarv = findViewById(R.id.linija_rv)!!
                     linijarel = findViewById(R.id.linija_relacija)!!
                     garBroj = findViewById(R.id.gb_redv)!!
@@ -99,6 +133,7 @@ class RedVoznje(private val context: Context) {
                     trasaDugme = findViewById(R.id.prikaztrase)!!
                     vozilostizeoko = findViewById(R.id.vozilostizetextview)!!
                     prikazilokstanice = findViewById(R.id.prikazilokstanice)!!
+                    samoBGVCheckBox = findViewById(R.id.samoBGVoz)!!
                 }
 
                 val pol = dobijenaLista[0]
@@ -112,103 +147,38 @@ class RedVoznje(private val context: Context) {
 
                 val zeleznickeStaniceZaListu = mutableMapOf<String,List<Any>>()
 
-                fun izracunavanjeVremena(autoSTGeoPoint : GeoPoint, sifraSt : String) {
-                    var i = 0
+                var staroRastojanje = 1000.0
+                var novoRastojanje: Double
 
-                    fun pojacivacI(x : Double) {
-                        if (x > 5000)
-                            i += 200
-                        else if (x > 2000)
-                            i += 20
-                        else i += 1
-                    }
+                val stDoKrajaTrase = staniceDoKrajaTrase(sveStaniceLinije, odabranoStajalisteMarker)
 
-                    val gpx = SQLcitac(context).prikaziTrasu(markerItem.title, odabranoStajalisteMarker.title)
-                    val pozicijaVozila = GeoPoint(item.geoPoint.latitude, item.geoPoint.longitude)
-                    var pozicijaGPX : GeoPoint
-                    var rastojanjeVozila : Double
-                    var rastojanjeStanica : Double
-                    var voziloGPXPozicija = 0
-                    var stanicaGPXPozicija = 0
-                    var x : LocalTime
-
-                    var pronadjenoVozilo = false
-                    var pronadjenaStanica = false
-
-                    while (i < gpx[1].length()) {
-                        pozicijaGPX = GeoPoint(gpx[1].getJSONObject(i).getDouble("lat"), gpx[1].getJSONObject(i).getDouble("lon"))
-                        if (!pronadjenoVozilo) {
-                            rastojanjeVozila = pozicijaGPX.sphericalDistance(pozicijaVozila)
-
-                            if (rastojanjeVozila < 55) { // Pronadjeno vozilo
-                                voziloGPXPozicija = i
-                                pronadjenoVozilo = true
-                            }
-
-                            pojacivacI(rastojanjeVozila)
+                for (brojac in 0 until stDoKrajaTrase.size) {
+                    jednaKoordinata = SQLcitac(context).idStaniceuGeoPoint(stDoKrajaTrase[brojac])
+                    SQLcitac(context).pretragabaze_kliknamapu(jednaKoordinata.latitude.toString(),jednaKoordinata.longitude.toString(), object: Interfejs.Callback {
+                        override fun korak(s: String) {
                         }
 
-                        if ((pronadjenoVozilo) and (!pronadjenaStanica)) {
-                            rastojanjeStanica = pozicijaGPX.sphericalDistance(autoSTGeoPoint)
-
-                            if (rastojanjeStanica < 45) {
-                                stanicaGPXPozicija = i
-                                if (voziloNaOkretnici) {
-                                    x = dobijenoVremePrviPolazak
-                                }
-                                else {
-                                    x = LocalTime.now()
-                                }
-                                vremeDolaska = x.plusMinutes(((stanicaGPXPozicija-voziloGPXPozicija)*4/60).toLong())
-                                vozilostizeoko.text = StringBuilder(context.resources.getString(R.string.vozilostizeoko) +
-                                        " "+LocalTime.parse(vremeDolaska?.hour.toString().padStart(2, '0') + ":" +
-                                        vremeDolaska?.minute.toString().padStart(2, '0'), DateTimeFormatter.ofPattern("HH:mm"))+", "+
-                                        context.resources.getString(R.string.stanicarb)+" "+ sifraSt
-                                )
-                                pronadjenaStanica = true
+                        override fun koloneBGVOZ(lista: List<Any>) {
+                            novoRastojanje = lista[3] as Double
+                            if (novoRastojanje < staroRastojanje) {
+                                zeleznickeStaniceZaListu[lista[0] as String] = listOf(lista[1], lista[2], jednaKoordinata, stDoKrajaTrase[brojac])
+                                staroRastojanje = lista[3] as Double
                             }
-
-                            pojacivacI(rastojanjeStanica)
                         }
-                        if ((pronadjenoVozilo) and (pronadjenaStanica))
-                            break
-                    }
+                    },1)
                 }
 
-                var prolazUIf = false
-
-                for (brojac in 0 until sveStaniceLinije.length()) {
-                    if ((sveStaniceLinije[brojac] == odabranoStajalisteMarker.title) and (!prolazUIf)) {
-                        prolazUIf = true
-                        continue
-                    }
-                    if (prolazUIf) {
-                        jednaKoordinata = SQLcitac(context).pozahtevu_jednastanica(sveStaniceLinije[brojac].toString())
-                        SQLcitac(context).pretragabaze_kliknamapu(jednaKoordinata.latitude.toString(),jednaKoordinata.longitude.toString(), object: SQLcitac.Callback {
-                            override fun korak(s: String) {
-                            }
-
-                            override fun koloneBGVOZ(lista: List<String>) {
-                                zeleznickeStaniceZaListu[lista[0]] = listOf(lista[1], lista[2], jednaKoordinata, sveStaniceLinije[brojac])
-                                if (!zadovoljenUslov)
-                                    if (SQLcitac(context).preradaRVJSON(JSONObject(lista[2]), null, null, 1, null).isNotEmpty())
-                                    zadovoljenUslov = true
-                            }
-                        },1)
-                    }
-                }
-
-                if ((zeleznickeStaniceZaListu.isNotEmpty()) and (zadovoljenUslov)) {
+                if (zeleznickeStaniceZaListu.isNotEmpty()) {
                     presedanjebgvoz.visibility = View.VISIBLE
 
                     presedanjebgvoz.setOnClickListener {
-                        prosirena_sekcija = dialog.findViewById(R.id.prosirena_sekcija)!!
-                        if (prosirena_sekcija.visibility == View.VISIBLE) {
-                            prosirena_sekcija.visibility = View.GONE
+                        prosirenaSekcija = dialog.findViewById(R.id.prosirena_sekcija)!!
+                        if (prosirenaSekcija.visibility == View.VISIBLE) {
+                            prosirenaSekcija.visibility = View.GONE
                         } else {
                             with(dialog) {
                                 stanicepadajucalista = findViewById(R.id.stanicepadajucalista)!!
-                                prosirena_sekcija.visibility = View.VISIBLE
+                                prosirenaSekcija.visibility = View.VISIBLE
                             }
 
                             val adapter = ArrayAdapter(context, R.layout.spinneritem, zeleznickeStaniceZaListu.map { it.value[0] } )
@@ -219,23 +189,33 @@ class RedVoznje(private val context: Context) {
                                 object : AdapterView.OnItemSelectedListener {
                                     override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
 
+                                        val autoSTGeoPoint = zeleznickeStaniceZaListu.map { it.value[2] }[position] as GeoPoint
+                                        val izlaznaSt = SQLcitac(context).idStaniceUNaziv(zeleznickeStaniceZaListu.map { it.value[3] }[position] as String)
+
                                         prikazilokstanice.setOnClickListener {
                                             val xy = zeleznickeStaniceZaListu.map {it.value[2]}[position] as GeoPoint
                                             Glavna.mapa.setMapPosition(xy.latitude, xy.longitude, 80000.0)
                                             crtanjeTrase(markerItem, odabranoStajalisteMarker, zeleznickeStaniceZaListu.map { it.value[3] }[position] as String)
-                                            dialog.behavior.state=BottomSheetBehavior.STATE_HALF_EXPANDED
-                                            dialog.behavior.isDraggable=true
+
+                                            dialog.dismiss()
                                         }
 
-                                        izracunavanjeVremena(zeleznickeStaniceZaListu.map { it.value[2] }[position] as GeoPoint,
-                                            zeleznickeStaniceZaListu.map { it.value[3] }[position] as String)
+                                        vozoviPosleVremena = IzracunavanjeVremena().izracunavanjeVremena(
+                                            listOf(autoSTGeoPoint),
+                                            SQLcitac(context).prikaziTrasu(markerItem.title, odabranoStajalisteMarker.title).second,
+                                            markerItem,
+                                            if (voziloNaOkretnici) prviSledeciPolazak else LocalTime.now(),
+                                            0
+                                        )[0]
+
+                                        vozilostizeoko.text = StringBuilder(context.resources.getString(R.string.dolazaknastajaliste) +
+                                                " "+ izlaznaSt + " " + context.resources.getString(R.string.oko) +" "+ vozoviPosleVremena)
                                         pregledPolaskaVozova(
                                             zeleznickeStaniceZaListu.map { it.value[0] }[position].toString(),
                                             zeleznickeStaniceZaListu.map { it.value[1] }[position].toString(), 1)
                                     }
 
                                     override fun onNothingSelected(parent: AdapterView<*>?) {
-                                        Toster(context).toster("nista nije izabrano")
                                     }
 
                                 }
@@ -244,69 +224,39 @@ class RedVoznje(private val context: Context) {
                 }
 
                 // Provera da li se vozilo nalazi na do 100 metara vazdusno od okretnice
-                if (SQLcitac(context).pozahtevu_jednastanica(sveStaniceLinije.get(0).toString()).sphericalDistance(markerItem.geoPoint) < 100) {
+                if (SQLcitac(context).idStaniceuGeoPoint(sveStaniceLinije.get(0).toString()).sphericalDistance(markerItem.geoPoint) < 100) {
                     voziloNaOkretnici = true
                     sati = polasci.getJSONObject("rv")
 
                     with (dialog) {
                         prvipol = findViewById(R.id.prvipolazak)!!
-                        drugipol = findViewById(R.id.drugipolazak)!!
-                        redvoznje_textview = findViewById(R.id.redvoznje_textview)!!
-                        datum_rv = findViewById(R.id.datum_rv)!!
+                        redvoznjeTextview = findViewById(R.id.redvoznje_textview)!!
+                        datumRv = findViewById(R.id.datum_rv)!!
                         sledeciPolasci = findViewById(R.id.polasci_textview)!!
-                        danunedelji_textview = findViewById(R.id.rdsn)!!
-                        prethodnipol = findViewById(R.id.prethodnipol)!!
+                        danunedeljiTextview = findViewById(R.id.rdsn)!!
                     }
 
-                    val view = listOf(prvipol, drugipol, redvoznje_textview, sledeciPolasci, datum_rv, prethodnipol, danunedelji_textview)
+                    val view = listOf(prvipol, redvoznjeTextview, sledeciPolasci, datumRv, danunedeljiTextview)
                     for (j in view)
                         j.visibility = View.VISIBLE
 
                     when (danunedelji) {
-                        0 -> danunedelji_textview.text = context.resources.getString(R.string.radni_dan)
-                        1 -> danunedelji_textview.text = context.resources.getString(R.string.subota)
-                        2 -> danunedelji_textview.text = context.resources.getString(R.string.nedelja)
+                        0 -> danunedeljiTextview.text = context.resources.getString(R.string.radni_dan)
+                        1 -> danunedeljiTextview.text = context.resources.getString(R.string.subota)
+                        2 -> danunedeljiTextview.text = context.resources.getString(R.string.nedelja)
 
                         else -> {}
                     }
 
-                    with(datum) {
-                        val datumRedaVoznje = this.getString(0) + ". " + this.getString(1) + ". " + this.getString(2) + "."
-                        datum_rv.text = datumRedaVoznje
-                    }
+                    datumRv.text = prikaziDatumRV(datum)
 
                     for (i in 0..sati.length() - 1) {
-                        val prviPolazak = sati.keys().asSequence().elementAt(0)
                         val sat = sati.keys().asSequence().elementAt(i)
                         for (k in 0 until sati.getJSONArray(sat).getJSONArray(danunedelji).length()) {
-                            dobijenoVreme_lt = LocalTime.parse(sat + ":" + sati.getJSONArray(sat).getJSONArray(danunedelji)[k], DateTimeFormatter.ofPattern("HH:mm"))
-                            if (dobijenoVreme_lt.isBefore(LocalTime.now().minusMinutes(1)) and (brojacDvaPolaska == 0)) {
-                                prethodnoVreme = dobijenoVreme_lt.toString()
-                            } else if (dobijenoVreme_lt.isAfter(LocalTime.now().minusMinutes(1)) and (brojacDvaPolaska < 2)) {
-                                if (brojacDvaPolaska == 0) {
-                                    dobijenoVremePrviPolazak = dobijenoVreme_lt
-                                    prvipol.text = dobijenoVreme_lt.toString()
-                                }
-                                else if (brojacDvaPolaska == 1) {
-                                    drugipol.text = dobijenoVreme_lt.toString()
-                                }
-                                brojacDvaPolaska += 1
+                                prviSledeciPolazak = LocalTime.parse(vreme, DateTimeFormatter.ofPattern("HH:mm"))
+                                prvipol.text = prviSledeciPolazak.toString()
                             }
                         }
-                        if ((i == sati.length() - 1) and (prviPolazak == "00") and (sati.getJSONArray(prviPolazak).getJSONArray(danunedelji).length() > 0)) {
-                            try {
-                                val ponoc = prviPolazak + ":" + sati.getJSONArray(prviPolazak).getJSONArray(danunedelji)[0]
-                                when (brojacDvaPolaska) {
-                                    0 -> prvipol.text = ponoc
-                                    1 -> drugipol.text = ponoc
-                                }
-                            } catch (e: Exception) {
-                                Log.d(context.resources.getString(R.string.debug), "Greska: $e")
-                            }
-
-                        }
-                    }
-                    prethodnipol.text = prethodnoVreme
                 }
 
                 linijarv.text = markerItem.title
@@ -316,6 +266,8 @@ class RedVoznje(private val context: Context) {
 
                 trasaDugme.setOnClickListener {
                     crtanjeTrase(markerItem, odabranoStajalisteMarker, null)
+                    Glavna.mapa.setMapPosition(odabranoStajalisteMarker.geoPoint.latitude, odabranoStajalisteMarker.geoPoint.longitude, 80000.0)
+                    dialog.dismiss()
                 }
 
                 if (!dialog.isShowing)
@@ -331,10 +283,11 @@ class RedVoznje(private val context: Context) {
         with (dialog) {
             behavior.state=BottomSheetBehavior.STATE_EXPANDED
             if (pozivodfn == 0)
-                setContentView(R.layout.prozor_bgvoz)
-            ime_okretnice = findViewById(R.id.ime_okretnice)!!
+                setContentView(R.layout.redvoznje_zs)
+            imeOkretnice = findViewById(R.id.ime_okretnice)!!
+            samoBGVCheckBox = findViewById(R.id.samoBGVoz)!!
 
-            with (ime_okretnice) {
+            with (imeOkretnice) {
                 text = if (pozivodfn == 0) imestanice else null
                 visibility = if (pozivodfn != 0) View.GONE else View.VISIBLE
             }
@@ -350,32 +303,77 @@ class RedVoznje(private val context: Context) {
                 prosirivalista.layoutParams.height=WindowManager.LayoutParams.WRAP_CONTENT
         }
 
-        val rezultat = SQLcitac(context).preradaRVJSON(JSONObject(rv), null,null, 0, vremeDolaska)
+        fun izlistajVozove() {
+            if (samoBGVBoolean) {
+                val iterator = rezultat.iterator()
+                while (iterator.hasNext()) {
+                    val sl = iterator.next()
+                    if (sl[5] == "false")
+                        iterator.remove()
+                }
+            }
+            else {
+                rezultat = SQLcitac(context).preradaRVJSON(JSONObject(rv), null, null, 0,
+                    if (pozivodfn == 0) LocalTime.now() else vozoviPosleVremena)
+            }
 
-        if (rezultat.size > 0)
-            prosirivalista.setAdapter(KursorAdapterVoz(context, rezultat.sortedBy { it[1] },prosirivalista))
+            prosirivalista.setAdapter(PrikazZStanica(context, rezultat.sortedBy { it[1] }, prosirivalista))
+        }
+
+        izlistajVozove()
+
+        samoBGVCheckBox.setOnClickListener {
+            samoBGVBoolean = samoBGVCheckBox.isChecked
+            izlistajVozove()
+        }
     }
 
-    fun crtanjeTrase(markerVozilo: MarkerItem, markerStanica: MarkerItem, presedackaSt : String?): List<JSONArray> {
-        Glavna.putanja.clearPath()
-        Glavna.sveStanice.removeAllItems()
-        val trasa = SQLcitac(context).prikaziTrasu(markerVozilo.title, markerStanica.title)
+    fun crtanjeTrase(markerVozilo: MarkerItem, markerStanica: MarkerItem, presedackaSt : String?) {
+        if ((markerVoziloCache == null) or (markerVoziloCache?.title != markerVozilo.title)) {
+            Glavna().izbrisiTrasu()
 
-        for (i in 0 until trasa[0].length()) {
-            val koordinateStanice = SQLcitac(context).pozahtevu_jednastanica(trasa[0][i].toString())
-            val marker = MarkerItem(null, trasa[0][i].toString(),null, GeoPoint(koordinateStanice.latitude, koordinateStanice.longitude))
-            marker.marker = MarkerSymbol(
-                AndroidBitmap(VectorDrawableCompat.create(
-                    context.resources, if ((presedackaSt != null) and (presedackaSt == trasa[0][i].toString())) R.drawable.crvena_tacka else R.drawable.plava_tacka, context.theme)!!.toBitmap()), MarkerSymbol.HotspotPlace.BOTTOM_CENTER,true)
-            Glavna.sveStanice.addItem(marker)
-        }
+            val stNiz = mutableListOf<sifraNaziv>()
+            val gpNiz = mutableListOf<GeoPoint>()
+            val trasa = SQLcitac(context).prikaziTrasu(markerVozilo.title, markerStanica.title)
 
-        for (i in 0 until trasa[1].length()) {
-            Glavna.putanja.addPoints(listOf(GeoPoint(
-                trasa[1].getJSONObject(i)["lat"].toString().toDouble(),
-                trasa[1].getJSONObject(i)["lon"].toString().toDouble()
-            )))
+            val test = staniceDoKrajaTrase(trasa.first, markerStanica)
+
+            for (element in test) {
+                gpNiz.add(SQLcitac(context).idStaniceuGeoPoint(element))
+            }
+
+            if (gpNiz.size > 0) {
+                val listLocalTime = IzracunavanjeVremena().izracunavanjeVremena(gpNiz, trasa.second, markerVozilo,
+                    if (voziloNaOkretnici) prviSledeciPolazak else LocalTime.now(),
+                    1)
+                for (b in listLocalTime.indices) {
+                    stNiz.add(sifraNaziv(test[b], SQLcitac(context).idStaniceUNaziv(test[b]), listLocalTime[b],
+                        presedackaSt == test[b]
+                    ))
+                }
+            }
+
+            for (i in 0 until trasa.second.length()) {
+                Glavna.putanja.addPoints(listOf(GeoPoint(
+                    trasa.second.getJSONObject(i)["lat"].toString().toDouble(),
+                    trasa.second.getJSONObject(i)["lon"].toString().toDouble()
+                )))
+            }
+
+            for (i in 0 until trasa.third.size) {
+                val ltlg = trasa.third[i]
+                val marker = MarkerItem(null, trasa.first[i].toString(),null, GeoPoint(ltlg.latitude, ltlg.longitude))
+                marker.marker = MarkerSymbol(
+                    AndroidBitmap(VectorDrawableCompat.create(
+                        context.resources, if ((presedackaSt != null) and (presedackaSt == trasa.first[i].toString())) R.drawable.crvena_tacka else
+                            R.drawable.plava_tacka, context.theme)!!.toBitmap()), MarkerSymbol.HotspotPlace.BOTTOM_CENTER,true)
+                Glavna.sveStanice.addItem(marker)
+            }
+
+            markerVoziloCache = markerVozilo
+            odabranoStajalisteMarkerCache = markerStanica
+
+            pozivTrasaInterface?.prikazTrase(markerVozilo.title, stNiz)
         }
-        return trasa
     }
 }

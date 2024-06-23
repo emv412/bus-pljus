@@ -1,4 +1,4 @@
-package com.buspljus
+package com.buspljus.Adapteri
 
 import android.content.Context
 import android.view.LayoutInflater
@@ -7,8 +7,11 @@ import android.view.ViewGroup
 import android.widget.BaseExpandableListAdapter
 import android.widget.ExpandableListView
 import android.widget.TextView
+import com.buspljus.R
+import com.buspljus.SQLcitac
+import java.time.LocalTime
 
-class KursorAdapterVoz(var context: Context, var spoljnalista: List<List<String>>, var spisak: ExpandableListView) : BaseExpandableListAdapter() {
+class PrikazZStanica(var context: Context, var spoljnalista: List<List<String>>, var spisak: ExpandableListView) : BaseExpandableListAdapter() {
 
     var lista = mutableListOf(listOf<String>())
     var novalista = listOf(listOf<String>())
@@ -80,13 +83,13 @@ class KursorAdapterVoz(var context: Context, var spoljnalista: List<List<String>
             if (novalista.size > childPosition) {
                 medjust?.text = novalista[childPosition][0]
                 vreme?.text = novalista[childPosition][1]
-                /*
+                medjust?.setTextColor(resources.getColor(R.color.crna))
+                vreme?.setTextColor(resources.getColor(R.color.crna))
+
                 if (LocalTime.parse(novalista[childPosition][1]).isBefore(LocalTime.parse(spoljnalista[groupPosition][1]))) {
                     medjust?.setTextColor(resources.getColor(R.color.siva))
                     vreme?.setTextColor(resources.getColor(R.color.siva))
                 }
-
-                 */
             }
             return this
         }

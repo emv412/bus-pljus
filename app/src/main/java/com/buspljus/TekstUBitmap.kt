@@ -10,7 +10,7 @@ import android.view.View
 import android.widget.TextView
 import androidx.vectordrawable.graphics.drawable.VectorDrawableCompat
 
-class tekstubitmap {
+class TekstUBitmap {
 
     fun setBackground(view: View, background: Drawable?) {
         view.background = background

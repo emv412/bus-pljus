@@ -32,7 +32,7 @@
     <string name="red_voznje_od">Ред вожње од:</string>
     <string name="gar_broj">ГБ возила:</string>
     <string name="rastojanje">Растојање</string>
-    <string name="sl_polasci">Поласци:</string>
+    <string name="sl_polasci">Полазак у:</string>
     <string name="radni_dan">Радни дан</string>
     <string name="subota">Субота</string>
     <string name="nedelja">Недеља</string>
@@ -45,11 +45,14 @@
     <string name="skinuta_mapa">Преузета мапа</string>
     <string name="skinute_stanice">Преузете станице</string>
     <string name="ka_stanici">Ка станици:</string>
-    <string name="presedanjebgvoz">Преседање на БГ:Воз</string>
+    <string name="presedanjebgvoz">Преседање на воз</string>
     <string name="sacuvaj">Сачувај</string>
     <string name="stanicasacuvana">Сачувана</string>
     <string name="stanicaobrisana">Уклоњена</string>
     <string name="trasa">Траса</string>
-    <string name="vozilostizeoko">Возило стиже близу ове станице око</string>
-    <string name="stanicarb">станица:</string>
+    <string name="dolazaknastajaliste">Долазак на стајалиште</string>
+    <string name="oko">око</string>
+    <string name="samobgvoz">Само БГ:Воз</string>
+    <string name="rv">Ред вожње</string>
+    <string name="nema_drugog_smera">Нема другог смера</string>
 </resources>

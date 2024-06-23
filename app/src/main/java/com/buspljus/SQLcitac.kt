@@ -4,6 +4,7 @@ import android.content.ContentValues
 import android.content.Context
 import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
+import android.util.Log
 import com.buspljus.RedVoznje.Companion.danunedelji
 import okhttp3.Response
 import org.json.JSONArray
@@ -18,6 +19,7 @@ class SQLcitac(private val context: Context) {
     companion object {
         const val IME_BAZE = "svi_podaci.db"
         const val CIR_KOLONA = "naziv_cir"
+        const val ID_KOLONA = "_id"
         lateinit var baza: SQLiteDatabase
         var globalQueryData: SqlQueryData? = null
 
@@ -30,17 +32,12 @@ class SQLcitac(private val context: Context) {
                 )
             }
         }
+
     }
     lateinit var kursor: Cursor
 
     init {
         inicijalizacija(context)
-    }
-
-    interface Callback {
-        fun korak(s: String)
-
-        fun koloneBGVOZ(lista: List<String>)
     }
 
     data class SqlQueryData(
@@ -61,19 +58,13 @@ class SQLcitac(private val context: Context) {
         )
     }
 
-    fun SQLzahtev(
-        tabela: String,
-        kolone: Array<String>,
-        odabir: String,
-        parametri: Array<String>,
-        redjanjepo: String?
-    ): Cursor {
+    fun SQLzahtev(tabela: String, kolone: Array<String>, odabir: String, parametri: Array<String>, redjanjepo: String?): Cursor {
         baza = SQLiteDatabase.openDatabase(context.getDatabasePath(IME_BAZE).absolutePath, null, 0)
         globalQueryData = SqlQueryData(tabela, kolone, odabir, parametri, redjanjepo)
-        return baza.query(tabela, kolone, odabir, parametri, null, null, redjanjepo + " LIMIT 50")
+        return baza.query(tabela, kolone, odabir, parametri, null, null, "$redjanjepo")
     }
 
-    fun pozahtevu_jednastanica(sifra: String): GeoPoint {
+    fun idStaniceuGeoPoint(sifra: String): GeoPoint {
         kursor = SQLzahtev("stanice", arrayOf("lt,lg"), "_id = ?", arrayOf(sifra), null)
         var lt = 0.0
         var lg = 0.0
@@ -89,16 +80,30 @@ class SQLcitac(private val context: Context) {
         return GeoPoint(lt,lg)
     }
 
-    fun pretragabaze_kliknamapu(lat: String, lng: String, callback: Callback, pozivOdFunkcije: Int) {
-        var prekiniForPetlju = false
-
-        var tacka = arrayOf("1", lat, "1", "1", lng, "1")
-        val tackaGeoPoint = GeoPoint(tacka[1].toDouble(),tacka[4].toDouble())
-
-        kursor = SQLzahtev("bgvoz", arrayOf("*"), "round(lt,?) = round(?,?) and round(lg,?) = round(?,?)", tacka, null)
-
+    fun idStaniceUNaziv(sifra: String): String {
+        kursor = SQLzahtev("stanice", arrayOf("naziv_cir"), "_id = ?", arrayOf(sifra), null)
+        var nazivCir = ""
         with (kursor) {
             if (count > 0) {
+                use {
+                    moveToFirst()
+                    nazivCir = getString(getColumnIndexOrThrow("naziv_cir"))
+                }
+            }
+        }
+        return nazivCir
+    }
+
+    fun pretragabaze_kliknamapu(lat: String, lng: String, callback: Interfejs.Callback, pozivOdFunkcije: Int) {
+        var i = 0
+        var pronadjenihZS = 0
+        val tackaGeoPoint = GeoPoint(lat.toDouble(),lng.toDouble())
+
+        var tacka = arrayOf("1", lat, "1", "2", lng, "2")
+        kursor = SQLzahtev("bgvoz", arrayOf("*"), "round(lt,?) = round(?,?) and round(lg,?) = round(?,?)", tacka, null)
+
+        fun pretraga(k: Cursor): Int {
+            with (k) {
                 use {
                     while (moveToNext()) {
                         val bazaGeoPoint = GeoPoint(getDouble(getColumnIndexOrThrow("lt")), getDouble(getColumnIndexOrThrow("lg")))
@@ -110,16 +115,29 @@ class SQLcitac(private val context: Context) {
                             if (pozivOdFunkcije == 0) {
                                 RedVoznje(context).pregledPolaskaVozova(naziv, redvoznje, 0)
                             } else if (pozivOdFunkcije == 1) {
-                                callback.koloneBGVOZ(listOf(id, naziv, redvoznje))
+                                callback.koloneBGVOZ(listOf(id, naziv, redvoznje, rastojanje))
                             }
-                            prekiniForPetlju = true
+                            pronadjenihZS += 1
                         }
+                        i += 1
                     }
                 }
             }
+            return i
         }
 
-        if ((Glavna.mapa.mapPosition.zoomLevel >= 16) and (pozivOdFunkcije == 0) and (!prekiniForPetlju)) {
+        with (kursor) {
+            if (count > 0) {
+                pretraga(kursor)
+            }
+            else if (pozivOdFunkcije == 1) {
+                kursor = SQLzahtev("bgvoz", arrayOf("*"), "round(lt,?) = round(?,?) or round(lg,?) = round(?,?)", tacka, null)
+                pretraga(kursor)
+            } else {
+            }
+        }
+
+        if ((Glavna.mapa.mapPosition.zoomLevel >= 16) and (pozivOdFunkcije == 0) and (pronadjenihZS == 0)) {
             val pronadjeneStanice = mutableListOf<String>()
             tacka = arrayOf("2", lat, "2", "2", lng, "2")
             kursor = SQLzahtev("stanice", arrayOf("_id", "naziv_cir", "lt", "lg"), "round(lt,?) = round(?,?) and round(lg,?) = round(?,?)", tacka, null)
@@ -132,69 +150,17 @@ class SQLcitac(private val context: Context) {
                                 pronadjeneStanice.add(getString(getColumnIndexOrThrow("_id")))
                     }
                     AlertDialog(context,pronadjeneStanice).pronadjeneStaniceAlertDialog(callback)
-                    prekiniForPetlju = true
+                    pronadjenihZS += 1
                 }
             }
         }
-
-        /*
-
-        for (brojac in preciznost downTo 3) {
-            val x = (if (pozivOdFunkcije == 1) 1 else brojac).toString()
-            val tacka = arrayOf(x, lat, x, x, lng, x)
-
-            kursor = SQLzahtev("bgvoz", arrayOf("*"), "round(lt,?) = round(?,?) and round(lg,?) = round(?,?)", tacka, null)
-
-            with (kursor) {
-                if (count > 0) {
-                    use {
-                        while (moveToNext()) {
-                            val tacka1 = GeoPoint(getDouble(getColumnIndexOrThrow("lt")), getDouble(getColumnIndexOrThrow("lg")))
-                            val tacka2 = GeoPoint(tacka[1].toDouble(),tacka[4].toDouble())
-                            val tacka3 = tacka1.sphericalDistance(tacka2)
-                            if (tacka3 < if (pozivOdFunkcije == 2) 50 else 400) {
-                                val id = getString(getColumnIndexOrThrow("_id"))
-                                val naziv = getString(getColumnIndexOrThrow("naziv"))
-                                val redvoznje = getString(getColumnIndexOrThrow("redvoznje"))
-                                if (pozivOdFunkcije == 2) {
-                                    RedVoznje(context).pregledPolaskaVozova(naziv, redvoznje, 0)
-                                } else if (pozivOdFunkcije == 1) {
-                                    callback.koloneBGVOZ(listOf(id, naziv, redvoznje))
-                                }
-                                prekiniForPetlju = true
-                            }
-                            if (pozivOdFunkcije == 1) prekiniForPetlju = true
-                        }
-                    }
-                }
-            }
-
-            if ((Glavna.mapa.mapPosition.zoomLevel >= 16) and (pozivOdFunkcije == 2)) {
-                kursor = SQLzahtev("stanice", arrayOf("_id", "naziv_cir"), "round(lt,?) = round(?,?) and round(lg,?) = round(?,?)", tacka, null)
-
-                with (kursor) {
-                    if (count > 0) {
-                        use {
-                            while (moveToNext())
-                                pronadjeneStanice.add(getString(getColumnIndexOrThrow("_id")))
-                        }
-                        AlertDialog(context,pronadjeneStanice).pronadjeneStaniceAlertDialog(callback)
-                        prekiniForPetlju = true
-                    }
-                }
-            }
-            if (prekiniForPetlju)
-                break
-        }
-
-         */
     }
 
     fun dobavisifre(rec: CharSequence?, trazenjepobroju: Boolean?): Cursor {
         kursor = SQLzahtev(
             "stanice", arrayOf("_id", "naziv_cir", "staju", "sacuvana"),
             if (trazenjepobroju == true) "_id like ?" else "naziv_ascii like ? or naziv_cir like ? or naziv_lat like ?",
-            if (trazenjepobroju == true) arrayOf("$rec%") else arrayOf("%$rec%", "%$rec%", "%$rec%"), "sacuvana" + " DESC")
+            if (trazenjepobroju == true) arrayOf("$rec%") else arrayOf("%$rec%", "%$rec%", "%$rec%"), "sacuvana" + " DESC LIMIT 50")
         return kursor
     }
 
@@ -211,61 +177,67 @@ class SQLcitac(private val context: Context) {
             )
     }
 
-    fun preradaRVJSON(redVoznjeJSON: JSONObject?, brojVoza: String?, sifraOS: String?, rezimRada : Int, vremeDol: LocalTime?): MutableList<List<String>> {
+    fun preradaRVJSON(redVoznjeJSON: JSONObject?, brojVoza: String?, sifraOS: String?, rezimRada: Int, vremeDol: LocalTime?): MutableList<List<String>> {
         val rezultat = mutableListOf<List<String>>()
         var pronadjeno: Boolean
         var radnidanSubotaNedelja : JSONObject
-        var sifre_stanica : JSONObject
+        var sifreStanica : JSONObject
         var sati : JSONObject
         var polasciUSatu : JSONArray
 
         fun podfunkcijaKursor(kr: Cursor, vecaLista: Boolean, sifraos: String) {
-            with (kr) {
-                if (count > 0) {
-                    use {
-                        while (moveToNext()) {
-                            pronadjeno = false
+            try {
+                with (kr) {
+                    if (count > 0) {
+                        use {
+                            while (moveToNext()) {
+                                pronadjeno = false
 
-                            // Ako je redVoznjeJSON null ide se na pretragu po broju voza
-                            radnidanSubotaNedelja = redVoznjeJSON ?: JSONObject(getString(getColumnIndexOrThrow("redvoznje")))
-                            sifre_stanica = radnidanSubotaNedelja.getJSONObject(danunedelji.toString())
+                                // Ako je redVoznjeJSON null ide se na pretragu po broju voza
+                                radnidanSubotaNedelja = redVoznjeJSON ?: JSONObject(getString(getColumnIndexOrThrow("redvoznje")))
+                                sifreStanica = radnidanSubotaNedelja.getJSONObject(danunedelji.toString())
 
-                            sati = sifre_stanica.getJSONObject(sifraos)
+                                sati = sifreStanica.getJSONObject(sifraos)
 
-                            if (!pronadjeno) {
-                                for (sat in sati.keys().iterator()) {
-                                    polasciUSatu = sati.getJSONArray(sat)
-                                    for (minuti in 0 until polasciUSatu.length()) {
-                                        with (polasciUSatu.getJSONObject(minuti)) {
-                                            val minut = keys().next()
-                                            val brVoza = getString(minut)
-                                            val dolazak = getString("d")
-                                            val ime_stanice = getString(0)
-                                            val polazak = "$sat:$minut"
+                                if (!pronadjeno) {
+                                    for (sat in sati.keys().iterator()) {
+                                        polasciUSatu = sati.getJSONArray(sat)
+                                        for (minuti in 0 until polasciUSatu.length()) {
+                                            with (polasciUSatu.getJSONObject(minuti)) {
+                                                val minut = keys().next()
+                                                val brVoza = getString(minut)
+                                                val dolazak = getString("d")
+                                                val bgVOZ = getString("bgv")
+                                                val imeStanice = getString(0)
+                                                val polazak = "$sat:$minut"
 
-                                            if (vecaLista) {
-                                                if (LocalTime.parse(polazak).isAfter(vremeDol ?: LocalTime.now().minusMinutes(3))) {
-                                                    rezultat.add(listOf(ime_stanice, polazak, dolazak, brVoza, sifraos))
-                                                    pronadjeno = if (rezimRada == 1) true else false
+                                                if (vecaLista) {
+                                                    if (LocalTime.parse(polazak).isAfter(vremeDol ?: LocalTime.now().minusMinutes(3))) {
+                                                        rezultat.add(listOf(imeStanice, polazak, dolazak, brVoza, sifraos, bgVOZ))
+                                                        pronadjeno = if (rezimRada == 1) true else false
+                                                    }
+                                                    else pronadjeno = false
                                                 }
-                                                else pronadjeno = false
-                                            }
-                                            else {
-                                                if (brVoza == brojVoza) {
-                                                    rezultat.add(listOf(ime_stanice, polazak))
-                                                    pronadjeno = true
+                                                else {
+                                                    if (brVoza == brojVoza) {
+                                                        rezultat.add(listOf(imeStanice, polazak))
+                                                        pronadjeno = true
+                                                    }
+                                                    else pronadjeno = false
                                                 }
-                                                else pronadjeno = false
                                             }
+                                            if (pronadjeno) break
                                         }
                                         if (pronadjeno) break
                                     }
-                                    if (pronadjeno) break
                                 }
                             }
                         }
                     }
                 }
+            }
+            catch(e: Exception) {
+                Toster(context).toster("Greska $e")
             }
         }
 
@@ -276,7 +248,7 @@ class SQLcitac(private val context: Context) {
             }
         }
         else {
-            kursor = SQLcitac(context).SQLzahtev("bgvoz", arrayOf("naziv", "redvoznje"), "redvoznje like ?", arrayOf("%$brojVoza%"),null)
+            kursor = SQLcitac(context).SQLzahtev("bgvoz", arrayOf("naziv", "redvoznje"), "redvoznje like ?", arrayOf("%\"$brojVoza\"%"),null)
             if (sifraOS != null) {
                 podfunkcijaKursor(kursor, false, sifraOS)
             }
@@ -285,13 +257,13 @@ class SQLcitac(private val context: Context) {
         return rezultat
     }
 
-    fun redvoznjeKliknavozilo(linija: String, stanica: String): List<String> {
+    fun kliknavozilo(linija: String, stanica: String): List<String> {
         val lista = mutableListOf<String>()
 
         kursor = SQLzahtev("linije", arrayOf("*"), "_id = ? and stajalista like ?", arrayOf(linija, "%\"$stanica\"%"), null)
 
         if (kursor.count == 0) {
-            Internet().zahtevPremaInternetu(stanica, linija, 1, object : Internet.odgovorSaInterneta {
+            Internet().zahtevPremaInternetu(stanica, linija, 1, object : Interfejs.odgovorSaInterneta {
                 override fun uspesanOdgovor(response: Response) {
                     try {
                         var pronadjeno = false
@@ -325,6 +297,7 @@ class SQLcitac(private val context: Context) {
                         }
                     } catch (g: Exception) {
                         Toster(context).toster(g.toString())
+                        Log.d(context.resources.getString(R.string.debug),""+g)
                     }
                 }
 
@@ -348,31 +321,90 @@ class SQLcitac(private val context: Context) {
         return lista
     }
 
-    fun prikaziTrasu(linija: String, sifraStajalista: String): List<JSONArray> {
-        val inflater = Inflater()
-        val spisakLtLg = ByteArrayOutputStream()
-        val bafer = ByteArray(1024)
-        var sveStanice = ""
+    fun prikaziTrasu(linija: String, sifraStajalista: String): Triple<JSONArray,JSONArray,MutableList<GeoPoint>> {
+        var trasaUnzip = ""
+        var jsonIDStanice : JSONArray? = null
+        val jsonGeoPointStanice = mutableListOf<GeoPoint>()
 
-        kursor = SQLzahtev("linije", arrayOf("stajalista","trasa"), "_id = ? and stajalista like ?", arrayOf(linija, "%\"$sifraStajalista\"%"), null)
+        kursor = SQLzahtev("linije", arrayOf("stajalista", "trasa"), "_id = ? and stajalista like ?", arrayOf(linija, "%\"$sifraStajalista\"%"), null)
         with (kursor) {
             if (count > 0) {
                 use {
                     moveToFirst()
-                    sveStanice = getString(getColumnIndexOrThrow("stajalista"))
-                    val jsonObjekat = getBlob(getColumnIndexOrThrow("trasa"))
 
-                    inflater.setInput(jsonObjekat)
-
-                    while (!inflater.finished()) {
-                        val count = inflater.inflate(bafer)
-                        spisakLtLg.write(bafer, 0, count)
+                    jsonIDStanice = JSONArray(getString(getColumnIndexOrThrow("stajalista")))
+                    for (n in 0 until jsonIDStanice!!.length()) {
+                        jsonGeoPointStanice.add(SQLcitac(context).idStaniceuGeoPoint(jsonIDStanice!![n].toString()))
                     }
 
-                    spisakLtLg.close()
+                    val trasa = getBlob(getColumnIndexOrThrow("trasa"))
+                    trasaUnzip = unzip(trasa)
                 }
             }
         }
-        return listOf(JSONArray(sveStanice),JSONArray(spisakLtLg.toString()))
+
+        return Triple(jsonIDStanice!!, JSONArray(trasaUnzip), jsonGeoPointStanice)
+    }
+
+    fun sveLinije(): List<String> {
+        kursor = SQLcitac(context).SQLzahtev("linije", arrayOf("_id"), "smer = ?", arrayOf("0"), "_id")
+
+        val lista = mutableListOf<String>()
+
+        with (kursor) {
+            if (count > 0) {
+                use {
+                    while (moveToNext()) {
+                        lista.add(getString(getColumnIndexOrThrow("_id")))
+                    }
+                }
+            }
+        }
+
+        return lista
+    }
+
+    fun redVoznjeJednaLinija(linija:  String, smer: String): List<Any> {
+        kursor = SQLcitac(context).SQLzahtev("linije", arrayOf("*"), "_id = ? and smer = ?", arrayOf(linija, smer), null)
+
+        val lista = mutableListOf<Any>()
+
+        with (kursor) {
+            if (count > 0) {
+                use {
+                    while (moveToNext()) {
+                        with (lista) {
+                            add(getString(getColumnIndexOrThrow("_id")))
+                            add(getString(getColumnIndexOrThrow("smer")))
+                            add(getString(getColumnIndexOrThrow("od")))
+                            add(getString(getColumnIndexOrThrow("do")))
+                            add(getBlob(getColumnIndexOrThrow("trasa")))
+                            add(getString(getColumnIndexOrThrow("stajalista")))
+                            add(getString(getColumnIndexOrThrow("datumrv")))
+                            add(getString(getColumnIndexOrThrow("redvoznje")))
+                        }
+                    }
+                }
+            }
+        }
+        return lista
+    }
+
+    private fun unzip(podatak: ByteArray): String {
+        val inflater = Inflater()
+        val bafer = ByteArray(1024)
+        val izlaz = ByteArrayOutputStream()
+
+        var brojac: Int
+
+        inflater.setInput(podatak)
+
+        while (!inflater.finished()) {
+            brojac = inflater.inflate(bafer)
+            izlaz.write(bafer, 0, brojac)
+        }
+        izlaz.close()
+
+        return izlaz.toString()
     }
 }

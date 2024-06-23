@@ -4,7 +4,7 @@ import android.app.AlertDialog
 import android.content.Context
 
 class AlertDialog(private val context: Context, private val pronadjeneStanice: List<String>): AlertDialog(context) {
-    fun pronadjeneStaniceAlertDialog(callback: SQLcitac.Callback) {
+    fun pronadjeneStaniceAlertDialog(callback: Interfejs.Callback) {
         if (pronadjeneStanice.size > 1) {
             Builder(context)
                 .setTitle(context.resources.getString(R.string.pronadjene_stanice))
