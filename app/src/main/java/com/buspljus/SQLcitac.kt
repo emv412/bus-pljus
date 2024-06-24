@@ -21,6 +21,7 @@ class SQLcitac(private val context: Context) {
         const val CIR_KOLONA = "naziv_cir"
         const val ID_KOLONA = "_id"
         lateinit var baza: SQLiteDatabase
+        lateinit var kursor: Cursor
         var globalQueryData: SqlQueryData? = null
 
         fun inicijalizacija(context: Context) {
@@ -32,9 +33,7 @@ class SQLcitac(private val context: Context) {
                 )
             }
         }
-
     }
-    lateinit var kursor: Cursor
 
     init {
         inicijalizacija(context)

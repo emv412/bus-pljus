@@ -1,7 +1,6 @@
 package com.buspljus.Adapteri
 
 import android.content.Context
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -11,7 +10,6 @@ import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.buspljus.R
 import com.buspljus.RedVoznje
-import com.buspljus.RedVoznje.Companion.danunedelji
 import com.buspljus.SQLcitac
 import com.buspljus.Toster
 import com.google.android.material.bottomsheet.BottomSheetBehavior
@@ -36,7 +34,6 @@ class RVSveLinije(private val context: Context, private val buttonLabels: List<S
 
     override fun onBindViewHolder(holder: ButtonViewHolder, position: Int) {
         holder.dugme.text = buttonLabels[position]
-        Log.d("PLJUS!", ""+buttonLabels[position])
 
         /*
         holder.dugme.layoutParams = RecyclerView.LayoutParams(
@@ -49,7 +46,6 @@ class RVSveLinije(private val context: Context, private val buttonLabels: List<S
          */
 
         holder.dugme.setOnClickListener {
-            Log.d("PLJUS!", "kliknuto "+buttonLabels[position])
             var podaciOLn = SQLcitac(context).redVoznjeJednaLinija(buttonLabels[position],"0")
             val listaPol = mutableListOf<String>()
             var izabranDan = 0
@@ -128,7 +124,7 @@ class RVSveLinije(private val context: Context, private val buttonLabels: List<S
 
                 //smerovi?.selectTab(smerovi.getTabAt(1))
                 //dani?.selectTab(dani.getTabAt(danunedelji))
-                mikrofn(danunedelji)
+                mikrofn(0)
 
                 show()
             }

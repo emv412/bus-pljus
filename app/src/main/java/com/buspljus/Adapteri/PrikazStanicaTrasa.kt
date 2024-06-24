@@ -36,14 +36,6 @@ class PrikazStanicaTrasa(context: Context, private val items: List<sifraNaziv>) 
             nazivTextView.setTextColor(context.resources.getColor(androidx.appcompat.R.color.secondary_text_default_material_dark))
             vremeDolTextView.setTextColor(context.resources.getColor(androidx.appcompat.R.color.secondary_text_default_material_dark))
         }
-
-        if (stavka.oznaci) {
-            with (viewHolder) {
-                sifraTextView.setTextColor(context.resources.getColor(R.color.crvena))
-                nazivTextView.setTextColor(context.resources.getColor(R.color.crvena))
-                vremeDolTextView.setTextColor(context.resources.getColor(R.color.crvena))
-            }
-        }
         return view
     }
 

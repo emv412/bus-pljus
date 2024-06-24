@@ -13,10 +13,10 @@ import com.buspljus.Glavna
 import com.buspljus.R
 import com.buspljus.SQLcitac
 
-class PretragaStanica(context: Context, kursor: Cursor?): CursorAdapter(context, kursor,0) {
+class PretragaStanica(context: Context, kursor: Cursor?) : CursorAdapter(context, kursor, 0) {
 
     override fun newView(context: Context?, cursor: Cursor?, parent: ViewGroup?): View {
-        return LayoutInflater.from(context).inflate(R.layout.pretraga_stanica_stavka, parent,false);
+        return LayoutInflater.from(context).inflate(R.layout.pretraga_stanica_stavka, parent, false)
     }
 
     override fun bindView(view: View?, context: Context?, cursor: Cursor?) {
@@ -28,7 +28,7 @@ class PretragaStanica(context: Context, kursor: Cursor?): CursorAdapter(context,
         val odredista = view.findViewById<TextView>(R.id.odredista_sa_stanice)
         val dugmeSacuvaj = view.findViewById<ImageButton>(R.id.sacuvaj)
 
-        with (cursor) {
+        with(cursor) {
             val sacuvana = getInt(getColumnIndexOrThrow("sacuvana"))
             sifre_stanica.text = getString(getColumnIndexOrThrow(SQLcitac.ID_KOLONA))
             nazivi_stanica.text = getString(getColumnIndexOrThrow(SQLcitac.CIR_KOLONA))
@@ -49,5 +49,11 @@ class PretragaStanica(context: Context, kursor: Cursor?): CursorAdapter(context,
                 Glavna.adapter.changeCursor(context?.let { it1 -> SQLcitac(it1).ponoviupit() })
             }
         }
+    }
+
+    override fun changeCursor(cursor: Cursor?) {
+        val oldCursor = getCursor()
+        super.changeCursor(cursor)
+        oldCursor?.close()
     }
 }

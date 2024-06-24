@@ -276,7 +276,7 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
 
         fun fokusKlik() {
             prikazListe()
-            izbrisiTrasu()
+            sakrijTrasu()
         }
 
         rvsveln.setOnClickListener {
@@ -352,7 +352,7 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
                                 stanicaNaziv = ""
                                 podesiNaziv()
                                 ukucanastanica(this@Glavna, s, odabranoStajalisteSloj, stajalisteMarker, false)
-                                izbrisiTrasu()
+                                sakrijTrasu()
                             }
 
                             override fun koloneBGVOZ(lista: List<Any>) {
@@ -617,15 +617,22 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
         baner?.visibility = View.VISIBLE
 
         zatvori.setOnClickListener {
-            izbrisiTrasu()
+            sakrijTrasu()
         }
+    }
+
+    fun sakrijTrasu() {
+        putanja.isEnabled=false
+        sveStanice.isEnabled=false
+        ukloniBaner()
     }
 
     fun izbrisiTrasu() {
         putanja.clearPath()
         sveStanice.removeAllItems()
-        RedVoznje.markerVoziloCache = null
-        RedVoznje.odabranoStajalisteMarkerCache = null
+    }
+
+    fun ukloniBaner() {
         baner?.visibility = View.GONE
         mapa.updateMap()
     }
@@ -639,5 +646,10 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
         if (stanicaId.isNotEmpty())
             dugmezaosvezavanje(0, 1)
         super.onResume()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        adapter.cursor.close()
     }
 }

@@ -29,6 +29,7 @@ class IzracunavanjeVremena {
             when {
                 x > 5000 -> i += 200
                 x > 1500 -> i += 20
+                x > 300 -> i += 5
                 else -> i += 1
             }
         }
@@ -63,7 +64,7 @@ class IzracunavanjeVremena {
 
                 dodajpolazak()
             }
-            i += 1
+            pojacivacI(rastojanjeStanica!!)
         }
 
         /*
