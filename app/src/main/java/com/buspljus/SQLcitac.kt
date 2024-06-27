@@ -5,7 +5,7 @@ import android.content.Context
 import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 import android.util.Log
-import com.buspljus.RedVoznje.Companion.danunedelji
+import com.buspljus.VoziloInfo.Companion.danunedelji
 import okhttp3.Response
 import org.json.JSONArray
 import org.json.JSONObject
@@ -107,12 +107,12 @@ class SQLcitac(private val context: Context) {
                     while (moveToNext()) {
                         val bazaGeoPoint = GeoPoint(getDouble(getColumnIndexOrThrow("lt")), getDouble(getColumnIndexOrThrow("lg")))
                         val rastojanje = bazaGeoPoint.sphericalDistance(tackaGeoPoint)
-                        if (rastojanje < if (pozivOdFunkcije == 0) 20 else 400) {
+                        if (rastojanje < if (pozivOdFunkcije == 0) 50 else 400) {
                             val id = getString(getColumnIndexOrThrow("_id"))
                             val naziv = getString(getColumnIndexOrThrow("naziv"))
                             val redvoznje = getString(getColumnIndexOrThrow("redvoznje"))
                             if (pozivOdFunkcije == 0) {
-                                RedVoznje(context).pregledPolaskaVozova(naziv, redvoznje, 0)
+                                VoziloInfo(context).pregledPolaskaVozova(naziv, redvoznje, 0)
                             } else if (pozivOdFunkcije == 1) {
                                 callback.koloneBGVOZ(listOf(id, naziv, redvoznje, rastojanje))
                             }
@@ -136,7 +136,7 @@ class SQLcitac(private val context: Context) {
             }
         }
 
-        if ((Glavna.mapa.mapPosition.zoomLevel >= 16) and (pozivOdFunkcije == 0) and (pronadjenihZS == 0)) {
+        if ((Glavna.mapa.mapPosition.zoomLevel >= 15) and (pozivOdFunkcije == 0) and (pronadjenihZS == 0)) {
             val pronadjeneStanice = mutableListOf<String>()
             tacka = arrayOf("2", lat, "2", "2", lng, "2")
             kursor = SQLzahtev("stanice", arrayOf("_id", "naziv_cir", "lt", "lg"), "round(lt,?) = round(?,?) and round(lg,?) = round(?,?)", tacka, null)

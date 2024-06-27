@@ -20,33 +20,35 @@ class PretragaStanica(context: Context, kursor: Cursor?) : CursorAdapter(context
     }
 
     override fun bindView(view: View?, context: Context?, cursor: Cursor?) {
-        view ?: return
-        cursor ?: return
+        val sifre_stanica = view?.findViewById<TextView>(R.id.sifra_stanice)
+        val nazivi_stanica = view?.findViewById<TextView>(R.id.naziv_stanice)
+        val odredista = view?.findViewById<TextView>(R.id.odredista_sa_stanice)
+        val dugmeSacuvaj = view?.findViewById<ImageButton>(R.id.sacuvaj)
 
-        val sifre_stanica = view.findViewById<TextView>(R.id.sifra_stanice)
-        val nazivi_stanica = view.findViewById<TextView>(R.id.naziv_stanice)
-        val odredista = view.findViewById<TextView>(R.id.odredista_sa_stanice)
-        val dugmeSacuvaj = view.findViewById<ImageButton>(R.id.sacuvaj)
+        cursor?.let {
+            with(it) {
+                    val sacuvana = getInt(getColumnIndexOrThrow("sacuvana"))
+                    sifre_stanica?.text = getString(getColumnIndexOrThrow(SQLcitac.ID_KOLONA))
+                    nazivi_stanica?.text = getString(getColumnIndexOrThrow(SQLcitac.CIR_KOLONA))
+                    odredista?.text = getString(getColumnIndexOrThrow("staju"))
 
-        with(cursor) {
-            val sacuvana = getInt(getColumnIndexOrThrow("sacuvana"))
-            sifre_stanica.text = getString(getColumnIndexOrThrow(SQLcitac.ID_KOLONA))
-            nazivi_stanica.text = getString(getColumnIndexOrThrow(SQLcitac.CIR_KOLONA))
-            odredista.text = getString(getColumnIndexOrThrow("staju"))
+                    fun ikonica(sacuvana: Int) {
+                        when (sacuvana) {
+                            0 -> dugmeSacuvaj?.setImageDrawable(ContextCompat.getDrawable(view.context, android.R.drawable.ic_menu_save))
+                            1 -> dugmeSacuvaj?.setImageDrawable(ContextCompat.getDrawable(view.context, android.R.drawable.ic_delete))
+                        }
+                    }
 
-            fun ikonica(sacuvana: Int) {
-                when (sacuvana) {
-                    0 -> dugmeSacuvaj.setImageDrawable(ContextCompat.getDrawable(view.context, android.R.drawable.ic_menu_save))
-                    1 -> dugmeSacuvaj.setImageDrawable(ContextCompat.getDrawable(view.context, android.R.drawable.ic_delete))
-                }
-            }
+                    ikonica(sacuvana)
 
-            ikonica(sacuvana)
+                    dugmeSacuvaj?.setOnClickListener {
+                        if (view.context != null) {
+                            val newCursor =  SQLcitac(view.context).ponoviupit()
+                            Glavna.adapter.changeCursor(newCursor)
 
-            dugmeSacuvaj.setOnClickListener {
-                SQLcitac(view.context).sacuvajStanicu(sifre_stanica.text as String, if (sacuvana == 1) 0 else 1)
-                ikonica(if (sacuvana == 1) 0 else 1)
-                Glavna.adapter.changeCursor(context?.let { it1 -> SQLcitac(it1).ponoviupit() })
+                            ikonica(if (getInt(getColumnIndexOrThrow("sacuvana")) == 1) 0 else 1)
+                        }
+                    }
             }
         }
     }

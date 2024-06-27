@@ -9,9 +9,10 @@ import android.widget.TextView
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.buspljus.R
-import com.buspljus.RedVoznje
 import com.buspljus.SQLcitac
 import com.buspljus.Toster
+import com.buspljus.VoziloInfo
+import com.buspljus.VoziloInfo.Companion.danunedelji
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.tabs.TabLayout
@@ -35,18 +36,9 @@ class RVSveLinije(private val context: Context, private val buttonLabels: List<S
     override fun onBindViewHolder(holder: ButtonViewHolder, position: Int) {
         holder.dugme.text = buttonLabels[position]
 
-        /*
-        holder.dugme.layoutParams = RecyclerView.LayoutParams(
-            RecyclerView.LayoutParams.WRAP_CONTENT,
-            RecyclerView.LayoutParams.WRAP_CONTENT
-        ).apply {
-            setMargins(0, 0, 0, 0)
-        }
-
-         */
-
         holder.dugme.setOnClickListener {
             var podaciOLn = SQLcitac(context).redVoznjeJednaLinija(buttonLabels[position],"0")
+
             val listaPol = mutableListOf<String>()
             var izabranDan = 0
 
@@ -65,7 +57,7 @@ class RVSveLinije(private val context: Context, private val buttonLabels: List<S
                 brojln?.text = podaciOLn[0] as String
                 smerovi?.getTabAt(0)?.text = podaciOLn[2] as String
                 smerovi?.getTabAt(1)?.text = podaciOLn[3] as String
-                datum?.text = RedVoznje(context).prikaziDatumRV(JSONArray(podaciOLn[6] as String))
+                datum?.text = VoziloInfo(context).prikaziDatumRV(JSONArray(podaciOLn[6] as String))
 
                 fun odradi(dan: Int) {
                     listaPol.clear()
@@ -122,9 +114,8 @@ class RVSveLinije(private val context: Context, private val buttonLabels: List<S
                     }
                 })
 
-                //smerovi?.selectTab(smerovi.getTabAt(1))
-                //dani?.selectTab(dani.getTabAt(danunedelji))
                 mikrofn(0)
+                dani?.selectTab(dani.getTabAt(danunedelji))
 
                 show()
             }

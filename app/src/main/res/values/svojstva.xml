@@ -14,7 +14,7 @@
         <item name="vozilo">@color/crvena</item>
     </style>
     <style name="Trolejbus">
-        <item name="vozilo">@color/narandzasta</item>
+        <item name="vozilo">@color/zelena</item>
     </style>
 
     <style name="prvastavka" parent="@android:style/TextAppearance">
@@ -24,8 +24,9 @@
     <color name="siva">#aaaaaa</color>
     <color name="crvena">#c90a0a</color>
     <color name="plava">#4769a6</color>
-    <color name="narandzasta">#1c7b20</color>
+    <color name="zelena">#1c7b20</color>
     <color name="crna">#000000</color>
+    <color name="narandzasta">#FFA500</color>
 
 
 </resources>

@@ -981,9 +981,9 @@
 
         <!-- railway -->
         <m k="railway">
-            <m v="halt|station" zoom-min="13">
+            <m v="halt|station" zoom-min="12">
                 <symbol src="assets:zeleznicka_stanica.svg" />
-                <caption style="bold" dy="20" fill="#af3a3a" k="name" size="11" stroke="#ffffff"
+                <caption style="bold" dy="20" fill="#af3a3a" k="name" size="12" stroke="#ffffff"
                     stroke-width="2.0" />
             </m>
 
@@ -1002,7 +1002,7 @@
     </m>
 
         <m k="highway">
-            <m v="bus_stop" zoom-min="17">
+            <m v="bus_stop" zoom-min="15">
                 <symbol src="assets:autobuska_stanica.svg" />
                 <caption style="bold" dy="16" fill="#000099" priority="100" k="name" size="11" stroke="#ffffff"
                     stroke-width="2.0" />

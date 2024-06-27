@@ -29,6 +29,7 @@ class RVSveLinijeInt(private val context: Context, private val buttonLabels: Lis
         ).apply {
             setMargins(0, 0, 0, 0)
         }
+
     }
 
     override fun getItemCount(): Int = buttonLabels.size

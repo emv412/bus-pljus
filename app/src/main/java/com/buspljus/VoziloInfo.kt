@@ -35,7 +35,7 @@ import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 
-class RedVoznje(private val context: Context) {
+class VoziloInfo(private val context: Context) {
 
     companion object {
         val danunedelji = when (LocalDate.now().dayOfWeek.value) {
@@ -184,8 +184,8 @@ class RedVoznje(private val context: Context) {
                                 }
                             },1)
                         }
-                        ucitavanjePresedanja.visibility = View.GONE
                     }
+                    ucitavanjePresedanja.visibility = View.GONE
                 }
 
                 fun asinhronoUcitajStanice() {
@@ -213,7 +213,7 @@ class RedVoznje(private val context: Context) {
                                     prikazilokstanice.setOnClickListener {
                                         val xy = zeleznickeStaniceZaListu.map {it.value[2]}[position] as GeoPoint
                                         Glavna.mapa.setMapPosition(xy.latitude, xy.longitude, 80000.0)
-                                        crtanjeTrase(linija, odabranoStajalisteMarker, zeleznickeStaniceZaListu.map { it.value[3] }[position] as String)
+                                        crtanjeTrase(linija, odabranoStajalisteMarker, zeleznickeStaniceZaListu.map { it.value[3] }[position] as String, if (voziloNaOkretnici) prviSledeciPolazak else LocalTime.now())
 
                                         dialog.dismiss()
                                     }
@@ -299,7 +299,7 @@ class RedVoznje(private val context: Context) {
                 }
 
                 trasaDugme.setOnClickListener {
-                    crtanjeTrase(linija, odabranoStajalisteMarker, null)
+                    crtanjeTrase(linija, odabranoStajalisteMarker, null, if (voziloNaOkretnici) prviSledeciPolazak else LocalTime.now())
                     Glavna.mapa.setMapPosition(odabranoStajalisteMarker.geoPoint.latitude, odabranoStajalisteMarker.geoPoint.longitude, 80000.0)
                     dialog.dismiss()
                 }
@@ -366,7 +366,7 @@ class RedVoznje(private val context: Context) {
         }
     }
 
-    fun crtanjeTrase(markerVozilo: MarkerItem, markerStanica: MarkerItem, presedackaSt : String?) {
+    fun crtanjeTrase(markerVozilo: MarkerItem, markerStanica: MarkerItem, presedackaSt : String?, polazak: LocalTime) {
         if ((voziloCache[0] != markerVozilo.title) or (voziloCache[1] != markerStanica.title) or (voziloCache[2] != vreme)) {
             Glavna().izbrisiTrasu()
             gpNiz.clear()
@@ -379,8 +379,7 @@ class RedVoznje(private val context: Context) {
             }
 
             if (gpNiz.size > 0) {
-                val listLocalTime = IzracunavanjeVremena().izracunavanjeVremena(gpNiz, trasa.second, markerVozilo,
-                    if (voziloNaOkretnici) prviSledeciPolazak else LocalTime.now(), 1)
+                val listLocalTime = IzracunavanjeVremena().izracunavanjeVremena(gpNiz, trasa.second, markerVozilo, polazak, 1)
                 if (listLocalTime.size == preostaleStanice.size) {
                     for (b in listLocalTime.indices) {
                         stNiz.add(sifraNaziv(

@@ -21,6 +21,7 @@ class IzracunavanjeVremena {
         var rastojanjeStanica: Double?
         var voziloGPXPozicija = 0
         var stanicaGPXPozicija: Int
+        val testNiz = mutableListOf<List<Any>>()
 
         var pronadjenoVozilo = false
         var pronadjenaStanica = false
@@ -29,7 +30,7 @@ class IzracunavanjeVremena {
             when {
                 x > 5000 -> i += 200
                 x > 1500 -> i += 20
-                x > 300 -> i += 5
+                //x > 300 -> i += 5
                 else -> i += 1
             }
         }
@@ -52,8 +53,9 @@ class IzracunavanjeVremena {
 
         fun traziZS() {
             rastojanjeStanica = pozicijaGPX?.sphericalDistance(autoSTGeoPoint[aStGeoPoint])
+            testNiz.add(listOf(rastojanjeStanica!!, pozicijaGPX as GeoPoint))
 
-            if (rastojanjeStanica!! < 60) {
+            if (rastojanjeStanica!! < 100) {
                 if (aStGeoPoint == autoSTGeoPoint.size-1)
                     pronadjenaStanica = true
                 else
@@ -64,27 +66,16 @@ class IzracunavanjeVremena {
 
                 dodajpolazak()
             }
+
             pojacivacI(rastojanjeStanica!!)
         }
 
-        /*
-        fun pronadjiStanicu() {
-            if (aStGeoPoint == 0) {
-                vremeDolaska = prviSledeciPolazak
-                aStGeoPoint += 1
-
-                dodajpolazak()
-            }
-            else if (autoSTGeoPoint.size > 1) {
-                traziZS()
-            }
-            i += 1
+        fun promeniPozicijuGPX() {
+            pozicijaGPX = GeoPoint(gpx.getJSONObject(i).getDouble("lat"), gpx.getJSONObject(i).getDouble("lon"))
         }
 
-         */
-
         while (i < gpx.length()) {
-            pozicijaGPX = GeoPoint(gpx.getJSONObject(i).getDouble("lat"), gpx.getJSONObject(i).getDouble("lon"))
+            promeniPozicijuGPX()
             if (!pronadjenoVozilo)
                 pronadjiVozilo()
 

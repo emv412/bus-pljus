@@ -48,6 +48,18 @@
             app:layout_constraintStart_toEndOf="@id/promenaunosa"
             app:layout_constraintTop_toTopOf="parent" />
 
+        <ProgressBar
+            android:id="@+id/napredak"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:indeterminate="true"
+            android:indeterminateBehavior="repeat"
+            android:visibility="invisible"
+            app:layout_constraintBottom_toBottomOf="@id/polje_za_unos"
+            app:layout_constraintEnd_toEndOf="@id/polje_za_unos"
+            app:layout_constraintStart_toStartOf="parent" />
+
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
@@ -61,18 +73,6 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/tasteri" />
-
-    <ProgressBar
-        android:id="@+id/napredak"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="-70dp"
-        android:layout_marginTop="11dp"
-        android:indeterminate="true"
-        android:visibility="invisible"
-        app:layout_constraintStart_toEndOf="@id/mapa"
-        app:layout_constraintTop_toBottomOf="@id/tasteri"
-        tools:visibility="visible" />
 
     <TextView
         android:id="@+id/copyright"
@@ -159,11 +159,11 @@
         android:layout_marginEnd="8dp"
         android:layout_marginBottom="8dp"
         android:clickable="true"
-        app:backgroundTint="@color/siva"
+        app:backgroundTint="@color/narandzasta"
         app:fabCustomSize="48dp"
         app:layout_constraintBottom_toTopOf="@id/gps"
         app:layout_constraintEnd_toEndOf="parent"
-        app:srcCompat="@android:drawable/ic_menu_sort_by_size" />
+        app:srcCompat="@drawable/redvoznje_ikona" />
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -39,6 +39,10 @@ import com.buspljus.Adapteri.PretragaStanica
 import com.buspljus.Adapteri.PrikazStanicaTrasa
 import com.buspljus.Adapteri.sifraNaziv
 import com.google.android.material.floatingactionbutton.FloatingActionButton
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import okhttp3.Response
 import org.json.JSONObject
 import org.oscim.android.MapView
@@ -84,7 +88,7 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
     private lateinit var pozicijaPesakaMarker: MarkerItem
     private lateinit var polje: AutoCompleteTextView
     private lateinit var podesavanje: ImageButton
-    private lateinit var ucitavanje: ProgressBar
+    private lateinit var ucitavanje : ProgressBar
     private lateinit var lista: ListView
     private lateinit var osvezi: ImageButton
     private lateinit var pregledmape: MapView
@@ -95,6 +99,8 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
     private lateinit var rvsveln : FloatingActionButton
     private lateinit var stajalisteMarker: MarkerItem
 
+    private val scope = CoroutineScope(Dispatchers.Default)
+    private var odbrojavanje15Sek = false
     private var baner : LinearLayout? = null
     private var markersimbol: MarkerSymbol? = null
     private var slobodnopomeranjemape = true
@@ -137,21 +143,22 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
 
         prikazSacuvanihStanica()
 
-        RedVoznje(this).registracijaCallback(this)
+        VoziloInfo(this).registracijaCallback(this)
 
         lista.onItemClickListener = AdapterView.OnItemClickListener { _, _, position, _ ->
-                adapter.cursor?.apply {
-                    moveToPosition(position)
-                    stanicaId = getString(getColumnIndexOrThrow("_id"))
-                    stanicaNaziv = getString(getColumnIndexOrThrow(SQLcitac.CIR_KOLONA))
-                }
-                if (!trazenjePoBroju)
-                    promenaunosa.callOnClick()
-                kliknalistu = true
-                ukucanastanica(this@Glavna, stanicaId, odabranoStajalisteSloj, stajalisteMarker, true)
-                podesiNaziv()
-                prikaziListu(0)
+            adapter.cursor?.apply {
+                moveToPosition(position)
+                stanicaId = getString(getColumnIndexOrThrow("_id"))
+                stanicaNaziv = getString(getColumnIndexOrThrow(SQLcitac.CIR_KOLONA))
+                close()
             }
+            if (!trazenjePoBroju)
+                promenaunosa.callOnClick()
+            kliknalistu = true
+            ukucanastanica(this@Glavna, stanicaId, odabranoStajalisteSloj, stajalisteMarker, true)
+            podesiNaziv()
+            prikaziListu(0)
+        }
 
         gpsdugme.setOnClickListener {
             menadzerLokacije = getSystemService(Context.LOCATION_SERVICE) as LocationManager
@@ -249,6 +256,7 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
                             moveToFirst()
                             stanicaId = getString(getColumnIndexOrThrow("_id"))
                             stanicaNaziv = getString(getColumnIndexOrThrow(SQLcitac.CIR_KOLONA))
+                            close()
                         }
 
                         ukucanastanica(this@Glavna, stanicaId, odabranoStajalisteSloj, stajalisteMarker, true)
@@ -504,6 +512,8 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
             mapa.updateMap()
             tajmer?.schedule(15000) { zahtevZaPozicijuVozila() }
 
+            animacijaUcitavanja()
+
         } catch (e: Exception) {
             with(Toster(this@Glavna)) {
                 if (odgovor == "0") {
@@ -520,9 +530,24 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
         }
     }
 
+    fun animacijaUcitavanja() {
+        runOnUiThread {
+            odbrojavanje15Sek = true
+            ucitavanje.visibility = View.VISIBLE
+            ucitavanje.isIndeterminate = false
+            ucitavanje.progress=100
+            scope.launch {
+                while (odbrojavanje15Sek) {
+                    delay(150)
+                    ucitavanje.progress -= 1
+                }
+            }
+        }
+    }
+
     override fun onItemSingleTapUp(index: Int, item: MarkerInterface?): Boolean {
         val markerItem = item as MarkerItem
-        RedVoznje(this@Glavna).redvoznjeKliknaVozilo(markerItem, stajalisteMarker)
+        VoziloInfo(this@Glavna).redvoznjeKliknaVozilo(markerItem, stajalisteMarker)
         return true
     }
 
@@ -556,8 +581,11 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
 
     fun dugmezaosvezavanje(kruzic: Int, taster: Int) {
         runOnUiThread {
-            ucitavanje.visibility = (if (kruzic == 0) View.INVISIBLE else View.VISIBLE)
             osvezi.visibility = (if (taster == 0) View.INVISIBLE else View.VISIBLE)
+
+            ucitavanje.visibility = (if (kruzic == 0) View.INVISIBLE else View.VISIBLE)
+            ucitavanje.isIndeterminate = true
+            odbrojavanje15Sek = false
         }
     }
 
@@ -588,6 +616,8 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
     }
     private fun stopTajmera() {
         Internet.zahtev?.cancel()
+
+        odbrojavanje15Sek = false
 
         tajmer?.cancel()
         tajmer?.purge()
