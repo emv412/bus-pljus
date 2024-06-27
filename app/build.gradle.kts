@@ -48,7 +48,10 @@ android {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
+
     buildToolsVersion = "34.0.0"
+
+
 }
 
 dependencies {
@@ -79,14 +82,15 @@ dependencies {
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
 
-
-    implementation("org.mapsforge:vtm:0.21.0")
-    runtimeOnly("com.github.mapsforge.vtm:vtm-android:0.21.0:natives-armeabi-v7a")
-    runtimeOnly("org.mapsforge:vtm-android:0.21.0:natives-arm64-v8a")
-    debugRuntimeOnly("org.mapsforge:vtm-android:0.21.0:natives-x86")
-    debugRuntimeOnly("org.mapsforge:vtm-android:0.21.0:natives-x86_64")
-    implementation("org.mapsforge:vtm-android:0.21.0")
+    implementation("com.github.mapsforge.vtm:vtm:0.21.0")
+    implementation("com.github.mapsforge.vtm:vtm-android:0.21.0")
     implementation("com.caverock:androidsvg:1.4")
     implementation("com.squareup.okio:okio:3.5.0")
     implementation("com.squareup.okhttp3:okhttp:4.10.0")
+
+    debugRuntimeOnly("com.github.mapsforge.vtm:vtm-android:0.21.0:natives-x86")
+    debugRuntimeOnly("com.github.mapsforge.vtm:vtm-android:0.21.0:natives-x86_64")
+
+    runtimeOnly("com.github.mapsforge.vtm:vtm-android:0.21.0:natives-armeabi-v7a")
+    runtimeOnly("com.github.mapsforge.vtm:vtm-android:0.21.0:natives-arm64-v8a")
 }
