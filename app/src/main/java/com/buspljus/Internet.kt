@@ -15,9 +15,13 @@ class Internet : OkHttpClient() {
 
     companion object {
         const val POLOZAJ_FLY = "http://buspljus.fly.dev/?st="
-        const val MAPA_GZ = "https://raw.githubusercontent.com/emv412/buspljus-materijal/main/beograd.map.gz"
-        const val SVIPODACI_GZ = "https://raw.githubusercontent.com/emv412/buspljus-materijal/main/svi_podaci.db.gz"
         const val NADOGRADNJA_PROGRAMA = "https://api.github.com/repos/emv412/bus-pljus/releases/latest"
+
+        const val MAPA_GZ = "https://api.github.com/repos/emv412/buspljus-materijal/contents/beograd.map.gz"
+        const val SVIPODACI_GZ = "https://api.github.com/repos/emv412/buspljus-materijal/contents/svi_podaci.db.gz"
+        const val MAPA_GZ_DOWNLOAD = "https://raw.githubusercontent.com/emv412/buspljus-materijal/main/beograd.map.gz"
+        const val SVIPODACI_GZ_DOWNLOAD = "https://raw.githubusercontent.com/emv412/buspljus-materijal/main/svi_podaci.db.gz"
+
         const val UPIT_STANICA_LINIJE = "&linija="
         val adresa = Request.Builder()
         var zahtev: Call? = null
@@ -34,6 +38,8 @@ class Internet : OkHttpClient() {
             2 -> adresa.url(MAPA_GZ)
             3 -> adresa.url(SVIPODACI_GZ)
             4 -> adresa.url(NADOGRADNJA_PROGRAMA)
+            5 -> adresa.url(MAPA_GZ_DOWNLOAD)
+            6 -> adresa.url(SVIPODACI_GZ_DOWNLOAD)
         }
         zahtev = newCall(adresa.build())
         if (!zahtev?.isExecuted()!!) {

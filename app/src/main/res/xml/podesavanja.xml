@@ -25,15 +25,13 @@
     <PreferenceCategory
         android:title="@string/nadogradnja_sekcija">
         <Preference
-            android:title="@string/mapa_nadogradnja"
+            android:enabled="true"
             android:key="nadogradimapu"
-            android:enabled="false">
-        </Preference>
+            android:title="@string/mapa_nadogradnja"></Preference>
         <Preference
-            android:title="@string/stanice_nadogradnja"
+            android:enabled="true"
             android:key="nadogradistanice"
-            android:enabled="false">
-        </Preference>
+            android:title="@string/stanice_nadogradnja"></Preference>
         <Preference
             android:title="@string/program_nadogradnja"
             android:key="nadogradi_program"

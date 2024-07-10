@@ -41,21 +41,12 @@ class PretragaStanica(context: Context, kursor: Cursor?) : CursorAdapter(context
 
                     ikonica(sacuvana)
 
-                    dugmeSacuvaj?.setOnClickListener {
-                        if (view.context != null) {
-                            val newCursor =  SQLcitac(view.context).ponoviupit()
-                            Glavna.adapter.changeCursor(newCursor)
-
-                            ikonica(if (getInt(getColumnIndexOrThrow("sacuvana")) == 1) 0 else 1)
-                        }
-                    }
+                dugmeSacuvaj?.setOnClickListener {
+                    SQLcitac(view.context).sacuvajStanicu(sifre_stanica?.text as String, if (sacuvana == 1) 0 else 1)
+                    ikonica(if (sacuvana == 1) 0 else 1)
+                    Glavna.adapter.changeCursor(context?.let { it1 -> SQLcitac(it1).ponoviupit() })
+                }
             }
         }
-    }
-
-    override fun changeCursor(cursor: Cursor?) {
-        val oldCursor = getCursor()
-        super.changeCursor(cursor)
-        oldCursor?.close()
     }
 }

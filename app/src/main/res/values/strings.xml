@@ -29,6 +29,11 @@
     <string name="nije_omoguceno_lociranje">Није дозвољено лоцирање</string>
     <string name="ukljucigps">Укључите лоцирање у подешавањима система</string>
     <string name="da">Да</string>
+    <string name="azurirati_mapu">Ажурирати мапу Београда?</string>
+    <string name="potrebnopreuzeti">Потребно је преузети</string>
+    <string name="azurirati_bazu">Ажурирати базу стајалишта и реда вожње?</string>
+    <string name="mapa_nadogradjena">Мапа ажурирана</string>
+    <string name="baza_nadogradjena">База стајалишта ажурирана</string>
     <string name="red_voznje_od">Ред вожње од:</string>
     <string name="gar_broj">ГБ возила:</string>
     <string name="rastojanje">Растојање</string>

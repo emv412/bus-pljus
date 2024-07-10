@@ -148,7 +148,7 @@ class SQLcitac(private val context: Context) {
                             if (GeoPoint(getDouble(getColumnIndexOrThrow("lt")), getDouble(getColumnIndexOrThrow("lg"))).sphericalDistance(tackaGeoPoint) < 20)
                                 pronadjeneStanice.add(getString(getColumnIndexOrThrow("_id")))
                     }
-                    AlertDialog(context,pronadjeneStanice).pronadjeneStaniceAlertDialog(callback)
+                    AlertDialog(context).pronadjeneStaniceAlertDialog(pronadjeneStanice, callback)
                     pronadjenihZS += 1
                 }
             }
@@ -318,6 +318,22 @@ class SQLcitac(private val context: Context) {
         }
         else kursor.close()
         return lista
+    }
+
+    fun ubacivanjeTestMarkera(sifraStajalista: String, ifejs: Interfejs.specMarker) {
+        kursor = SQLzahtev("linije", arrayOf("_id", "trasa", "redvoznje"), "stajalista like ?", arrayOf("%\"$sifraStajalista\"%"), null)
+        with (kursor) {
+            if (count > 0) {
+                use {
+                    while (moveToNext()) {
+                        val id = getString(getColumnIndexOrThrow("_id"))
+                        val trasa = getBlob(getColumnIndexOrThrow("trasa"))
+                        val rv = getString(getColumnIndexOrThrow("redvoznje"))
+                        ifejs.crtanjespecMarkera(id, IzracunavanjeVremena().tranziranjeRV(rv, unzip(trasa)))
+                    }
+                }
+            }
+        }
     }
 
     fun prikaziTrasu(linija: String, sifraStajalista: String): Triple<JSONArray,JSONArray,MutableList<GeoPoint>> {

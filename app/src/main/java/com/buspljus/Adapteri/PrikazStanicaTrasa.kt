@@ -6,10 +6,12 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ArrayAdapter
 import android.widget.TextView
+import com.buspljus.Glavna
 import com.buspljus.R
+import org.oscim.core.GeoPoint
 import java.time.LocalTime
 
-data class sifraNaziv(val sifra : String, val naziv : String, val vreme: LocalTime, val oznaci: Boolean)
+data class sifraNaziv(val sifra : String, val naziv : String, val vreme: LocalTime, val pozicija: GeoPoint)
 
 class PrikazStanicaTrasa(context: Context, private val items: List<sifraNaziv>) : ArrayAdapter<sifraNaziv>(context, R.layout.polazak_autost, items) {
 
@@ -28,13 +30,17 @@ class PrikazStanicaTrasa(context: Context, private val items: List<sifraNaziv>) 
 
         val stavka = items[position]
 
+        view.setOnClickListener {
+            Glavna.mapa.setMapPosition(stavka.pozicija.latitude, stavka.pozicija.longitude, 80000.0)
+        }
+
         with (viewHolder) {
             sifraTextView.text = stavka.sifra
             nazivTextView.text = stavka.naziv
             vremeDolTextView.text = stavka.vreme.toString()
-            sifraTextView.setTextColor(context.resources.getColor(androidx.appcompat.R.color.secondary_text_default_material_dark))
-            nazivTextView.setTextColor(context.resources.getColor(androidx.appcompat.R.color.secondary_text_default_material_dark))
-            vremeDolTextView.setTextColor(context.resources.getColor(androidx.appcompat.R.color.secondary_text_default_material_dark))
+            //sifraTextView.setTextColor(context.resources.getColor(androidx.appcompat.R.color.secondary_text_default_material_dark))
+            //nazivTextView.setTextColor(context.resources.getColor(androidx.appcompat.R.color.secondary_text_default_material_dark))
+            //vremeDolTextView.setTextColor(context.resources.getColor(androidx.appcompat.R.color.secondary_text_default_material_dark))
         }
         return view
     }

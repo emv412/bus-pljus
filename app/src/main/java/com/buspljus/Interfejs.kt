@@ -2,6 +2,7 @@ package com.buspljus
 
 import com.buspljus.Adapteri.sifraNaziv
 import okhttp3.Response
+import org.oscim.core.GeoPoint
 import java.io.IOException
 
 class Interfejs {
@@ -16,7 +17,15 @@ class Interfejs {
 
     interface Callback {
         fun korak(s: String)
-
         fun koloneBGVOZ(lista: List<Any>)
     }
+
+    interface specMarker {
+        fun crtanjespecMarkera(id : String, g: List<GeoPoint>)
+    }
+
+    interface odgovor {
+        fun da(odg: Boolean)
+    }
+
 }
