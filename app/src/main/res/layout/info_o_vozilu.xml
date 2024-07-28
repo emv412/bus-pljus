@@ -10,34 +10,11 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
+        android:text="---"
         app:layout_constraintBottom_toBottomOf="@+id/rastojanje_textview"
         app:layout_constraintStart_toEndOf="@+id/gbvozila_textview"
         app:layout_constraintTop_toTopOf="@+id/rastojanje_textview"
         tools:text="0.5 km" />
-
-    <TextView
-        android:id="@+id/redvoznje_textview"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="8dp"
-        android:text="@string/red_voznje_od"
-        android:visibility="gone"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/divider2"
-        tools:visibility="visible" />
-
-    <TextView
-        android:id="@+id/datum_rv"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
-        android:visibility="gone"
-        app:layout_constraintBottom_toBottomOf="@+id/redvoznje_textview"
-        app:layout_constraintStart_toEndOf="@+id/redvoznje_textview"
-        app:layout_constraintTop_toTopOf="@+id/redvoznje_textview"
-        tools:text="16. 9. 2023."
-        tools:visibility="visible" />
 
     <TextView
         android:id="@+id/linija_rv"
@@ -45,6 +22,7 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
         android:layout_marginTop="8dp"
+        android:text="---"
         android:textSize="26sp"
         android:textStyle="bold"
         app:layout_constraintStart_toStartOf="parent"
@@ -57,6 +35,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
         android:layout_marginEnd="8dp"
+        android:text="---"
         android:textSize="16sp"
         app:layout_constraintEnd_toStartOf="@+id/prvipolazak"
         app:layout_constraintStart_toStartOf="@+id/linija_rv"
@@ -92,23 +71,11 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
+        android:text="---"
         app:layout_constraintBottom_toBottomOf="@+id/gbvozila_textview"
         app:layout_constraintStart_toEndOf="@+id/gbvozila_textview"
         app:layout_constraintTop_toTopOf="@+id/gbvozila_textview"
         tools:text="3156" />
-
-    <TextView
-        android:id="@+id/rdsn"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginEnd="8dp"
-        android:layout_marginBottom="8dp"
-        android:visibility="invisible"
-        app:layout_constraintBottom_toTopOf="@id/prikaztrase"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/datum_rv"
-        tools:text="Радни дан"
-        tools:visibility="visible" />
 
     <TextView
         android:id="@+id/rastojanje_textview"
@@ -159,7 +126,7 @@
         android:textAlignment="textStart"
         android:visibility="gone"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/datum_rv"
+        app:layout_constraintTop_toBottomOf="@+id/divider2"
         tools:visibility="visible" />
 
     <Button
@@ -209,7 +176,7 @@
 
         <include
             android:id="@+id/stavka"
-            layout="@layout/redvoznje_zs"
+            layout="@layout/prozor_bgvoz"
             android:layout_width="match_parent"
             android:layout_height="300dp"
             app:layout_constraintBottom_toBottomOf="parent"
@@ -269,11 +236,9 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
-        android:layout_marginTop="24dp"
         android:indeterminateBehavior="repeat"
         android:visibility="gone"
         app:layout_constraintEnd_toEndOf="@id/presedanjebgvoz"
-        app:layout_constraintStart_toStartOf="@id/presedanjebgvoz"
-        app:layout_constraintTop_toBottomOf="@id/datum_rv" />
+        app:layout_constraintStart_toStartOf="@id/presedanjebgvoz" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

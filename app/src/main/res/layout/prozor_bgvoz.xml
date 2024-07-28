@@ -33,6 +33,19 @@
         android:layout_weight="1"
         android:childDivider="@color/siva"
         android:divider="@color/crna"
-        android:dividerHeight="1dp" />
+        android:dividerHeight="1dp">
+
+    </ExpandableListView>
+
+    <TextView
+        android:id="@+id/nemapolazaka"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="80sp"
+        android:text="@string/nema_polazaka"
+        android:textAlignment="center"
+        android:textSize="24sp"
+        android:visibility="gone"
+        tools:visibility="visible" />
 
 </LinearLayout>

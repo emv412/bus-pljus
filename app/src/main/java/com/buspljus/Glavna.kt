@@ -1,6 +1,6 @@
 package com.buspljus
 
-import RedVoznjeSveLinije
+import SpisakLinija
 import android.Manifest.permission.ACCESS_COARSE_LOCATION
 import android.Manifest.permission.ACCESS_FINE_LOCATION
 import android.content.Context
@@ -41,6 +41,7 @@ import com.buspljus.Adapteri.sifraNaziv
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import okhttp3.Response
@@ -79,9 +80,12 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
         lateinit var putanja : PathLayer
         lateinit var sveStanice : ItemizedLayer
         lateinit var markeriVozila: ItemizedLayer
+        lateinit var odabranoStajalisteSloj: ItemizedLayer
+        private var tajmer: Timer? = null
+        private var posao: Job? = null
+        private var odbrojavanje15Sek = false
     }
 
-    private lateinit var odabranoStajalisteSloj: ItemizedLayer
     private lateinit var pozicijaPesakaSloj: ItemizedLayer
     private lateinit var redvoznjeProzor: ItemizedLayer
 
@@ -100,13 +104,13 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
 
     private var pratilacLokacije: LocationListener? = null
     private val scope = CoroutineScope(Dispatchers.Default)
-    private var odbrojavanje15Sek = false
+
     private var baner : LinearLayout? = null
     private var markersimbol: MarkerSymbol? = null
     private var slobodnopomeranjemape = true
     private var pozicija = MapPosition()
     private var prviput: Boolean = true
-    private var tajmer: Timer? = null
+
     private var najbliziAutobusRastojanje = 100000.0
     private var najbliziAutobusMarker : MarkerItem? = null
     private var tastaturasklonjena: Boolean = true
@@ -289,7 +293,7 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
         }
 
         rvsveln.setOnClickListener {
-            RedVoznjeSveLinije(this@Glavna).nacrtajDugmad()
+            SpisakLinija(this@Glavna).nacrtajDugmad()
         }
 
         polje.setOnFocusChangeListener { _, hasFocus ->
@@ -415,7 +419,7 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
 
                 pozicija = mapPosition
 
-                if (e == Map.ANIM_END) {
+                if (e == Map.MOVE_EVENT) {
                     sklonitastaturu()
                     prikaziListu(0)
                     slobodnopomeranjemape = true
@@ -552,10 +556,12 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
     fun animacijaUcitavanja() {
         runOnUiThread {
             odbrojavanje15Sek = true
-            ucitavanje.visibility = View.VISIBLE
-            ucitavanje.isIndeterminate = false
-            ucitavanje.progress=100
-            scope.launch {
+            with (ucitavanje) {
+                visibility = View.VISIBLE
+                isIndeterminate = false
+                progress = 100
+            }
+            posao = scope.launch {
                 while (odbrojavanje15Sek) {
                     delay(150)
                     ucitavanje.progress -= 1
@@ -602,12 +608,15 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
         tastaturasklonjena = false
     }
 
-    fun dugmezaosvezavanje(kruzic: Int, taster: Int) {
+    fun dugmezaosvezavanje(animiranaTraka: Int, taster: Int) {
         runOnUiThread {
             osvezi.visibility = (if (taster == 0) View.INVISIBLE else View.VISIBLE)
 
-            ucitavanje.visibility = (if (kruzic == 0) View.INVISIBLE else View.VISIBLE)
-            ucitavanje.isIndeterminate = true
+            with (ucitavanje) {
+                visibility = (if (animiranaTraka == 0) View.INVISIBLE else View.VISIBLE)
+                isIndeterminate = true
+            }
+
             odbrojavanje15Sek = false
         }
     }
@@ -643,9 +652,11 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
 
         odbrojavanje15Sek = false
 
-        tajmer?.cancel()
-        tajmer?.purge()
-        tajmer = null
+        with (tajmer) {
+            this?.cancel()
+            this?.purge()
+            tajmer = null
+        }
     }
 
     private fun prikaziListu(prikaz: Int) {
@@ -665,8 +676,8 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
         val linija = findViewById<TextView>(R.id.ln)!!
         val lista = findViewById<ListView>(R.id.ls)!!
         val zatvori = findViewById<ImageButton>(R.id.zatvori)!!
-        linija.text=linijarv
-        lista.adapter=PrikazStanicaTrasa(this, listasifraNaziv)
+        linija.text = linijarv
+        lista.adapter = PrikazStanicaTrasa(this, listasifraNaziv)
 
         baner?.visibility = View.VISIBLE
 
@@ -694,7 +705,11 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
     fun reset() {
         sveStanice.removeAllItems()
         markeriVozila.removeAllItems()
+        odabranoStajalisteSloj.removeAllItems()
         putanja.clearPath()
+
+        VoziloInfo.voziloCache = mutableListOf("0","0")
+        stopTajmera()
 
         ukloniBaner()
     }
@@ -707,7 +722,7 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
     override fun onResume() {
         if (stanicaId.isNotEmpty())
             dugmezaosvezavanje(0, 1)
-        if ((System.currentTimeMillis().div(1000)) - (Podesavanja.deljenapodesavanja.getLong("zatvoren", 0)) > 120) {
+        if ((System.currentTimeMillis().div(1000)) - (Podesavanja.deljenapodesavanja.getLong("zatvoren", 0)) > 300) {
             reset()
         }
         super.onResume()

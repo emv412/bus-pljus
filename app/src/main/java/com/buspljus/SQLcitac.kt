@@ -336,12 +336,24 @@ class SQLcitac(private val context: Context) {
         }
     }
 
-    fun prikaziTrasu(linija: String, sifraStajalista: String): Triple<JSONArray,JSONArray,MutableList<GeoPoint>> {
+    fun prikaziTrasu(linija: String, sifraStajalista: String, smer: String?): Triple<JSONArray, JSONArray, MutableList<GeoPoint>> {
         var trasaUnzip = ""
         var jsonIDStanice : JSONArray? = null
         val jsonGeoPointStanice = mutableListOf<GeoPoint>()
+        val nizZahtev: Array<String>
+        val selekcioniZahtev : String
 
-        kursor = SQLzahtev("linije", arrayOf("stajalista", "trasa"), "_id = ? and stajalista like ?", arrayOf(linija, "%\"$sifraStajalista\"%"), null)
+        if (smer != null) {
+            nizZahtev = arrayOf(linija, "%\"$sifraStajalista\"%", smer)
+            selekcioniZahtev = "_id = ? and stajalista like ? and smer = ?"
+        }
+        else {
+            nizZahtev = arrayOf(linija, "%\"$sifraStajalista\"%")
+            selekcioniZahtev = "_id = ? and stajalista like ?"
+        }
+
+
+        kursor = SQLzahtev("linije", arrayOf("stajalista", "trasa"), selekcioniZahtev, nizZahtev, null)
         with (kursor) {
             if (count > 0) {
                 use {
@@ -361,8 +373,20 @@ class SQLcitac(private val context: Context) {
         return Triple(jsonIDStanice!!, JSONArray(trasaUnzip), jsonGeoPointStanice)
     }
 
-    fun sveLinije(): List<String> {
-        kursor = SQLcitac(context).SQLzahtev("linije", arrayOf("_id"), "smer = ?", arrayOf("0"), "_id")
+    fun sveLinije(pretraga: String): List<String> {
+        val upit : String
+        val niz_upit : Array<String>
+
+        if (pretraga.isNotEmpty()) {
+            upit = "smer = ? and _id like ?"
+            niz_upit = arrayOf("0", "$pretraga%")
+        }
+        else {
+            upit = "smer = ?"
+            niz_upit = arrayOf("0")
+        }
+
+        kursor = SQLcitac(context).SQLzahtev("linije", arrayOf("_id"), upit, niz_upit, "_id")
 
         val lista = mutableListOf<String>()
 
@@ -390,12 +414,11 @@ class SQLcitac(private val context: Context) {
                     while (moveToNext()) {
                         with (lista) {
                             add(getString(getColumnIndexOrThrow("_id")))
-                            add(getString(getColumnIndexOrThrow("smer")))
+                            add(getInt(getColumnIndexOrThrow("smer")))
                             add(getString(getColumnIndexOrThrow("od")))
                             add(getString(getColumnIndexOrThrow("do")))
-                            add(getBlob(getColumnIndexOrThrow("trasa")))
-                            add(getString(getColumnIndexOrThrow("stajalista")))
                             add(getString(getColumnIndexOrThrow("datumrv")))
+                            add(JSONArray(getString(getColumnIndexOrThrow("stajalista"))))
                             add(getString(getColumnIndexOrThrow("redvoznje")))
                         }
                     }

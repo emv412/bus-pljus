@@ -13,13 +13,10 @@ class IzracunavanjeVremena {
     var vremeDolaska: LocalTime = LocalTime.now()
     var vremeDolaskaFinal = mutableListOf<LocalTime>()
     val spic = ((vremeDolaska.hour > 6) and (vremeDolaska.hour < 9)) or ((vremeDolaska.hour > 13) and (vremeDolaska.hour < 18))
-    private val mnozilac =
-        when (VoziloInfo.danunedelji) {
-            0 -> if (spic) 5.0 else 4.0
-            1 -> if (spic) 4.5 else 3.8
-            2 -> 3.8
-            else -> 4.0
-        }
+    private val mnozilac = when (VoziloInfo.danunedelji) {
+        0 -> if (spic) 4.3 else 4.0
+        else -> 4.0
+    }
 
     fun tranziranjeRV(rv: String, trasa: String): List<GeoPoint> {
         val listaGP = mutableListOf<GeoPoint>()
@@ -30,7 +27,7 @@ class IzracunavanjeVremena {
         for (sat in rvJSON.keys().iterator()) {
             val minut = JSONArray(rvJSON[sat].toString()).getJSONArray(VoziloInfo.danunedelji)
             for (c in 0 until minut.length()) {
-                if (LocalTime.parse(sat+":"+minut[c]).isBefore(LocalTime.now())) {
+                if (LocalTime.parse(sat + ":" + minut[c]).isBefore(LocalTime.now())) {
                     val vremenskoRastojanje = Duration.between(LocalTime.parse(sat+":"+minut[c] as String, DateTimeFormatter.ofPattern("HH:mm")), LocalTime.now()).toSeconds()
                     if (vremenskoRastojanje < potrebnoVremeZaPrelazakTrase) {
                         latLNG = JSONObject(trasaJSON[vremenskoRastojanje.div(4).toInt()].toString())

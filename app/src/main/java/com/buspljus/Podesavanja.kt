@@ -117,6 +117,7 @@ class Podesavanja : AppCompatActivity() {
                                                 val mapa = response.body!!.source().inputStream()
                                                 Internet().gunzip(mapa, File(preference.context.filesDir, "beograd.map"))
                                                 Toster(preference.context).toster(preference.context.resources.getString(R.string.mapa_nadogradjena))
+                                                Glavna.mapa.updateMap()
                                             }
 
                                             override fun neuspesanOdgovor(e: IOException) {

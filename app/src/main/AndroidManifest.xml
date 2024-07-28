@@ -28,13 +28,8 @@
             android:theme="@style/Theme.AppCompat.NoActionBar"
             android:launchMode="singleTask"
             android:screenOrientation="portrait"
-            android:exported="false">
-            <intent-filter>
-                <action android:name="android.intent.action.SEARCH" />
-            </intent-filter>
-            <meta-data
-                android:name="android.app.searchable"
-                android:resource="@xml/pretraga" />
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize">
         </activity>
         <activity
             android:name=".Podesavanja"

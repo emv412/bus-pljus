@@ -27,5 +27,4 @@ class Interfejs {
     interface odgovor {
         fun da(odg: Boolean)
     }
-
 }

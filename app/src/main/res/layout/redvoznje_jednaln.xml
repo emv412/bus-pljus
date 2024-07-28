@@ -95,4 +95,32 @@
         app:layout_constraintBottom_toTopOf="@+id/smerovi"
         app:layout_constraintEnd_toEndOf="parent" />
 
+    <ImageView
+        android:id="@+id/nemapol_img"
+        android:layout_width="192dp"
+        android:layout_height="213dp"
+        android:layout_marginTop="12dp"
+        android:layout_marginBottom="32dp"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/dani"
+        app:srcCompat="@drawable/nema_pol"
+        tools:visibility="visible" />
+
+    <TextView
+        android:id="@+id/nemapol_tv"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="19dp"
+        android:text="@string/nema_polazaka"
+        android:textAlignment="center"
+        android:textSize="24sp"
+        android:visibility="gone"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/nemapol_img"
+        tools:visibility="visible" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>

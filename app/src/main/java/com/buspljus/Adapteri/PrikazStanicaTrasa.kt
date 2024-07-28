@@ -11,7 +11,7 @@ import com.buspljus.R
 import org.oscim.core.GeoPoint
 import java.time.LocalTime
 
-data class sifraNaziv(val sifra : String, val naziv : String, val vreme: LocalTime, val pozicija: GeoPoint)
+data class sifraNaziv(val sifra: String, val naziv: String, val vreme: LocalTime?, val pozicija: GeoPoint)
 
 class PrikazStanicaTrasa(context: Context, private val items: List<sifraNaziv>) : ArrayAdapter<sifraNaziv>(context, R.layout.polazak_autost, items) {
 
@@ -37,7 +37,7 @@ class PrikazStanicaTrasa(context: Context, private val items: List<sifraNaziv>) 
         with (viewHolder) {
             sifraTextView.text = stavka.sifra
             nazivTextView.text = stavka.naziv
-            vremeDolTextView.text = stavka.vreme.toString()
+            vremeDolTextView.text = if (stavka.vreme != null) stavka.vreme.toString() else "-:--"
             //sifraTextView.setTextColor(context.resources.getColor(androidx.appcompat.R.color.secondary_text_default_material_dark))
             //nazivTextView.setTextColor(context.resources.getColor(androidx.appcompat.R.color.secondary_text_default_material_dark))
             //vremeDolTextView.setTextColor(context.resources.getColor(androidx.appcompat.R.color.secondary_text_default_material_dark))

@@ -21,6 +21,10 @@
         <item name="android:textColor">#FFFFFF</item>
     </style>
 
+    <style name="BottomSheetDialogStyle" parent="Theme.Design.Light.BottomSheetDialog">
+        <item name="android:windowSoftInputMode">adjustResize</item>
+    </style>
+
     <color name="siva">#aaaaaa</color>
     <color name="crvena">#c90a0a</color>
     <color name="plava">#4769a6</color>
