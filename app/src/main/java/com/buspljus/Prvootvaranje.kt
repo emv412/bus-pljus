@@ -32,7 +32,7 @@ class Prvootvaranje: AppCompatActivity() {
 
     fun skidanjeMapeibaze() {
         for (i in 5 .. 6) {
-            Internet().zahtevPremaInternetu(null,null, i, object: Interfejs.odgovorSaInterneta {
+            Internet().zahtevPremaInternetu(null,null, null, i, object: Interfejs.odgovorSaInterneta {
                 override fun uspesanOdgovor(response: Response) {
                     Handler(Looper.getMainLooper()).post { preuzimanje.isEnabled = false }
                     val preuzeto = response.body!!.source().inputStream()

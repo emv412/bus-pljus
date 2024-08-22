@@ -34,7 +34,6 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
-        android:layout_marginEnd="8dp"
         android:text="---"
         android:textSize="16sp"
         app:layout_constraintEnd_toStartOf="@+id/prvipolazak"
@@ -56,6 +55,7 @@
         android:id="@+id/prvipolazak"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
         android:layout_marginTop="8dp"
         android:layout_marginEnd="8dp"
         android:text="-:--"
@@ -63,6 +63,7 @@
         android:textStyle="bold"
         android:visibility="invisible"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/linija_relacija"
         app:layout_constraintTop_toBottomOf="@+id/polasci_textview"
         tools:visibility="visible" />
 
@@ -82,11 +83,10 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
-        android:layout_marginBottom="8dp"
+        android:layout_marginTop="2dp"
         android:text="@string/rastojanje"
-        app:layout_constraintBottom_toBottomOf="@id/divider2"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/gbvozila_textview" />
+        app:layout_constraintTop_toBottomOf="@id/posao_u" />
 
     <TextView
         android:id="@+id/polasci_textview"
@@ -102,17 +102,6 @@
         app:layout_constraintTop_toTopOf="parent"
         tools:visibility="visible" />
 
-    <View
-        android:id="@+id/divider2"
-        android:layout_width="0dp"
-        android:layout_height="1dp"
-        android:layout_marginTop="8dp"
-        android:background="?android:attr/listDivider"
-        android:theme="@android:style/Widget.DeviceDefault.PopupMenu"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/rastojanje_textview" />
-
     <Button
         android:id="@+id/presedanjebgvoz"
         style="@style/Widget.AppCompat.Button.Borderless.Colored"
@@ -126,7 +115,7 @@
         android:textAlignment="textStart"
         android:visibility="gone"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/divider2"
+        app:layout_constraintTop_toBottomOf="@id/rastojanje_textview"
         tools:visibility="visible" />
 
     <Button
@@ -240,5 +229,29 @@
         android:visibility="gone"
         app:layout_constraintEnd_toEndOf="@id/presedanjebgvoz"
         app:layout_constraintStart_toStartOf="@id/presedanjebgvoz" />
+
+    <TextView
+        android:id="@+id/posao_u"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="2dp"
+        android:text="@string/posao_u"
+        android:visibility="gone"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.052"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/gbvozila_textview"
+        tools:visibility="gone" />
+
+    <TextView
+        android:id="@+id/posao_u_vreme"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="5dp"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="@+id/posao_u"
+        app:layout_constraintStart_toEndOf="@+id/posao_u"
+        app:layout_constraintTop_toTopOf="@+id/posao_u"
+        tools:visibility="gone" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

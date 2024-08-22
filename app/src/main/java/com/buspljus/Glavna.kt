@@ -469,57 +469,57 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
                 val linija = linije.next()
                 val maximumI = json.getJSONArray(linija).length()
                 for (i in 0 until maximumI) {
-                    val vozilo = MarkerItem(null, null, null)
+                    val jsonObject = json.getJSONArray(linija).getJSONObject(i)
+                    val vozilo = MojMarker(
+                        linija.replace(" ",""),
+                        jsonObject.getString("g"),
+                        null,
+                        jsonObject.getString("p"),
+                        GeoPoint((jsonObject.getDouble("lt")), jsonObject.getDouble("lg")
+                        ))
 
-                    // funkcija za prikaz garaznog broja vozila
-                    vozilo.title = linija.replace(" ","")
-                    vozilo.description = json.getJSONArray(linija).getJSONObject(i).getString("g") + ", " + json.getJSONArray(linija).getJSONObject(i).getString("p")
-                    if ((vozilo.description.toString()
-                            .startsWith("P9")) or (vozilo.description.toString().startsWith("P8"))
-                    ) {
-                        if (vozilo.description.toString().startsWith("P9"))
+                    if ((vozilo.garazniBOriginal.startsWith("P9")) or (vozilo.garazniBOriginal.startsWith("P8"))) {
+                        if (vozilo.garazniBOriginal.startsWith("P9"))
                             boja = 1
-                        if (vozilo.description.toString().startsWith("P8")) {
+                        if (vozilo.garazniBOriginal.startsWith("P8")) {
                             boja =
-                                if (vozilo.description.toString()[2] == '0' || vozilo.description.toString()[2] == '1')
+                                if (vozilo.garazniBOriginal[2] == '0' || vozilo.garazniBOriginal[2] == '1')
                                     2 //tramvaj
                                 else 3 //trolejbus
-                            if (vozilo.description.toString()[2] == '0')
-                                vozilo.description = vozilo.description.replaceFirst("0","2")
+
+                            if (vozilo.garazniBOriginal[2] == '0')
+                                vozilo.garazniBMenjan = vozilo.garazniBOriginal.replaceFirst("0","2")
                         }
-                        if (vozilo.description.toString()[2] == '0')
-                            vozilo.description = vozilo.description.drop(3)
-                        else vozilo.description = vozilo.description.drop(2)
+                        if (vozilo.garazniBOriginal[2] == '0')
+                            vozilo.garazniBMenjan = vozilo.garazniBOriginal.drop(3)
+                        else vozilo.garazniBMenjan = vozilo.garazniBOriginal.drop(2)
                     } else boja = 1
 
-                    vozilo.geoPoint = GeoPoint(
-                        (json.getJSONArray(linija).getJSONObject(i).getDouble("lt")),
-                        json.getJSONArray(linija).getJSONObject(i).getDouble("lg")
-                    )
                     vozilo.marker = (MarkerSymbol(
                         AndroidBitmap(TekstUBitmap().getBitmapFromTitle(
                             when (Podesavanja.deljenapodesavanja.getBoolean("prikazgb", false)) {
-                                true -> vozilo.title + " (" + vozilo.description + ")"
-                                false -> vozilo.title
+                                true -> vozilo.brojLinije + " (" + vozilo.garazniBMenjan + ")"
+                                false -> vozilo.brojLinije
                             }, this, boja)),
                         MarkerSymbol.HotspotPlace.BOTTOM_CENTER, true
                     ))
+
                     markeriVozila.addItem(vozilo)
 
-                    if ((stajaliste.geoPoint.sphericalDistance(GeoPoint(vozilo.geoPoint!!.latitude, vozilo.geoPoint!!.longitude)) < najbliziAutobusRastojanje)
-                        and ((stajaliste.geoPoint.sphericalDistance(GeoPoint(vozilo.geoPoint!!.latitude, vozilo.geoPoint!!.longitude)) > 100))) {
+                    if ((stajaliste.geoPoint.sphericalDistance(GeoPoint(vozilo.polozajVozila.latitude, vozilo.polozajVozila.longitude)) < najbliziAutobusRastojanje)
+                        and ((stajaliste.geoPoint.sphericalDistance(GeoPoint(vozilo.polozajVozila.latitude, vozilo.polozajVozila.longitude)) > 100))) {
 
                         najbliziAutobusRastojanje =
                             stajaliste.geoPoint.sphericalDistance(
                                 GeoPoint(
-                                    vozilo.geoPoint!!.latitude,
-                                    vozilo.geoPoint!!.longitude
+                                    vozilo.polozajVozila.latitude,
+                                    vozilo.polozajVozila.longitude
                                 )
                             )
                         najbliziAutobusMarker = MarkerItem(
                             null,
                             null,
-                            GeoPoint(vozilo.geoPoint!!.latitude, vozilo.geoPoint!!.longitude)
+                            GeoPoint(vozilo.polozajVozila.latitude, vozilo.polozajVozila.longitude)
                         )
                     }
                 }
@@ -571,7 +571,7 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
     }
 
     override fun onItemSingleTapUp(index: Int, item: MarkerInterface?): Boolean {
-        val markerItem = item as MarkerItem
+        val markerItem = item as MojMarker
         VoziloInfo(this@Glavna).redvoznjeKliknaVozilo(markerItem, stajaliste)
         return true
     }
@@ -623,7 +623,7 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
 
     private fun zahtevZaPozicijuVozila() {
         dugmezaosvezavanje(1, 0)
-        Internet().zahtevPremaInternetu(stanicaId, null, 1,  object : Interfejs.odgovorSaInterneta {
+        Internet().zahtevPremaInternetu(stanicaId, null, null, 1,  object : Interfejs.odgovorSaInterneta {
             override fun uspesanOdgovor(response: Response) {
                 if (response.isSuccessful) {
                     primljeniString = response.body!!.string()

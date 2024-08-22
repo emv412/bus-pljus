@@ -14,7 +14,7 @@ import java.util.zip.GZIPInputStream
 class Internet : OkHttpClient() {
 
     companion object {
-        const val POLOZAJ_FLY = "http://buspljus.fly.dev/?st="
+        const val POLOZAJ_VOZILA = "http://buspljus.fly.dev/?st="
         const val NADOGRADNJA_PROGRAMA = "https://api.github.com/repos/emv412/bus-pljus/releases/latest"
 
         const val MAPA_GZ = "https://api.github.com/repos/emv412/buspljus-materijal/contents/beograd.map.gz"
@@ -22,18 +22,23 @@ class Internet : OkHttpClient() {
         const val MAPA_GZ_DOWNLOAD = "https://raw.githubusercontent.com/emv412/buspljus-materijal/main/beograd.map.gz"
         const val SVIPODACI_GZ_DOWNLOAD = "https://raw.githubusercontent.com/emv412/buspljus-materijal/main/svi_podaci.db.gz"
 
-        const val UPIT_STANICA_LINIJE = "&linija="
+        const val LINIJA = "&linija="
+        const val SLEDECA_STANICA = "&s="
+
         val adresa = Request.Builder()
         var zahtev: Call? = null
     }
 
-    fun zahtevPremaInternetu(stanica: String?, linija: String?, argument: Int, callback: Interfejs.odgovorSaInterneta) {
+    fun zahtevPremaInternetu(stanica: String?, linija: String?, garBroj: String?, argument: Int, callback: Interfejs.odgovorSaInterneta) {
         when (argument) {
             1 -> if (linija == null) {
-                adresa.url(POLOZAJ_FLY + stanica)
+                adresa.url(POLOZAJ_VOZILA + stanica)
             }
             else {
-                adresa.url(POLOZAJ_FLY + stanica + UPIT_STANICA_LINIJE + linija)
+                if (garBroj == null)
+                    adresa.url(POLOZAJ_VOZILA + stanica + LINIJA + linija)
+                else
+                    adresa.url(POLOZAJ_VOZILA + stanica + LINIJA + linija + SLEDECA_STANICA + garBroj)
             }
             2 -> adresa.url(MAPA_GZ)
             3 -> adresa.url(SVIPODACI_GZ)

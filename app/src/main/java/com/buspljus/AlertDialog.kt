@@ -39,4 +39,8 @@ class AlertDialog(private val context: Context): AlertDialog(context) {
             }
             .show()
     }
+
+    fun prikaziGresku(g: Exception) {
+        Builder(context).setTitle(R.string.greska_u_programu).setMessage(g.toString()).show()
+    }
 }

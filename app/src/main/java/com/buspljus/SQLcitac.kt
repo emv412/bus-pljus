@@ -4,7 +4,6 @@ import android.content.ContentValues
 import android.content.Context
 import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
-import android.util.Log
 import com.buspljus.VoziloInfo.Companion.danunedelji
 import okhttp3.Response
 import org.json.JSONArray
@@ -256,13 +255,27 @@ class SQLcitac(private val context: Context) {
         return rezultat
     }
 
-    fun kliknavozilo(linija: String, stanica: String): List<String> {
-        val lista = mutableListOf<String>()
+    fun kliknavozilo(linija: String, stanica: String, gb: String, vratiListu: Interfejs.vracenaLista) {
+        fun nastavi() {
+            val lista = mutableListOf<String>()
+            if (kursor.count == 1) {
+                with (kursor) {
+                    use {
+                        val kolone = listOf("od", "do", "stajalista", "redvoznje", "datumrv")
+                        moveToFirst()
+                        for (i in kolone) {
+                            lista.add(getString(getColumnIndexOrThrow(i)))
+                        }
+                    }
+                }
+            }
+            vratiListu.vratiListu(lista)
+        }
 
         kursor = SQLzahtev("linije", arrayOf("*"), "_id = ? and stajalista like ?", arrayOf(linija, "%\"$stanica\"%"), null)
 
         if (kursor.count == 0) {
-            Internet().zahtevPremaInternetu(stanica, linija, 1, object : Interfejs.odgovorSaInterneta {
+            Internet().zahtevPremaInternetu(stanica, linija, null, 1, object : Interfejs.odgovorSaInterneta {
                 override fun uspesanOdgovor(response: Response) {
                     try {
                         var pronadjeno = false
@@ -290,13 +303,14 @@ class SQLcitac(private val context: Context) {
                                     }
                                 }
                             }
-                            if (pronadjeno)
+                            if (pronadjeno) {
                                 kursor = SQLzahtev("linije", arrayOf("*"), "_id = ? and stajalista like ?", arrayOf(linija, "%\"$stanica\"%"), null)
+                                nastavi()
+                            }
                             break
                         }
                     } catch (g: Exception) {
-                        Toster(context).toster(g.toString())
-                        Log.d(context.resources.getString(R.string.debug),""+g)
+                        AlertDialog(context).prikaziGresku(g)
                     }
                 }
 
@@ -305,19 +319,22 @@ class SQLcitac(private val context: Context) {
                     }
                 })
         }
-        if (kursor.count > 0) {
-            with (kursor) {
-                use {
-                    val kolone = listOf("od", "do", "stajalista", "redvoznje", "datumrv")
-                    moveToFirst()
-                    for (i in kolone) {
-                        lista.add(getString(getColumnIndexOrThrow(i)))
-                    }
+        if (kursor.count > 1) {
+            Internet().zahtevPremaInternetu(stanica, linija, gb, 1, object: Interfejs.odgovorSaInterneta{
+                override fun uspesanOdgovor(response: Response) {
+                    val odg = response.body!!.string()
+                    kursor = SQLzahtev("linije", arrayOf("*"), "_id = ? and stajalista like ?", arrayOf(linija, "%\"$odg\"%"), null)
+                    nastavi()
                 }
-            }
+
+                override fun neuspesanOdgovor(e: IOException) {
+                    Toster(context).toster(context.resources.getString(R.string.nema_interneta))
+                }
+
+            })
         }
-        else kursor.close()
-        return lista
+        else nastavi()
+        kursor.close()
     }
 
     fun ubacivanjeTestMarkera(sifraStajalista: String, ifejs: Interfejs.specMarker) {

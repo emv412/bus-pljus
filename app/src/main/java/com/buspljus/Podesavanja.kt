@@ -75,7 +75,7 @@ class Podesavanja : AppCompatActivity() {
         override fun onPreferenceClick(preference: Preference): Boolean {
             when (preference.key) {
                 "nadogradi_program" -> {
-                    Internet().zahtevPremaInternetu(null, null, 4, object : Interfejs.odgovorSaInterneta {
+                    Internet().zahtevPremaInternetu(null, null, null, 4, object : Interfejs.odgovorSaInterneta {
                         override fun uspesanOdgovor(response: Response) {
                             if (response.isSuccessful) {
                                 val odgovor = JSONObject(response.body!!.string())
@@ -105,14 +105,14 @@ class Podesavanja : AppCompatActivity() {
                     })
                 }
                 "nadogradimapu" -> {
-                    Internet().zahtevPremaInternetu(null, null, 2, object : Interfejs.odgovorSaInterneta {
+                    Internet().zahtevPremaInternetu(null, null, null,2, object : Interfejs.odgovorSaInterneta {
                         override fun uspesanOdgovor(response: Response) {
                             val preuzeto = JSONObject(response.body!!.string())
                             val velicinaMape = preuzeto.getDouble("size")
                             Handler(Looper.getMainLooper()).post {
                                 AlertDialog(preference.context).preuzimanjeMapeiliStanica(0, velicinaMape, object: Interfejs.odgovor {
                                     override fun da(odg: Boolean) {
-                                        Internet().zahtevPremaInternetu(null, null, 5, object : Interfejs.odgovorSaInterneta {
+                                        Internet().zahtevPremaInternetu(null, null, null,5, object : Interfejs.odgovorSaInterneta {
                                             override fun uspesanOdgovor(response: Response) {
                                                 val mapa = response.body!!.source().inputStream()
                                                 Internet().gunzip(mapa, File(preference.context.filesDir, "beograd.map"))
@@ -135,14 +135,14 @@ class Podesavanja : AppCompatActivity() {
                     })
                 }
                 "nadogradistanice" -> {
-                    Internet().zahtevPremaInternetu(null, null, 3, object : Interfejs.odgovorSaInterneta {
+                    Internet().zahtevPremaInternetu(null, null, null,3, object : Interfejs.odgovorSaInterneta {
                         override fun uspesanOdgovor(response: Response) {
                             val preuzeto = JSONObject(response.body!!.string())
                             val velicinaBaze = preuzeto.getDouble("size")
                             Handler(Looper.getMainLooper()).post {
                                 AlertDialog(preference.context).preuzimanjeMapeiliStanica(1, velicinaBaze, object: Interfejs.odgovor {
                                     override fun da(odg: Boolean) {
-                                        Internet().zahtevPremaInternetu(null, null, 6, object : Interfejs.odgovorSaInterneta {
+                                        Internet().zahtevPremaInternetu(null, null, null,6, object : Interfejs.odgovorSaInterneta {
                                             override fun uspesanOdgovor(response: Response) {
                                                 val baza = response.body!!.source().inputStream()
                                                 preference.context.getDatabasePath(SQLcitac.IME_BAZE)?.path?.let { File(it) }?.let {

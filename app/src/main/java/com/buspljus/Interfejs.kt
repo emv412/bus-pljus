@@ -27,4 +27,12 @@ class Interfejs {
     interface odgovor {
         fun da(odg: Boolean)
     }
+
+    interface upitSlSt {
+        fun promenikursor(odg: String)
+    }
+
+    interface vracenaLista {
+        fun vratiListu(lista: List<String>)
+    }
 }

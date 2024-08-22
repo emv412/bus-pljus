@@ -32,6 +32,7 @@
     <string name="opis_programa">Мала, брза апликација за преглед положаја возила градског превоза у Београду. Користи OpenStreetMap податке, док за графичко исцртавање користи VTM.</string>
     <string name="podesavanja_prikaza">Приказ</string>
     <string name="potrebnopreuzeti">Потребно је преузети</string>
+    <string name="posao_u">Кренуо у</string>
     <string name="praznik_nedelja">Недеља (празник)</string>
     <string name="presedanjebgvoz">Преседање на воз</string>
     <string name="pretraga">Претрага линија…</string>
