@@ -86,7 +86,7 @@
         android:layout_marginTop="2dp"
         android:text="@string/rastojanje"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/posao_u" />
+        app:layout_constraintTop_toBottomOf="@id/krenuo_u" />
 
     <TextView
         android:id="@+id/polasci_textview"
@@ -231,11 +231,11 @@
         app:layout_constraintStart_toStartOf="@id/presedanjebgvoz" />
 
     <TextView
-        android:id="@+id/posao_u"
+        android:id="@+id/krenuo_u"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="2dp"
-        android:text="@string/posao_u"
+        android:text="@string/sl_polasci"
         android:visibility="gone"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.052"
@@ -244,14 +244,14 @@
         tools:visibility="gone" />
 
     <TextView
-        android:id="@+id/posao_u_vreme"
+        android:id="@+id/krenuo_u_vreme"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="5dp"
         android:visibility="gone"
-        app:layout_constraintBottom_toBottomOf="@+id/posao_u"
-        app:layout_constraintStart_toEndOf="@+id/posao_u"
-        app:layout_constraintTop_toTopOf="@+id/posao_u"
+        app:layout_constraintBottom_toBottomOf="@+id/krenuo_u"
+        app:layout_constraintStart_toEndOf="@+id/krenuo_u"
+        app:layout_constraintTop_toTopOf="@+id/krenuo_u"
         tools:visibility="gone" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

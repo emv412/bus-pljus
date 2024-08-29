@@ -274,41 +274,48 @@ class SQLcitac(private val context: Context) {
 
         kursor = SQLzahtev("linije", arrayOf("*"), "_id = ? and stajalista like ?", arrayOf(linija, "%\"$stanica\"%"), null)
 
-        if (kursor.count == 0) {
-            Internet().zahtevPremaInternetu(stanica, linija, null, 1, object : Interfejs.odgovorSaInterneta {
+        if (kursor.count != 1) {
+            Internet().zahtevPremaInternetu(stanica, linija, 1, object : Interfejs.odgovorSaInterneta {
                 override fun uspesanOdgovor(response: Response) {
                     try {
                         var pronadjeno = false
                         val jsonOdOdgovora = JSONArray(response.body!!.string())
-                        for (i in 0 until jsonOdOdgovora.length()) {
-                            with (SQLzahtev("linije", arrayOf("*"), "_id = ? and stajalista like ?",
-                                arrayOf(linija, "%\"${jsonOdOdgovora.getString(i)}\"%"), null)) {
-                                if (count == 1) {
-                                    use {
-                                        moveToFirst()
-                                        val nizStanicaUBazi = JSONArray(getString(getColumnIndexOrThrow("stajalista")))
-                                        for (n in 0 until nizStanicaUBazi.length()) {
-                                            if (jsonOdOdgovora[i] == nizStanicaUBazi[n]) {
-                                                val smerKretanjaLinije = getString(getColumnIndexOrThrow("smer"))
-                                                val vrednostiZaUpis = ContentValues()
-                                                vrednostiZaUpis.put("stajalista", jsonOdOdgovora.toString())
-                                                val brojUpisanihRedova = baza.update("linije", vrednostiZaUpis, "_id = ? and smer = ?",
-                                                    arrayOf(linija, smerKretanjaLinije))
-                                                if (brojUpisanihRedova > 0) { Toster(context).toster("OK")
+                        if (kursor.count > 1) {
+                            kursor = SQLzahtev("linije", arrayOf("*"), "_id = ? and stajalista = ?", arrayOf(linija, jsonOdOdgovora.toString().replace(",",", ")), null)
+                            nastavi()
+                        }
+                        else {
+                            for (i in 0 until jsonOdOdgovora.length()) {
+                                with (SQLzahtev("linije", arrayOf("*"), "_id = ? and stajalista like ?",
+                                    arrayOf(linija, "%\"${jsonOdOdgovora.getString(i)}\"%"), null)) {
+                                    if (count == 1) {
+                                        use {
+                                            moveToFirst()
+                                            val nizStanicaUBazi = JSONArray(getString(getColumnIndexOrThrow("stajalista")))
+                                            for (n in 0 until nizStanicaUBazi.length()) {
+                                                if (jsonOdOdgovora[i] == nizStanicaUBazi[n]) {
+                                                    val smerKretanjaLinije = getString(getColumnIndexOrThrow("smer"))
+                                                    val vrednostiZaUpis = ContentValues()
+                                                    vrednostiZaUpis.put("stajalista", jsonOdOdgovora.toString())
+                                                    val brojUpisanihRedova = baza.update("linije", vrednostiZaUpis, "_id = ? and smer = ?",
+                                                        arrayOf(linija, smerKretanjaLinije))
+                                                    if (brojUpisanihRedova > 0) { Toster(context).toster("OK")
+                                                    }
+                                                    pronadjeno = true
+                                                    break
                                                 }
-                                                pronadjeno = true
-                                                break
                                             }
                                         }
                                     }
                                 }
+                                if (pronadjeno) {
+                                    kursor = SQLzahtev("linije", arrayOf("*"), "_id = ? and stajalista like ?", arrayOf(linija, "%\"$stanica\"%"), null)
+                                    nastavi()
+                                }
+                                break
                             }
-                            if (pronadjeno) {
-                                kursor = SQLzahtev("linije", arrayOf("*"), "_id = ? and stajalista like ?", arrayOf(linija, "%\"$stanica\"%"), null)
-                                nastavi()
-                            }
-                            break
                         }
+
                     } catch (g: Exception) {
                         AlertDialog(context).prikaziGresku(g)
                     }
@@ -318,20 +325,6 @@ class SQLcitac(private val context: Context) {
                         Toster(context).toster(context.resources.getString(R.string.nema_interneta))
                     }
                 })
-        }
-        if (kursor.count > 1) {
-            Internet().zahtevPremaInternetu(stanica, linija, gb, 1, object: Interfejs.odgovorSaInterneta{
-                override fun uspesanOdgovor(response: Response) {
-                    val odg = response.body!!.string()
-                    kursor = SQLzahtev("linije", arrayOf("*"), "_id = ? and stajalista like ?", arrayOf(linija, "%\"$odg\"%"), null)
-                    nastavi()
-                }
-
-                override fun neuspesanOdgovor(e: IOException) {
-                    Toster(context).toster(context.resources.getString(R.string.nema_interneta))
-                }
-
-            })
         }
         else nastavi()
         kursor.close()

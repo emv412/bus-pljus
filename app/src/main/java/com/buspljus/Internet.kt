@@ -23,22 +23,18 @@ class Internet : OkHttpClient() {
         const val SVIPODACI_GZ_DOWNLOAD = "https://raw.githubusercontent.com/emv412/buspljus-materijal/main/svi_podaci.db.gz"
 
         const val LINIJA = "&linija="
-        const val SLEDECA_STANICA = "&s="
 
         val adresa = Request.Builder()
         var zahtev: Call? = null
     }
 
-    fun zahtevPremaInternetu(stanica: String?, linija: String?, garBroj: String?, argument: Int, callback: Interfejs.odgovorSaInterneta) {
+    fun zahtevPremaInternetu(stanica: String?, linija: String?, argument: Int, callback: Interfejs.odgovorSaInterneta) {
         when (argument) {
             1 -> if (linija == null) {
                 adresa.url(POLOZAJ_VOZILA + stanica)
             }
             else {
-                if (garBroj == null)
-                    adresa.url(POLOZAJ_VOZILA + stanica + LINIJA + linija)
-                else
-                    adresa.url(POLOZAJ_VOZILA + stanica + LINIJA + linija + SLEDECA_STANICA + garBroj)
+                adresa.url(POLOZAJ_VOZILA + stanica + LINIJA + linija)
             }
             2 -> adresa.url(MAPA_GZ)
             3 -> adresa.url(SVIPODACI_GZ)

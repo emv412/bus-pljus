@@ -498,7 +498,7 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
                     vozilo.marker = (MarkerSymbol(
                         AndroidBitmap(TekstUBitmap().getBitmapFromTitle(
                             when (Podesavanja.deljenapodesavanja.getBoolean("prikazgb", false)) {
-                                true -> vozilo.brojLinije + " (" + vozilo.garazniBMenjan + ")"
+                                true -> vozilo.brojLinije + " (" + if (vozilo.garazniBMenjan == null) vozilo.garazniBOriginal else vozilo.garazniBMenjan + ")"
                                 false -> vozilo.brojLinije
                             }, this, boja)),
                         MarkerSymbol.HotspotPlace.BOTTOM_CENTER, true
@@ -623,7 +623,7 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
 
     private fun zahtevZaPozicijuVozila() {
         dugmezaosvezavanje(1, 0)
-        Internet().zahtevPremaInternetu(stanicaId, null, null, 1,  object : Interfejs.odgovorSaInterneta {
+        Internet().zahtevPremaInternetu(stanicaId, null, 1, object : Interfejs.odgovorSaInterneta {
             override fun uspesanOdgovor(response: Response) {
                 if (response.isSuccessful) {
                     primljeniString = response.body!!.string()
