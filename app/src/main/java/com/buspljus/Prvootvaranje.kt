@@ -48,7 +48,7 @@ class Prvootvaranje: AppCompatActivity() {
                 }
 
                 override fun neuspesanOdgovor(e: IOException) {
-                    Toster(this@Prvootvaranje).toster(resources.getString(R.string.nema_interneta))
+                    Toster(this@Prvootvaranje).toster(resources.getString(R.string.greska_sa_vezom))
                 }
             })
         }

@@ -16,6 +16,9 @@
     <style name="Trolejbus">
         <item name="vozilo">@color/zelena</item>
     </style>
+    <style name="TestMarker">
+        <item name="vozilo">@color/crna</item>
+    </style>
 
     <style name="prvastavka" parent="@android:style/TextAppearance">
         <item name="android:textColor">#FFFFFF</item>

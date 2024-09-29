@@ -44,6 +44,8 @@ class Podesavanja : AppCompatActivity() {
             val nadogradnjaMape: Preference? = findPreference("nadogradimapu")
             val nadogradnjaStanica: Preference? = findPreference("nadogradistanice")
             val oProgramu: Preference? = findPreference("o_programu")
+            val prikazPoRV: CheckBoxPreference? = findPreference("prikazporv")
+            val mnozilac: Preference? = findPreference("mnozilac")
 
             deljenapodesavanja = PreferenceManager.getDefaultSharedPreferences(requireContext())
             stalanprikazgb = deljenapodesavanja.getBoolean("prikazgb", false)
@@ -51,11 +53,13 @@ class Podesavanja : AppCompatActivity() {
 
             prikazgb2?.onPreferenceChangeListener = this
             autounos?.onPreferenceChangeListener = this
+            prikazPoRV?.onPreferenceClickListener = this
 
             nadogradnjaPrograma?.onPreferenceClickListener = this
             nadogradnjaMape?.onPreferenceClickListener = this
             nadogradnjaStanica?.onPreferenceClickListener = this
             oProgramu?.onPreferenceClickListener = this
+            mnozilac?.onPreferenceClickListener = this
         }
 
         override fun onPreferenceChange(podesavanje: Preference, podesenaVrednost: Any?): Boolean {
@@ -100,7 +104,7 @@ class Podesavanja : AppCompatActivity() {
                         }
 
                         override fun neuspesanOdgovor(e: IOException) {
-                            context?.let { Toster(it).toster(resources.getString(R.string.nema_interneta)) }
+                            context?.let { Toster(it).toster(resources.getString(R.string.greska_sa_vezom)) }
                         }
                     })
                 }
@@ -121,7 +125,7 @@ class Podesavanja : AppCompatActivity() {
                                             }
 
                                             override fun neuspesanOdgovor(e: IOException) {
-                                                Toster(preference.context).toster(resources.getString(R.string.nema_interneta))
+                                                Toster(preference.context).toster(resources.getString(R.string.greska_sa_vezom))
                                             }
                                         })
                                     }
@@ -130,7 +134,7 @@ class Podesavanja : AppCompatActivity() {
                         }
 
                         override fun neuspesanOdgovor(e: IOException) {
-                            Toster(preference.context).toster(resources.getString(R.string.nema_interneta))
+                            Toster(preference.context).toster(resources.getString(R.string.greska_sa_vezom))
                         }
                     })
                 }
@@ -145,14 +149,16 @@ class Podesavanja : AppCompatActivity() {
                                         Internet().zahtevPremaInternetu(null, null, 6, object : Interfejs.odgovorSaInterneta {
                                             override fun uspesanOdgovor(response: Response) {
                                                 val baza = response.body!!.source().inputStream()
+                                                val sacuvanestanice = SQLcitac(preference.context).dobaviSacuvaneStanice()
                                                 preference.context.getDatabasePath(SQLcitac.IME_BAZE)?.path?.let { File(it) }?.let {
                                                     Internet().gunzip(baza, it)
                                                 }
+                                                SQLcitac(preference.context).sacuvajStanicu(sacuvanestanice,1)
                                                 Toster(preference.context).toster(preference.context.resources.getString(R.string.baza_nadogradjena))
                                             }
 
                                             override fun neuspesanOdgovor(e: IOException) {
-                                                Toster(preference.context).toster(resources.getString(R.string.nema_interneta))
+                                                Toster(preference.context).toster(resources.getString(R.string.greska_sa_vezom))
                                             }
                                         })
                                     }
@@ -161,12 +167,15 @@ class Podesavanja : AppCompatActivity() {
                         }
 
                         override fun neuspesanOdgovor(e: IOException) {
-                            Toster(preference.context).toster(resources.getString(R.string.nema_interneta))
+                            Toster(preference.context).toster(resources.getString(R.string.greska_sa_vezom))
                         }
                     })
                 }
                 "o_programu" -> {
                     startActivity(Intent(context, OProgramu::class.java))
+                }
+                "mnozilac" -> {
+                    AlertDialog(preference.context).podesavanjeMnozioca()
                 }
             }
             return true

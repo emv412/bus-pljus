@@ -26,6 +26,7 @@ class TekstUBitmap {
                     1 -> R.style.Autobus
                     2 -> R.style.Tramvaj
                     3 -> R.style.Trolejbus
+                    4 -> R.style.TestMarker
                     else -> {R.style.Autobus}
                 }).theme))
 

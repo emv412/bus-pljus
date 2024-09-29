@@ -66,9 +66,9 @@ class VoziloInfo(private val context: Context) {
     private var voziloNaOkretnici = false
     private var samoBGVBoolean = false
     private var rezultat = mutableListOf(listOf<String>())
+    private var vozoviPosleVremena : LocalTime? = null
 
     private lateinit var vreme : String
-    private lateinit var vozoviPosleVremena : LocalTime
     private lateinit var prviSledeciPolazak : LocalTime
     private lateinit var polazakU : TextView
     private lateinit var polasci_textview : TextView
@@ -177,6 +177,89 @@ class VoziloInfo(private val context: Context) {
                         var staroRastojanje = 1000.0
                         var novoRastojanje: Double
 
+                        fun ucitajStanice() {
+                            try {
+                                prosirenaSekcija = dialog.findViewById(R.id.prosirena_sekcija)!!
+                                if (prosirenaSekcija.visibility == View.VISIBLE) {
+                                    izvrsiUI.post { prosirenaSekcija.visibility = View.GONE }
+                                } else {
+                                    with (dialog) {
+                                        stanicepadajucalista = findViewById(R.id.stanicepadajucalista)!!
+                                        izvrsiUI.post { prosirenaSekcija.visibility = View.VISIBLE }
+                                    }
+
+                                    val adapter = ArrayAdapter(context, R.layout.spinneritem, zeleznickeStaniceZaListu.map { it.value[0] } )
+                                    adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+                                    stanicepadajucalista.adapter = adapter
+
+                                    stanicepadajucalista.onItemSelectedListener =
+                                        object : AdapterView.OnItemSelectedListener {
+                                            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+                                                izvrsiUI.post { ucitavamStanice.visibility = View.VISIBLE }
+
+                                                val autoSTGeoPoint = zeleznickeStaniceZaListu.map { it.value[2] }[position] as GeoPoint
+                                                val izlaznaSt = SQLcitac(context).idStaniceUNaziv(zeleznickeStaniceZaListu.map { it.value[3] }[position] as String)
+
+                                                prikazilokstanice.setOnClickListener {
+                                                    try {
+                                                        val xy = zeleznickeStaniceZaListu.map {it.value[2]}[position] as GeoPoint
+                                                        Glavna.mapa.setMapPosition(xy.latitude, xy.longitude, 80000.0)
+                                                        crtanjeTrase(linija, odabranoStajalisteMarker, zeleznickeStaniceZaListu.map { it.value[3] }[position] as String, proveriPolazak(), false)
+
+                                                        dialog.dismiss()
+                                                    }
+                                                    catch (g: Exception) {
+                                                        AlertDialog(context).prikaziGresku(g)
+                                                    }
+
+                                                }
+
+                                                try {
+                                                    vozoviPosleVremena = IzracunavanjeVremena().izracunavanjeVremena(
+                                                        listOf(autoSTGeoPoint),
+                                                        SQLcitac(context).prikaziTrasu(linija.brojLinije, odabranoStajalisteMarker.title, null).second,
+                                                        linija,
+                                                        proveriPolazak()
+                                                    )[0]
+                                                }
+                                                catch (e: Exception) {
+                                                    vozilostizeoko.text = context.resources.getString(R.string.neuspelo_trazenje_vozila)
+                                                }
+
+                                                if (vozoviPosleVremena != null) {
+                                                    vozilostizeoko.text = StringBuilder(context.resources.getString(R.string.dolazaknastajaliste) +
+                                                            " "+ izlaznaSt + " " + context.resources.getString(R.string.oko) +" "+ vozoviPosleVremena)
+                                                }
+
+                                                pregledPolaskaVozova(
+                                                    zeleznickeStaniceZaListu.map { it.value[0] }[position].toString(),
+                                                    zeleznickeStaniceZaListu.map { it.value[1] }[position].toString(), 1)
+
+                                                izvrsiUI.post { ucitavamStanice.visibility = View.GONE }
+                                            }
+
+                                            override fun onNothingSelected(parent: AdapterView<*>?) {
+                                            }
+
+                                        }
+                                }
+                            }
+                            catch (g: Exception) {
+                                AlertDialog(context).prikaziGresku(g)
+                            }
+
+                        }
+
+                        fun prikaziZSDugme() {
+                            if (zeleznickeStaniceZaListu.isNotEmpty()) {
+                                izvrsiUI.post { presedanjebgvoz.visibility = View.VISIBLE }
+
+                                presedanjebgvoz.setOnClickListener {
+                                    ucitajStanice()
+                                }
+                            }
+                        }
+
                         fun pretresiZS() {
                             try {
                                 if ((voziloCache[0] != linija.brojLinije) or (voziloCache[1] != odabranoStajalisteMarker.title)) {
@@ -191,7 +274,7 @@ class VoziloInfo(private val context: Context) {
 
                                             override fun koloneBGVOZ(lista: List<Any>) {
                                                 novoRastojanje = lista[3] as Double
-                                                if (novoRastojanje < staroRastojanje) {
+                                                if ((novoRastojanje < staroRastojanje) or (lista[0] !in zeleznickeStaniceZaListu)) {
                                                     zeleznickeStaniceZaListu[lista[0] as String] = listOf(lista[1], lista[2], jednaKoordinata, preostaleStanice[brojac][0])
                                                     staroRastojanje = lista[3] as Double
                                                 }
@@ -200,6 +283,8 @@ class VoziloInfo(private val context: Context) {
                                     }
                                 }
                                 izvrsiUI.post { ucitavanjePresedanja.visibility = View.GONE }
+
+                                prikaziZSDugme()
                             }
                             catch (e: Exception) {
                                 Toster(context).toster(e.toString())
@@ -207,82 +292,7 @@ class VoziloInfo(private val context: Context) {
 
                         }
 
-                        fun ucitajStanice() {
-                            prosirenaSekcija = dialog.findViewById(R.id.prosirena_sekcija)!!
-                            if (prosirenaSekcija.visibility == View.VISIBLE) {
-                                izvrsiUI.post { prosirenaSekcija.visibility = View.GONE }
-                            } else {
-                                with (dialog) {
-                                    stanicepadajucalista = findViewById(R.id.stanicepadajucalista)!!
-                                    izvrsiUI.post { prosirenaSekcija.visibility = View.VISIBLE }
-                                }
 
-                                val adapter = ArrayAdapter(context, R.layout.spinneritem, zeleznickeStaniceZaListu.map { it.value[0] } )
-                                adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-                                stanicepadajucalista.adapter = adapter
-
-                                stanicepadajucalista.onItemSelectedListener =
-                                    object : AdapterView.OnItemSelectedListener {
-                                        override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
-                                            izvrsiUI.post { ucitavamStanice.visibility = View.VISIBLE }
-
-                                            val autoSTGeoPoint = zeleznickeStaniceZaListu.map { it.value[2] }[position] as GeoPoint
-                                            val izlaznaSt = SQLcitac(context).idStaniceUNaziv(zeleznickeStaniceZaListu.map { it.value[3] }[position] as String)
-
-                                            prikazilokstanice.setOnClickListener {
-                                                try {
-                                                    val xy = zeleznickeStaniceZaListu.map {it.value[2]}[position] as GeoPoint
-                                                    Glavna.mapa.setMapPosition(xy.latitude, xy.longitude, 80000.0)
-                                                    crtanjeTrase(linija, odabranoStajalisteMarker, zeleznickeStaniceZaListu.map { it.value[3] }[position] as String, proveriPolazak(), false)
-
-                                                    dialog.dismiss()
-                                                }
-                                                catch (g: Exception) {
-                                                    AlertDialog(context).prikaziGresku(g)
-                                                }
-
-                                            }
-
-                                            try {
-                                                vozoviPosleVremena = IzracunavanjeVremena().izracunavanjeVremena(
-                                                    listOf(autoSTGeoPoint),
-                                                    SQLcitac(context).prikaziTrasu(linija.brojLinije, odabranoStajalisteMarker.title, null).second,
-                                                    linija,
-                                                    proveriPolazak()
-                                                )[0]
-                                            }
-                                            catch (e: Exception) {
-                                                AlertDialog(context).prikaziGresku(e)
-                                            }
-
-                                            if (::vozoviPosleVremena.isInitialized) {
-                                                vozilostizeoko.text = StringBuilder(context.resources.getString(R.string.dolazaknastajaliste) +
-                                                        " "+ izlaznaSt + " " + context.resources.getString(R.string.oko) +" "+ vozoviPosleVremena)
-                                                pregledPolaskaVozova(
-                                                    zeleznickeStaniceZaListu.map { it.value[0] }[position].toString(),
-                                                    zeleznickeStaniceZaListu.map { it.value[1] }[position].toString(), 1)
-
-                                            }
-
-                                            izvrsiUI.post { ucitavamStanice.visibility = View.GONE }
-                                        }
-
-                                        override fun onNothingSelected(parent: AdapterView<*>?) {
-                                        }
-
-                                    }
-                            }
-                        }
-
-                        fun prikaziZSDugme() {
-                            if (zeleznickeStaniceZaListu.isNotEmpty()) {
-                                izvrsiUI.post { presedanjebgvoz.visibility = View.VISIBLE }
-
-                                presedanjebgvoz.setOnClickListener {
-                                    ucitajStanice()
-                                }
-                            }
-                        }
 
                         fun proveraOkretnica() {
                             // Provera da li se vozilo nalazi na do 100 metara vazdusno od okretnice
@@ -333,7 +343,6 @@ class VoziloInfo(private val context: Context) {
                             try {
                                 proveraOkretnica()
                                 pretresiZS()
-                                prikaziZSDugme()
                             }
                             catch (g: Exception) {
                                 izvrsiUI.post { AlertDialog(context).prikaziGresku(g) }
@@ -347,7 +356,7 @@ class VoziloInfo(private val context: Context) {
             }
         }
 
-        SQLcitac(context).kliknavozilo(linija.title, odabranoStajalisteMarker.title, linija.description, object: Interfejs.vracenaLista {
+        SQLcitac(context).kliknavozilo(linija.title, linija.smer, odabranoStajalisteMarker.title, object: Interfejs.vracenaLista {
             override fun vratiListu(lista: List<String>) {
                 obradilistu(lista)
             }

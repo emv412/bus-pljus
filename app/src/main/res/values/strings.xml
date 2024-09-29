@@ -1,5 +1,5 @@
 <resources>
-    <string name="auto_unos_opis">Када у претрази остане једна станица, аутоматски се шаље упит</string>
+    <string name="auto_unos_opis">Када у претрази остане једна станица, аутоматски се шаље упит.</string>
     <string name="auto_unos">Аутоматски упит</string>
     <string name="azurirati_bazu">Ажурирати базу стајалишта и реда вожње?</string>
     <string name="azurirati_mapu">Ажурирати мапу Београда?</string>
@@ -7,6 +7,7 @@
     <string name="broj_stanice">Број станице…</string>
     <string name="da">Да</string>
     <string name="debug">PLJUS!</string>
+    <string name="eksprezim">Експериментални режим</string>
     <string name="dolazaknastajaliste">Долазак на стајалиште</string>
     <string name="dostupna_nadogradnja">Доступна је надоградња</string>
     <string name="gar_broj">ГБ возила:</string>
@@ -19,9 +20,12 @@
     <string name="nadogradnja_sekcija">Надоградња…</string>
     <string name="naziv_stanice">Назив станице…</string>
     <string name="nedelja">Недеља</string>
+    <string name="neuspelo_trazenje_vozila">Неуспешно израчунавање времена доласка близу ЖС. Приказ од тренутног времена:</string>
     <string name="nema_drugog_smera">Нема другог смера</string>
-    <string name="nema_interneta">Нема интернета, или је грешка на серверу</string>
+    <string name="greska_sa_vezom">Грешка са повезивањем</string>
+    <string name="nema_interneta">Нема Интернет везе</string>
     <string name="nema_nadogradnje">Нема нове надоградње</string>
+    <string name="offline_rezim">Режим ван мреже</string>
     <string name="nema_polazaka">Нема полазака.</string>
     <string name="nema_vozila">Нема возила</string>
     <string name="nema_trase">Нема уписане трасе за ову линију</string>
@@ -38,8 +42,9 @@
     <string name="preuzmi_mapu">Потребно је преузети мапу Београда.</string>
     <string name="preuzmi">Преузимање</string>
     <string name="prihvatiti_stanicu">Послати упит за ову станицу?</string>
-    <string name="prikaz_gb_opis">Приказују се заједно са бројем линије</string>
+    <string name="prikaz_gb_opis">Приказују се заједно са бројем линије.</string>
     <string name="prikaz_gb">Гаражни бројеви</string>
+    <string name="prikaz_po_rv">Непријављена возила</string>
     <string name="program_nadogradnja">Програма</string>
     <string name="program">Програм</string>
     <string name="pronadjene_stanice">Пронађене станице</string>
@@ -49,6 +54,7 @@
     <string name="rastojanje">Растојање</string>
     <string name="red_voznje_od">Ред вожње од:</string>
     <string name="rv">Ред вожње</string>
+    <string name="mnozilac">Множилац</string>
     <string name="sacuvaj">Сачувај</string>
     <string name="samobgvoz">Само БГ:Воз</string>
     <string name="skinuta_mapa">Преузета мапа</string>
@@ -59,8 +65,9 @@
     <string name="stanice_nadogradnja">Базе станица, линија и реда вожње</string>
     <string name="subota">Субота</string>
     <string name="trasa">Траса</string>
-    <string name="ukljucigps">Укључите лоцирање у подешавањима система</string>
+    <string name="ukljucigps">Укључите лоцирање у подешавањима система.</string>
     <string name="uvecaj_mapu">Увећајте мапу</string>
     <string name="zeleznicka_stanica">ЖС:</string>
+    <string name="neprijavljenavozila_opis">Возила без опреме за праћење. Приказују се црном бојом, према реду вожње.</string>
     <string name="app_name">Бус Пљус!</string>
 </resources>

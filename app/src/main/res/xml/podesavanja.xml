@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<PreferenceScreen
+<PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:android="http://schemas.android.com/apk/res/android">
     <PreferenceCategory
         android:title="@string/prva_sekcija_podesavanja">
@@ -20,18 +20,35 @@
         android:title="@string/prikaz_gb"
         android:summary="@string/prikaz_gb_opis"
         android:defaultValue="false"/>
+    <CheckBoxPreference
+        android:id="@+id/rv"
+        android:defaultValue="false"
+        android:key="prikazporv"
+        android:title="@string/prikaz_po_rv"
+        android:summary="@string/neprijavljenavozila_opis"
+        app:singleLineTitle="false" />
+    <Preference
+        android:title="@string/mnozilac"
+        android:key="mnozilac"
+        android:id="@+id/mnoz"/>
+
 </PreferenceCategory>
 
     <PreferenceCategory
         android:title="@string/nadogradnja_sekcija">
+
         <Preference
             android:enabled="true"
             android:key="nadogradimapu"
-            android:title="@string/mapa_nadogradnja"></Preference>
+            android:title="@string/mapa_nadogradnja">
+        </Preference>
+
         <Preference
             android:enabled="true"
             android:key="nadogradistanice"
-            android:title="@string/stanice_nadogradnja"></Preference>
+            android:title="@string/stanice_nadogradnja">
+        </Preference>
+
         <Preference
             android:title="@string/program_nadogradnja"
             android:key="nadogradi_program"

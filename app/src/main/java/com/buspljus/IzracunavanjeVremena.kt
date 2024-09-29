@@ -10,33 +10,43 @@ import java.time.format.DateTimeFormatter
 
 class IzracunavanjeVremena {
 
+    companion object {
+        var mnozilac = 4.0
+    }
+
     var vremeDolaska: LocalTime = LocalTime.now()
     var vremeDolaskaFinal = mutableListOf<LocalTime>()
     val spic = ((vremeDolaska.hour > 6) and (vremeDolaska.hour < 9)) or ((vremeDolaska.hour > 13) and (vremeDolaska.hour < 18))
-    private val mnozilac = when (VoziloInfo.danunedelji) {
-        0 -> if (spic) 4.3 else 4.0
-        else -> 4.0
-    }
+    //private val mnozilac = when (VoziloInfo.danunedelji) {
+        //0 -> if (spic) 4.3 else 4.0
+    //    0 -> 3.5
+    //    else -> 3.5
+    //}
 
-    fun tranziranjeRV(rv: String, trasa: String): List<GeoPoint> {
-        val listaGP = mutableListOf<GeoPoint>()
+    fun tranziranjeRV(rv: String, trasa: String): List<Pair<GeoPoint, LocalTime>> {
+        val GPnaVR = mutableListOf<Pair<GeoPoint, LocalTime>>()
         var latLNG: JSONObject
         val rvJSON = JSONObject(rv).getJSONObject("rv")
         val trasaJSON = JSONArray(trasa)
-        val potrebnoVremeZaPrelazakTrase = trasaJSON.length()*4
+        val potrebnoVremeZaPrelazakTrase = trasaJSON.length()*mnozilac
         for (sat in rvJSON.keys().iterator()) {
             val minut = JSONArray(rvJSON[sat].toString()).getJSONArray(VoziloInfo.danunedelji)
             for (c in 0 until minut.length()) {
-                if (LocalTime.parse(sat + ":" + minut[c]).isBefore(LocalTime.now())) {
-                    val vremenskoRastojanje = Duration.between(LocalTime.parse(sat+":"+minut[c] as String, DateTimeFormatter.ofPattern("HH:mm")), LocalTime.now()).toSeconds()
+                var vreme: LocalTime?
+                if (sat == "24")
+                    vreme = LocalTime.parse("00"+":"+minut[c])
+                else
+                    vreme = LocalTime.parse(sat+":"+minut[c])
+                if (vreme.isBefore(LocalTime.now())) {
+                    val vremenskoRastojanje = Duration.between(vreme, LocalTime.now()).toSeconds()
                     if (vremenskoRastojanje < potrebnoVremeZaPrelazakTrase) {
-                        latLNG = JSONObject(trasaJSON[vremenskoRastojanje.div(4).toInt()].toString())
-                        listaGP.add(GeoPoint(latLNG.getDouble("lat"), latLNG.getDouble("lon")))
+                        latLNG = JSONObject(trasaJSON[vremenskoRastojanje.div(mnozilac).toInt()].toString())
+                        GPnaVR.add(Pair(GeoPoint(latLNG.getDouble("lat"), latLNG.getDouble("lon")), vreme))
                     }
                 }
             }
         }
-        return listaGP
+        return GPnaVR
     }
 
     fun izracunavanjeVremena(autoSTGeoPoint: List<GeoPoint>, gpx: JSONArray, vozilo: MarkerItem, prviSledeciPolazak: LocalTime): List<LocalTime> {

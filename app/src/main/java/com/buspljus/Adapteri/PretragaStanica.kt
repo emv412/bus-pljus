@@ -30,7 +30,7 @@ class PretragaStanica(context: Context, kursor: Cursor?) : CursorAdapter(context
                     val sacuvana = getInt(getColumnIndexOrThrow("sacuvana"))
                     sifre_stanica?.text = getString(getColumnIndexOrThrow(SQLcitac.ID_KOLONA))
                     nazivi_stanica?.text = getString(getColumnIndexOrThrow(SQLcitac.CIR_KOLONA))
-                    odredista?.text = getString(getColumnIndexOrThrow("staju"))
+                    odredista?.text = getString(getColumnIndexOrThrow("staju")).replace(", ","\n")
 
                     fun ikonica(sacuvana: Int) {
                         when (sacuvana) {
@@ -42,7 +42,7 @@ class PretragaStanica(context: Context, kursor: Cursor?) : CursorAdapter(context
                     ikonica(sacuvana)
 
                 dugmeSacuvaj?.setOnClickListener {
-                    SQLcitac(view.context).sacuvajStanicu(sifre_stanica?.text as String, if (sacuvana == 1) 0 else 1)
+                    SQLcitac(view.context).sacuvajStanicu(listOf(sifre_stanica?.text.toString()), if (sacuvana == 1) 0 else 1)
                     ikonica(if (sacuvana == 1) 0 else 1)
                     Glavna.adapter.changeCursor(context?.let { it1 -> SQLcitac(it1).ponoviupit() })
                 }

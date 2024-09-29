@@ -34,11 +34,11 @@
 
     <!--###### LINE styles ######-->
 
-    <style-line id="trunk" stroke="#FFD966" width="1.2" />
+    <style-line id="trunk" stroke="#f9b29c" width="1.2" />
     <style-line id="motorway" stroke="#FFD966" width="1.5" />
-    <style-line id="primary" stroke="#FFD966" width="1.3" />
-    <style-line id="secondary" stroke="#FFD966" width="1.1" />
-    <style-line id="tertiary" stroke="#FFD966" width="1.0" />
+    <style-line id="primary" stroke="#fcd6a4" width="1.3" />
+    <style-line id="secondary" stroke="#f7fabf" width="1.1" />
+    <style-line id="tertiary" stroke="#FFFFFF" width="1.0" />
 
     <!--###### SYMBOL styles ######-->
 

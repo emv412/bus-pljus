@@ -98,7 +98,9 @@ class SQLcitac(private val context: Context) {
         val tackaGeoPoint = GeoPoint(lat.toDouble(),lng.toDouble())
 
         var tacka = arrayOf("1", lat, "1", "2", lng, "2")
+        //var tacka = arrayOf(lat, lng)
         kursor = SQLzahtev("bgvoz", arrayOf("*"), "round(lt,?) = round(?,?) and round(lg,?) = round(?,?)", tacka, null)
+        //kursor = SQLzahtev("bgvoz", arrayOf("*"), "lt like ? and lg like ?", arrayOf("%${lat.take(3)}%", "%${lng.take(3)}%"), null)
 
         fun pretraga(k: Cursor): Int {
             with (k) {
@@ -135,7 +137,7 @@ class SQLcitac(private val context: Context) {
             }
         }
 
-        if ((Glavna.mapa.mapPosition.zoomLevel >= 15) and (pozivOdFunkcije == 0) and (pronadjenihZS == 0)) {
+        if ((Glavna.mapa.mapPosition.zoomLevel >= 14) and (pozivOdFunkcije == 0) and (pronadjenihZS == 0)) {
             val pronadjeneStanice = mutableListOf<String>()
             tacka = arrayOf("2", lat, "2", "2", lng, "2")
             kursor = SQLzahtev("stanice", arrayOf("_id", "naziv_cir", "lt", "lg"), "round(lt,?) = round(?,?) and round(lg,?) = round(?,?)", tacka, null)
@@ -162,17 +164,25 @@ class SQLcitac(private val context: Context) {
         return kursor
     }
 
-    fun sacuvajStanicu(stanica: String, cuvanjeilibrisanje: Int) {
+    fun dobaviSacuvaneStanice(): List<String> {
+        val lista = mutableListOf<String>()
+        kursor = SQLzahtev("stanice", arrayOf("_id"),"sacuvana = 1", arrayOf(),null)
+        with (kursor) {
+            use {
+                while (kursor.moveToNext()) {
+                    lista.add(getString(getColumnIndexOrThrow("_id")))
+                }
+            }
+        }
+        return lista
+    }
+
+    fun sacuvajStanicu(stanica: List<String>, cuvanjeilibrisanje: Int) {
         val stanicazacuvanje = ContentValues()
         stanicazacuvanje.put("sacuvana", cuvanjeilibrisanje)
-        val uspesnoiline = baza.update("stanice", stanicazacuvanje, "_id = ?", arrayOf(stanica))
-        if (uspesnoiline > 0)
-            Toster(context).toster(
-                if (cuvanjeilibrisanje == 0)
-                    context.resources.getString(R.string.stanicaobrisana)
-                else
-                    context.resources.getString(R.string.stanicasacuvana)
-            )
+        for (element in stanica) {
+            baza.update("stanice", stanicazacuvanje, "_id = ?", arrayOf(element))
+        }
     }
 
     fun preradaRVJSON(redVoznjeJSON: JSONObject?, brojVoza: String?, sifraOS: String?, rezimRada: Int, vremeDol: LocalTime?): MutableList<List<String>> {
@@ -255,94 +265,115 @@ class SQLcitac(private val context: Context) {
         return rezultat
     }
 
-    fun kliknavozilo(linija: String, stanica: String, gb: String, vratiListu: Interfejs.vracenaLista) {
-        fun nastavi() {
-            val lista = mutableListOf<String>()
-            if (kursor.count == 1) {
-                with (kursor) {
-                    use {
-                        val kolone = listOf("od", "do", "stajalista", "redvoznje", "datumrv")
-                        moveToFirst()
-                        for (i in kolone) {
-                            lista.add(getString(getColumnIndexOrThrow(i)))
+    fun kliknavozilo(linija: String, smer: String?, stanica: String, vratiListu: Interfejs.vracenaLista) {
+        try {
+            fun nastavi() {
+                val lista = mutableListOf<String>()
+                if (kursor.count == 1) {
+                    with (kursor) {
+                        use {
+                            val kolone = listOf("od", "do", "stajalista", "redvoznje", "datumrv")
+                            moveToFirst()
+                            for (i in kolone) {
+                                lista.add(getString(getColumnIndexOrThrow(i)))
+                            }
                         }
                     }
                 }
+                vratiListu.vratiListu(lista)
             }
-            vratiListu.vratiListu(lista)
-        }
 
-        kursor = SQLzahtev("linije", arrayOf("*"), "_id = ? and stajalista like ?", arrayOf(linija, "%\"$stanica\"%"), null)
-
-        if (kursor.count != 1) {
-            Internet().zahtevPremaInternetu(stanica, linija, 1, object : Interfejs.odgovorSaInterneta {
-                override fun uspesanOdgovor(response: Response) {
-                    try {
-                        var pronadjeno = false
-                        val jsonOdOdgovora = JSONArray(response.body!!.string())
-                        if (kursor.count > 1) {
-                            kursor = SQLzahtev("linije", arrayOf("*"), "_id = ? and stajalista = ?", arrayOf(linija, jsonOdOdgovora.toString().replace(",",", ")), null)
-                            nastavi()
-                        }
-                        else {
-                            for (i in 0 until jsonOdOdgovora.length()) {
-                                with (SQLzahtev("linije", arrayOf("*"), "_id = ? and stajalista like ?",
-                                    arrayOf(linija, "%\"${jsonOdOdgovora.getString(i)}\"%"), null)) {
-                                    if (count == 1) {
-                                        use {
-                                            moveToFirst()
-                                            val nizStanicaUBazi = JSONArray(getString(getColumnIndexOrThrow("stajalista")))
-                                            for (n in 0 until nizStanicaUBazi.length()) {
-                                                if (jsonOdOdgovora[i] == nizStanicaUBazi[n]) {
-                                                    val smerKretanjaLinije = getString(getColumnIndexOrThrow("smer"))
-                                                    val vrednostiZaUpis = ContentValues()
-                                                    vrednostiZaUpis.put("stajalista", jsonOdOdgovora.toString())
-                                                    val brojUpisanihRedova = baza.update("linije", vrednostiZaUpis, "_id = ? and smer = ?",
-                                                        arrayOf(linija, smerKretanjaLinije))
-                                                    if (brojUpisanihRedova > 0) { Toster(context).toster("OK")
+            if (smer != null) {
+                kursor = SQLzahtev("linije", arrayOf("*"), "_id = ? and smer = ?", arrayOf(linija, smer), null)
+                nastavi()
+            }
+            else {
+                kursor = SQLzahtev("linije", arrayOf("*"), "_id = ? and stajalista like ?", arrayOf(linija, "%\"$stanica\"%"), null)
+                if (kursor.count != 1) {
+                    Internet().zahtevPremaInternetu(stanica, linija, 1, object : Interfejs.odgovorSaInterneta {
+                        override fun uspesanOdgovor(response: Response) {
+                            try {
+                                var pronadjeno = false
+                                val jsonOdOdgovora = JSONArray(response.body!!.string())
+                                if (kursor.count > 1) {
+                                    kursor = SQLzahtev("linije", arrayOf("*"), "_id = ? and stajalista = ?", arrayOf(linija, jsonOdOdgovora.toString().replace(",",", ")), null)
+                                    nastavi()
+                                }
+                                else {
+                                    for (i in 0 until jsonOdOdgovora.length()) {
+                                        with (SQLzahtev("linije", arrayOf("*"), "_id = ? and stajalista like ?",
+                                            arrayOf(linija, "%\"${jsonOdOdgovora.getString(i)}\"%"), null)) {
+                                            if (count == 1) {
+                                                use {
+                                                    moveToFirst()
+                                                    val nizStanicaUBazi = JSONArray(getString(getColumnIndexOrThrow("stajalista")))
+                                                    for (n in 0 until nizStanicaUBazi.length()) {
+                                                        if (jsonOdOdgovora[i] == nizStanicaUBazi[n]) {
+                                                            val smerKretanjaLinije = getString(getColumnIndexOrThrow("smer"))
+                                                            val vrednostiZaUpis = ContentValues()
+                                                            vrednostiZaUpis.put("stajalista", jsonOdOdgovora.toString())
+                                                            val brojUpisanihRedova = baza.update("linije", vrednostiZaUpis, "_id = ? and smer = ?",
+                                                                arrayOf(linija, smerKretanjaLinije))
+                                                            if (brojUpisanihRedova > 0) { Toster(context).toster("OK")
+                                                            }
+                                                            pronadjeno = true
+                                                            break
+                                                        }
                                                     }
-                                                    pronadjeno = true
-                                                    break
                                                 }
                                             }
                                         }
+                                        if (pronadjeno) {
+                                            kursor = SQLzahtev("linije", arrayOf("*"), "_id = ? and stajalista like ?", arrayOf(linija, "%\"$stanica\"%"), null)
+                                            nastavi()
+                                        }
+                                        else {
+                                            Toster(context).toster("Neuspesno pronalazenje relacije linije")
+                                        }
+                                        break
                                     }
                                 }
-                                if (pronadjeno) {
-                                    kursor = SQLzahtev("linije", arrayOf("*"), "_id = ? and stajalista like ?", arrayOf(linija, "%\"$stanica\"%"), null)
-                                    nastavi()
-                                }
-                                break
+
+                            } catch (g: Exception) {
+                                AlertDialog(context).prikaziGresku(g)
                             }
                         }
 
-                    } catch (g: Exception) {
-                        AlertDialog(context).prikaziGresku(g)
-                    }
+                        override fun neuspesanOdgovor(e: IOException) {
+                            Toster(context).toster(context.resources.getString(R.string.greska_sa_vezom))
+                        }
+                    })
                 }
-
-                    override fun neuspesanOdgovor(e: IOException) {
-                        Toster(context).toster(context.resources.getString(R.string.nema_interneta))
-                    }
-                })
+                else nastavi()
+            }
         }
-        else nastavi()
-        kursor.close()
+        catch (g: Exception) {
+            AlertDialog(context).prikaziGresku(g)
+        }
+        finally {
+            kursor.close()
+        }
     }
 
     fun ubacivanjeTestMarkera(sifraStajalista: String, ifejs: Interfejs.specMarker) {
-        kursor = SQLzahtev("linije", arrayOf("_id", "trasa", "redvoznje"), "stajalista like ?", arrayOf("%\"$sifraStajalista\"%"), null)
-        with (kursor) {
-            if (count > 0) {
-                use {
-                    while (moveToNext()) {
-                        val id = getString(getColumnIndexOrThrow("_id"))
-                        val trasa = getBlob(getColumnIndexOrThrow("trasa"))
-                        val rv = getString(getColumnIndexOrThrow("redvoznje"))
-                        ifejs.crtanjespecMarkera(id, IzracunavanjeVremena().tranziranjeRV(rv, unzip(trasa)))
+        try {
+            kursor = SQLzahtev("linije", arrayOf("_id", "smer", "trasa", "redvoznje"), "stajalista like ?", arrayOf("%\"$sifraStajalista\"%"), null)
+            with (kursor) {
+                if (kursor.count > 0) {
+                    use {
+                        while (moveToNext()) {
+                            val id = getString(getColumnIndexOrThrow("_id"))
+                            val smer = getString(getColumnIndexOrThrow("smer"))
+                            val trasa = getBlob(getColumnIndexOrThrow("trasa"))
+                            val rv = getString(getColumnIndexOrThrow("redvoznje"))
+                            ifejs.crtanjespecMarkera(id, smer, IzracunavanjeVremena().tranziranjeRV(rv, unzip(trasa)))
+                        }
                     }
                 }
             }
+        }
+        catch (g:Exception) {
+            AlertDialog(context).prikaziGresku(g)
         }
     }
 

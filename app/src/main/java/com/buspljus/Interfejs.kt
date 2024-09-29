@@ -4,6 +4,8 @@ import com.buspljus.Adapteri.sifraNaziv
 import okhttp3.Response
 import org.oscim.core.GeoPoint
 import java.io.IOException
+import java.time.LocalTime
+
 
 class Interfejs {
     interface trasa {
@@ -21,15 +23,11 @@ class Interfejs {
     }
 
     interface specMarker {
-        fun crtanjespecMarkera(id : String, g: List<GeoPoint>)
+        fun crtanjespecMarkera(id : String, smer: String, g: List<Pair<GeoPoint, LocalTime>>)
     }
 
     interface odgovor {
         fun da(odg: Boolean)
-    }
-
-    interface upitSlSt {
-        fun promenikursor(odg: String)
     }
 
     interface vracenaLista {
