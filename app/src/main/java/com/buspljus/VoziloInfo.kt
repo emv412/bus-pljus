@@ -49,16 +49,15 @@ class VoziloInfo(private val context: Context) {
         }
         private var pozivTrasaInterface: Interfejs.trasa? = null
 
-        var preostaleStanice = mutableListOf<List<Any>>()
-
-        var voziloCache = mutableListOf("0","0")
+        //var voziloCache = mutableListOf("0","0")
         lateinit var trasaLinije : Triple<JSONArray, JSONArray, MutableList<GeoPoint>>
 
-        val zeleznickeStaniceZaListu = mutableMapOf<String,List<Any>>()
         val stNiz = mutableListOf<sifraNaziv>()
         val gpNiz = mutableListOf<GeoPoint>()
 
     }
+    var preostaleStanice = mutableListOf<List<Any>>()
+    val zeleznickeStaniceZaListu = mutableMapOf<String,List<Any>>()
 
     private lateinit var sati : JSONObject
 
@@ -262,7 +261,7 @@ class VoziloInfo(private val context: Context) {
 
                         fun pretresiZS() {
                             try {
-                                if ((voziloCache[0] != linija.brojLinije) or (voziloCache[1] != odabranoStajalisteMarker.title)) {
+                                //if ((voziloCache[0] != linija.brojLinije) or (voziloCache[1] != odabranoStajalisteMarker.title)) {
                                     zeleznickeStaniceZaListu.clear()
                                     staniceDoKrajaTrase(sveStaniceLinije, odabranoStajalisteMarker)
 
@@ -281,7 +280,7 @@ class VoziloInfo(private val context: Context) {
                                             }
                                         },1)
                                     }
-                                }
+                                //}
                                 izvrsiUI.post { ucitavanjePresedanja.visibility = View.GONE }
 
                                 prikaziZSDugme()
@@ -424,7 +423,7 @@ class VoziloInfo(private val context: Context) {
 
     fun crtanjeTrase(markerVozilo: MarkerItem, markerStanica: MarkerItem, presedackaSt : String?, polazak: LocalTime, sveStanice: Boolean) {
         stNiz.clear()
-        if ((voziloCache[0] != markerVozilo.title) or (voziloCache[1] != markerStanica.title) or (sveStanice)) {
+        //if ((voziloCache[0] != markerVozilo.title) or (voziloCache[1] != markerStanica.title) or (sveStanice)) {
             Glavna().izbrisiTrasu()
             gpNiz.clear()
 
@@ -460,12 +459,15 @@ class VoziloInfo(private val context: Context) {
                 Glavna.sveStanice.addItem(marker)
             }
 
+        /*
             with (voziloCache) {
                 this[0] = markerVozilo.title
                 this[1] = markerStanica.title
             }
 
-        }
+         */
+
+        //}
 
         if (gpNiz.size > 0) {
             val listLocalTime = IzracunavanjeVremena().izracunavanjeVremena(gpNiz, trasaLinije.second, markerVozilo, polazak)

@@ -442,7 +442,7 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
 
                 pozicija = mapPosition
 
-                if (e == Map.MOVE_EVENT) {
+                if (e == Map.ANIM_START) {
                     sklonitastaturu()
                     prikaziListu(0)
                     slobodnopomeranjemape = true
@@ -469,7 +469,7 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
                 val listaPolazaka = mutableListOf<Pair<String,String>>()
 
                 fun specMarker(marker: Int) {
-                    if ((g[marker].first.sphericalDistance(stajaliste.geoPoint) < 2500) or (vozilaNaMapi.size < 3)) {
+                    if (g[marker].first.sphericalDistance(stajaliste.geoPoint) < 3500) {
                         val specMarker = MojMarker(id, smer, "/", null, g[marker].second.toString(), g[marker].first)
                         specMarker.marker = (MarkerSymbol(
                             AndroidBitmap(TekstUBitmap().getBitmapFromTitle(
@@ -549,7 +549,7 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
                     vozilo.marker = (MarkerSymbol(
                         AndroidBitmap(TekstUBitmap().getBitmapFromTitle(
                             when (Podesavanja.deljenapodesavanja.getBoolean("prikazgb", false)) {
-                                true -> vozilo.brojLinije + " (" + if (vozilo.garazniBMenjan == null) vozilo.garazniBOriginal else vozilo.garazniBMenjan + ")"
+                                true -> vozilo.brojLinije + " (" + (if (vozilo.garazniBMenjan == null) vozilo.garazniBOriginal else vozilo.garazniBMenjan) + ")"
                                 false -> vozilo.brojLinije
                             }, this, boja)),
                         MarkerSymbol.HotspotPlace.BOTTOM_CENTER, true
@@ -764,7 +764,7 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
         odabranoStajalisteSloj.removeAllItems()
         putanja.clearPath()
 
-        VoziloInfo.voziloCache = mutableListOf("0","0")
+        //VoziloInfo.voziloCache = mutableListOf("0","0")
         stopTajmera()
 
         ukloniBaner()
@@ -778,8 +778,7 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
     override fun onResume() {
         if (stanicaId.isNotEmpty())
             dugmezaosvezavanje(0, 1)
-        if (((System.currentTimeMillis().div(1000)) - (Podesavanja.deljenapodesavanja.getLong("zatvoren", 0)) > 300)
-            or (markeriVozila.itemList.size > 10)) {
+        if ((System.currentTimeMillis().div(1000)) - (Podesavanja.deljenapodesavanja.getLong("zatvoren", 0)) > 300){
             reset()
         }
         super.onResume()

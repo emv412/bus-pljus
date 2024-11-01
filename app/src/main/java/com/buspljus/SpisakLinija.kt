@@ -30,8 +30,8 @@ class SpisakLinija(private val context: Context) {
         rvRecyclerView.layoutManager = GridLayoutManager(context, 5)
         rvRecyclerView.adapter = SpisakLinijaAdapter(context, l)
 
-        pretraga.doOnTextChanged { text, _, _, count ->
-            l = if (count > 0)
+        pretraga.doOnTextChanged { text, _, _, _ ->
+            l = if (text?.length!! > 0)
                 SQLcitac(context).sveLinije(text.toString())
             else
                 SQLcitac(context).sveLinije("")
