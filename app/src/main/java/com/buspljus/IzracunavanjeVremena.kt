@@ -17,11 +17,10 @@ class IzracunavanjeVremena {
     var vremeDolaska: LocalTime = LocalTime.now()
     var vremeDolaskaFinal = mutableListOf<LocalTime>()
     val spic = ((vremeDolaska.hour > 6) and (vremeDolaska.hour < 9)) or ((vremeDolaska.hour > 13) and (vremeDolaska.hour < 18))
-    //private val mnozilac = when (VoziloInfo.danunedelji) {
-        //0 -> if (spic) 4.3 else 4.0
-    //    0 -> 3.5
-    //    else -> 3.5
-    //}
+    private val mnozilac = when (VoziloInfo.danunedelji) {
+        0 -> if (spic) 4.3 else 4.0
+        else -> 3.9
+    }
 
     fun tranziranjeRV(rv: String, trasa: String): List<Pair<GeoPoint, LocalTime>> {
         val GPnaVR = mutableListOf<Pair<GeoPoint, LocalTime>>()

@@ -68,9 +68,11 @@ class PrikazZStanica(var context: Context, var spoljnalista: List<List<String>>,
         with (convertView?: LayoutInflater.from(context).inflate(R.layout.zs_vecalista, parent, false)) {
             val odred = findViewById<TextView>(R.id.odrediste_voz)
             val odredVremepol = findViewById<TextView>(R.id.odrediste_vremepol)
+            val brojVoza = findViewById<TextView>(R.id.brojVoza)
 
             odred?.text = spoljnalista[groupPosition][0]
             odredVremepol?.text = spoljnalista[groupPosition][1]
+            brojVoza?.text = spoljnalista[groupPosition][3]
             return this
         }
     }

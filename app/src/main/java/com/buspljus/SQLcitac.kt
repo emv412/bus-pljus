@@ -11,6 +11,7 @@ import org.json.JSONObject
 import org.oscim.core.GeoPoint
 import java.io.ByteArrayOutputStream
 import java.io.IOException
+import java.time.LocalDate
 import java.time.LocalTime
 import java.util.zip.Inflater
 
@@ -57,7 +58,6 @@ class SQLcitac(private val context: Context) {
     }
 
     fun SQLzahtev(tabela: String, kolone: Array<String>, odabir: String, parametri: Array<String>, redjanjepo: String?): Cursor {
-        baza = SQLiteDatabase.openDatabase(context.getDatabasePath(IME_BAZE).absolutePath, null, 0)
         globalQueryData = SqlQueryData(tabela, kolone, odabir, parametri, redjanjepo)
         return baza.query(tabela, kolone, odabir, parametri, null, null, "$redjanjepo")
     }
@@ -90,6 +90,28 @@ class SQLcitac(private val context: Context) {
             }
         }
         return nazivCir
+    }
+
+    fun praznik(): Int {
+        kursor = SQLzahtev("praznici", arrayOf("dan","mesec"), "godina = ? and mesec = ? and dan = ?", arrayOf(
+            LocalDate.now().year.toString(),
+            LocalDate.now().month.value.toString(),
+            LocalDate.now().dayOfMonth.toString()), null)
+        return try {
+            with (kursor) {
+                if (count > 0) {
+                    2
+                }
+                else 0
+            }
+        }
+        catch (g: Exception) {
+            AlertDialog(context).prikaziGresku(g)
+            0
+        }
+        finally {
+            kursor.close()
+        }
     }
 
     fun pretragabaze_kliknamapu(lat: String, lng: String, callback: Interfejs.Callback, pozivOdFunkcije: Int) {
@@ -157,6 +179,7 @@ class SQLcitac(private val context: Context) {
     }
 
     fun dobavisifre(rec: CharSequence?, trazenjepobroju: Boolean?): Cursor {
+        kursor.close()
         kursor = SQLzahtev(
             "stanice", arrayOf("_id", "naziv_cir", "staju", "sacuvana"),
             if (trazenjepobroju == true) "_id like ?" else "naziv_ascii like ? or naziv_cir like ? or naziv_lat like ?",
