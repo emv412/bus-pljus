@@ -70,4 +70,6 @@
     <string name="zeleznicka_stanica">ЖС:</string>
     <string name="neprijavljenavozila_opis">Возила без опреме за праћење. Приказују се црном бојом, према реду вожње.</string>
     <string name="app_name">Бус Пљус!</string>
+    <string name="prikazpolaska">Време поласка</string>
+    <string name="prikazpolaska_objasnjenje">Приказује се пријављено време поласка возила са окретнице.</string>
 </resources>

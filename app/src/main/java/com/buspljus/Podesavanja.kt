@@ -2,12 +2,13 @@ package com.buspljus
 
 import android.content.Intent
 import android.content.SharedPreferences
-import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.edit
+import androidx.core.net.toUri
 import androidx.preference.CheckBoxPreference
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
@@ -46,6 +47,7 @@ class Podesavanja : AppCompatActivity() {
             val oProgramu: Preference? = findPreference("o_programu")
             val prikazPoRV: CheckBoxPreference? = findPreference("prikazporv")
             val mnozilac: Preference? = findPreference("mnozilac")
+            val vremePolaskaPodesavanje: CheckBoxPreference? = findPreference("vremepolaska")
 
             deljenapodesavanja = PreferenceManager.getDefaultSharedPreferences(requireContext())
             stalanprikazgb = deljenapodesavanja.getBoolean("prikazgb", false)
@@ -54,22 +56,24 @@ class Podesavanja : AppCompatActivity() {
             prikazgb2?.onPreferenceChangeListener = this
             autounos?.onPreferenceChangeListener = this
             prikazPoRV?.onPreferenceClickListener = this
+            vremePolaskaPodesavanje?.onPreferenceClickListener = this
 
             nadogradnjaPrograma?.onPreferenceClickListener = this
             nadogradnjaMape?.onPreferenceClickListener = this
             nadogradnjaStanica?.onPreferenceClickListener = this
             oProgramu?.onPreferenceClickListener = this
             mnozilac?.onPreferenceClickListener = this
+            vremePolaskaPodesavanje?.onPreferenceClickListener = this
         }
 
         override fun onPreferenceChange(podesavanje: Preference, podesenaVrednost: Any?): Boolean {
             when (podesavanje.key) {
                 "prikazgb" -> {
-                    deljenapodesavanja.edit().putBoolean("prikazgb", stalanprikazgb).apply()
+                    deljenapodesavanja.edit() { putBoolean("prikazgb", stalanprikazgb) }
                     return true
                 }
                 "automatskiunos" -> {
-                    deljenapodesavanja.edit().putBoolean("automatskiunos", auto).apply()
+                    deljenapodesavanja.edit() { putBoolean("automatskiunos", auto) }
                     return true
                 }
             }
@@ -90,8 +94,9 @@ class Podesavanja : AppCompatActivity() {
                                             .setMessage(odgovor.getString("body"))
                                             .setPositiveButton(resources.getString(R.string.preuzmi)) { dialog, _ ->
                                                 dialog.dismiss()
-                                                startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(
-                                                    odgovor.getJSONArray("assets").getJSONObject(0).getString("browser_download_url"))))
+                                                startActivity(Intent(Intent.ACTION_VIEW,
+                                                    odgovor.getJSONArray("assets").getJSONObject(0)
+                                                        .getString("browser_download_url").toUri()))
                                             }
                                     }
                                     Handler(Looper.getMainLooper()).post {

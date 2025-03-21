@@ -6,15 +6,15 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-        <TextView
-            android:id="@+id/ime_okretnice"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
-            android:layout_marginTop="8dp"
-            android:textSize="26sp"
-            android:textStyle="bold"
-            tools:text="Овча" />
+    <TextView
+        android:id="@+id/ime_okretnice"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:textSize="26sp"
+        android:textStyle="bold"
+        tools:text="Овча" />
 
     <CheckBox
         android:id="@+id/samoBGVoz"
@@ -24,6 +24,14 @@
         android:layout_marginTop="8dp"
         android:layout_marginEnd="8dp"
         android:text="@string/samobgvoz" />
+
+    <TextView
+        android:id="@+id/rezimRV"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="4dp"
+        android:text="@string/radni_dan" />
 
     <ExpandableListView
         android:id="@+id/prosirenje"

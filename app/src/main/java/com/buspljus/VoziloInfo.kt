@@ -17,6 +17,7 @@ import android.widget.Spinner
 import android.widget.TextView
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.graphics.drawable.toBitmap
+import androidx.core.view.isVisible
 import androidx.vectordrawable.graphics.drawable.VectorDrawableCompat
 import com.buspljus.Adapteri.PrikazZStanica
 import com.buspljus.Adapteri.SpisakLinijaAdapter
@@ -41,12 +42,24 @@ import java.time.format.DateTimeFormatter
 class VoziloInfo(private val context: Context) {
 
     companion object {
-        val danunedelji = when (LocalDate.now().dayOfWeek.value) {
-            in 1 .. 5 -> 0
-            6 -> 1
-            7 -> 2
-            else -> 0
+        var danunedelji = 0
+        var praznik = false
+
+        fun proveriPraznik(c: Context) {
+            if (SQLcitac(c).praznik() == 2) {
+                danunedelji = 2
+                praznik = true
+                Toster(c).toster(c.getString(R.string.praznik_nedelja))
+            }
+            else {
+                when (LocalDate.now().dayOfWeek.value) {
+                    in 1 .. 5 -> danunedelji = 0
+                    6 -> danunedelji = 1
+                    7 -> danunedelji = 2
+                }
+            }
         }
+
         private var pozivTrasaInterface: Interfejs.trasa? = null
 
         //var voziloCache = mutableListOf("0","0")
@@ -79,6 +92,7 @@ class VoziloInfo(private val context: Context) {
     private lateinit var vozilostizeoko : TextView
     private lateinit var krenuo_u_textview : TextView
     private lateinit var krenuo_u_vreme : TextView
+    private lateinit var rezimRV : TextView
     private lateinit var prosirenaSekcija : ConstraintLayout
     private lateinit var stanicepadajucalista : Spinner
     private lateinit var presedanjebgvoz : Button
@@ -120,6 +134,14 @@ class VoziloInfo(private val context: Context) {
                 lokalVreme = prviSledeciPolazak
         }
         return lokalVreme
+    }
+
+    fun blizinaOkretnice(sveStaniceLinije: JSONArray, linija: MojMarker): Boolean {
+        // provera blizine vozila u odnosu na okretnicu
+        return if (SQLcitac(context).idStaniceuGeoPoint(sveStaniceLinije.get(0).toString()).sphericalDistance(linija.polozajVozila) < 100)
+            true
+        else
+            false
     }
 
     fun prikaziDatumRV(datum: JSONArray): String {
@@ -179,7 +201,7 @@ class VoziloInfo(private val context: Context) {
                         fun ucitajStanice() {
                             try {
                                 prosirenaSekcija = dialog.findViewById(R.id.prosirena_sekcija)!!
-                                if (prosirenaSekcija.visibility == View.VISIBLE) {
+                                if (prosirenaSekcija.isVisible) {
                                     izvrsiUI.post { prosirenaSekcija.visibility = View.GONE }
                                 } else {
                                     with (dialog) {
@@ -261,7 +283,6 @@ class VoziloInfo(private val context: Context) {
 
                         fun pretresiZS() {
                             try {
-                                //if ((voziloCache[0] != linija.brojLinije) or (voziloCache[1] != odabranoStajalisteMarker.title)) {
                                     zeleznickeStaniceZaListu.clear()
                                     staniceDoKrajaTrase(sveStaniceLinije, odabranoStajalisteMarker)
 
@@ -280,7 +301,6 @@ class VoziloInfo(private val context: Context) {
                                             }
                                         },1)
                                     }
-                                //}
                                 izvrsiUI.post { ucitavanjePresedanja.visibility = View.GONE }
 
                                 prikaziZSDugme()
@@ -291,12 +311,8 @@ class VoziloInfo(private val context: Context) {
 
                         }
 
-
-
-                        fun proveraOkretnica() {
-                            // Provera da li se vozilo nalazi na do 100 metara vazdusno od okretnice
-                            if (SQLcitac(context).idStaniceuGeoPoint(sveStaniceLinije.get(0).toString()).sphericalDistance(linija.polozajVozila) < 100) {
-                                voziloNaOkretnici = true
+                        fun naOkretnici() {
+                            if (blizinaOkretnice(sveStaniceLinije, linija)) {
                                 sati = polasci.getJSONObject("rv")
 
                                 with (dialog) {
@@ -340,7 +356,7 @@ class VoziloInfo(private val context: Context) {
 
                         asinhrono.launch {
                             try {
-                                proveraOkretnica()
+                                naOkretnici()
                                 pretresiZS()
                             }
                             catch (g: Exception) {
@@ -374,6 +390,15 @@ class VoziloInfo(private val context: Context) {
             imeOkretnice = findViewById(R.id.ime_okretnice)!!
             samoBGVCheckBox = findViewById(R.id.samoBGVoz)!!
             nemaPolazaka = findViewById(R.id.nemapolazaka)!!
+            rezimRV = findViewById(R.id.rezimRV)!!
+
+            when (praznik) {
+                true -> rezimRV.text=context.resources.getString(R.string.praznik_nedelja)
+                false -> when (danunedelji) {
+                    1 -> rezimRV.text=context.resources.getString(R.string.subota)
+                    2 -> rezimRV.text=context.resources.getString(R.string.nedelja)
+                }
+            }
 
             with (imeOkretnice) {
                 text = if (pozivodfn == 0) imestanice else null

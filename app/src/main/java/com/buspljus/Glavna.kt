@@ -32,6 +32,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.core.content.edit
 import androidx.core.graphics.drawable.toBitmap
 import androidx.preference.PreferenceManager
 import androidx.vectordrawable.graphics.drawable.VectorDrawableCompat
@@ -111,6 +112,7 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
     private var slobodnopomeranjemape = true
     private var pozicija = MapPosition()
     private var prviput: Boolean = true
+    private var listaPrikazana = false
 
     private var najbliziAutobusRastojanje = 100000.0
     private var najbliziAutobusMarker : MarkerItem? = null
@@ -255,7 +257,8 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
                 prikaziListu(1)
                 tastaturasklonjena = false
                 if (polje.length() > 0) {
-                    adapter.changeCursor(SQLcitac(this@Glavna).dobavisifre(s.toString(), trazenjePoBroju))
+                    SQLcitac.kursor.close()
+                    adapter.swapCursor(SQLcitac(this@Glavna).dobavisifre(s.toString(), trazenjePoBroju))
                     lista.setSelection(0)
 
                     if ((trazenjePoBroju) and //Trazenje po broju, a ne imenu stanice
@@ -442,16 +445,20 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
 
                 pozicija = mapPosition
 
-                if (e == Map.ANIM_START) {
-                    sklonitastaturu()
-                    prikaziListu(0)
+                if (e == Map.MOVE_EVENT) {
+                    if (!tastaturasklonjena)
+                        sklonitastaturu()
+                    if (polje.isFocused)
+                        polje.clearFocus()
+                    if (!listaPrikazana)
+                        prikaziListu(0)
                     slobodnopomeranjemape = true
-                    polje.clearFocus()
                 }
             })
 
             mapa.setTheme(AssetsRenderTheme(assets, "", "osmarender.xml"))
             mapa.setMapPosition(44.821, 20.471, 2500.0)
+            VoziloInfo.proveriPraznik(this)
 
             if (adapter.cursor.count > 0)
                 prikaziListu(1)
@@ -550,7 +557,7 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
                         AndroidBitmap(TekstUBitmap().getBitmapFromTitle(
                             when (Podesavanja.deljenapodesavanja.getBoolean("prikazgb", false)) {
                                 true -> vozilo.brojLinije + " (" + (if (vozilo.garazniBMenjan == null) vozilo.garazniBOriginal else vozilo.garazniBMenjan) + ")"
-                                false -> vozilo.brojLinije
+                               false -> vozilo.brojLinije
                             }, this, boja)),
                         MarkerSymbol.HotspotPlace.BOTTOM_CENTER, true
                     ))
@@ -649,13 +656,11 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
     }
 
     private fun sklonitastaturu() {
-        if (!tastaturasklonjena) {
-            (getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager).hideSoftInputFromWindow(
-                currentFocus?.windowToken,
-                0
-            )
-            tastaturasklonjena = true
-        }
+        (getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager).hideSoftInputFromWindow(
+            currentFocus?.windowToken,
+            0
+        )
+        tastaturasklonjena = true
     }
 
     private fun prikaziTastaturu() {
@@ -720,12 +725,14 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
             lista.visibility = (if (prikaz == 0) View.GONE else View.VISIBLE)
             gpsdugme.visibility = (if (prikaz == 0) View.VISIBLE else View.GONE)
             rvsveln.visibility = (if (prikaz == 0) View.VISIBLE else View.GONE)
+            listaPrikazana = (if (prikaz == 0) true else false)
         }
     }
 
     private fun prikazSacuvanihStanica() {
         adapter = PretragaStanica(this, SQLcitac(this).SQLzahtev("stanice", arrayOf("_id","naziv_cir","staju","sacuvana"),"sacuvana = ?", arrayOf("1"),null))
-        lista.adapter = adapter
+        if (!adapter.cursor.isClosed)
+            lista.adapter = adapter
     }
 
     override fun prikazTrase(linijarv: String, listasifraNaziv: MutableList<sifraNaziv>) {
@@ -778,20 +785,27 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
     override fun onResume() {
         if (stanicaId.isNotEmpty())
             dugmezaosvezavanje(0, 1)
+
         if ((System.currentTimeMillis().div(1000)) - (Podesavanja.deljenapodesavanja.getLong("zatvoren", 0)) > 300){
             reset()
         }
+
         super.onResume()
     }
 
     override fun onPause() {
         super.onPause()
-        Podesavanja.deljenapodesavanja.edit().putLong("zatvoren", System.currentTimeMillis().div(1000)).apply()
+        Podesavanja.deljenapodesavanja.edit() {
+            putLong(
+                "zatvoren",
+                System.currentTimeMillis().div(1000)
+            )
+        }
         pratilacLokacije?.let { it1 -> menadzerLokacije.removeUpdates(it1) }
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        adapter.cursor.close()
+        SQLcitac.kursor.close()
     }
 }
