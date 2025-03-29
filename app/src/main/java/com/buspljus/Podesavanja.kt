@@ -27,8 +27,10 @@ class Podesavanja : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        supportFragmentManager.beginTransaction()
-            .replace(android.R.id.content, SettingsFragment())
+        setContentView(R.layout.layout_podesavanja)
+        supportFragmentManager
+            .beginTransaction()
+            .replace(R.id.settings_container, SettingsFragment())
             .commit()
     }
 
