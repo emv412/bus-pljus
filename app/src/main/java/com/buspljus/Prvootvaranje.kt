@@ -38,13 +38,15 @@ class Prvootvaranje: AppCompatActivity() {
                     val preuzeto = response.body!!.source().inputStream()
                     when (i) {
                         5 -> {
-                            Internet().gunzip(preuzeto,File(filesDir,"beograd.map"))
+                            Internet().gunzip(preuzeto, File(filesDir,"beograd.map"))
+                            podigniProcenat(50)
                         }
                         6 -> {
                             Internet().gunzip(preuzeto, File(getDatabasePath(SQLcitac.IME_BAZE).path))
+                            podigniProcenat(100)
+                            proveraprisustvafajlova()
                         }
                     }
-                    proveraprisustvafajlova()
                 }
 
                 override fun neuspesanOdgovor(e: IOException) {
@@ -55,12 +57,12 @@ class Prvootvaranje: AppCompatActivity() {
 
     }
 
+    fun podigniProcenat(i: Int) {
+        Handler(Looper.getMainLooper()).post { postotak.progress = i }
+    }
+
     fun proveraprisustvafajlova() {
-        if (File(filesDir,"beograd.map").exists()) {
-            Handler(Looper.getMainLooper()).post { postotak.progress=50 }
-        }
-        if (File(filesDir,"beograd.map").exists() and File(getDatabasePath(SQLcitac.IME_BAZE).path).exists()) {
-            Handler(Looper.getMainLooper()).post { postotak.progress = 100 }
+        if ((File(filesDir,"beograd.map").exists()) and (File(getDatabasePath(SQLcitac.IME_BAZE).path).exists())) {
             startActivity(Intent(this, Glavna::class.java))
             finish()
         }
