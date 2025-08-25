@@ -18,7 +18,7 @@ class Interfejs {
     }
 
     interface Callback {
-        fun korak(s: String)
+        fun podesiTextView(idStanice: String, nazivStanice: String)
         fun koloneBGVOZ(lista: List<Any>)
     }
 

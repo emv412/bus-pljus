@@ -7,6 +7,7 @@ import android.os.Looper
 import android.widget.Button
 import android.widget.ProgressBar
 import androidx.appcompat.app.AppCompatActivity
+import com.buspljus.Baza.PosrednikBaze
 import okhttp3.Response
 import java.io.File
 import java.io.IOException
@@ -42,7 +43,7 @@ class Prvootvaranje: AppCompatActivity() {
                             podigniProcenat(50)
                         }
                         6 -> {
-                            Internet().gunzip(preuzeto, File(getDatabasePath(SQLcitac.IME_BAZE).path))
+                            Internet().gunzip(preuzeto, File(getDatabasePath(PosrednikBaze.IME_BAZE).path))
                             podigniProcenat(100)
                             proveraprisustvafajlova()
                         }
@@ -62,7 +63,7 @@ class Prvootvaranje: AppCompatActivity() {
     }
 
     fun proveraprisustvafajlova() {
-        if ((File(filesDir,"beograd.map").exists()) and (File(getDatabasePath(SQLcitac.IME_BAZE).path).exists())) {
+        if ((File(filesDir,"beograd.map").exists()) and (File(getDatabasePath(PosrednikBaze.IME_BAZE).path).exists())) {
             startActivity(Intent(this, Glavna::class.java))
             finish()
         }

@@ -3,6 +3,9 @@ package com.buspljus
 import org.oscim.core.GeoPoint
 import org.oscim.layers.marker.MarkerItem
 
-class MojMarker(var brojLinije: String, var smer: String?, var garazniBOriginal: String, var garazniBMenjan: String?, var vremePolaska: String, var polozajVozila: GeoPoint):
+class MojMarker(
+    var brojLinije: String, var smer: String?, var garazniBOriginal: String, var garazniBMenjan: String?, var vremePolaska: String,
+    var polozajVozila: GeoPoint, var sledeceStajaliste: String?
+):
     MarkerItem(brojLinije, garazniBOriginal, polozajVozila) {
 }

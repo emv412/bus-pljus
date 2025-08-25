@@ -11,8 +11,8 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.buspljus.Baza.Linije
 import com.buspljus.R
-import com.buspljus.SQLcitac
 import com.buspljus.Toster
 import com.buspljus.VoziloInfo
 import com.buspljus.VoziloInfo.Companion.danunedelji
@@ -50,7 +50,7 @@ class SpisakLinijaAdapter(private val context: Context, private val buttonLabels
             val dl = BottomSheetDialog(context)
 
             with (dl) {
-                var podaciOLn = SQLcitac(context).redVoznjeJednaLinija(buttonLabels[position],"0")
+                var podaciOLn = Linije(context).redVoznjeJednaLinija(buttonLabels[position],"0")
 
                 behavior.state = BottomSheetBehavior.STATE_EXPANDED
                 behavior.isDraggable = false
@@ -111,7 +111,7 @@ class SpisakLinijaAdapter(private val context: Context, private val buttonLabels
                 }
 
                 fun mikrofn(tab: Int?) {
-                    podaciOLn = SQLcitac(context).redVoznjeJednaLinija(buttonLabels[holder.adapterPosition], tab.toString())
+                    podaciOLn = Linije(context).redVoznjeJednaLinija(buttonLabels[holder.adapterPosition], tab.toString())
                     odradi(izabranDan)
                 }
 

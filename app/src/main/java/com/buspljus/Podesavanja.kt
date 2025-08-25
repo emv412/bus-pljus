@@ -13,6 +13,7 @@ import androidx.preference.CheckBoxPreference
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.PreferenceManager
+import com.buspljus.Baza.PosrednikBaze
 import okhttp3.Response
 import org.json.JSONObject
 import java.io.File
@@ -121,7 +122,7 @@ class Podesavanja : AppCompatActivity() {
                             val preuzeto = JSONObject(response.body!!.string())
                             val velicinaMape = preuzeto.getDouble("size")
                             Handler(Looper.getMainLooper()).post {
-                                AlertDialog(preference.context).preuzimanjeMapeiliStanica(0, velicinaMape, object: Interfejs.odgovor {
+                                PopupProzor(preference.context).preuzimanjeMapeiliStanica(0, velicinaMape, object: Interfejs.odgovor {
                                     override fun da(odg: Boolean) {
                                         Internet().zahtevPremaInternetu(null, null, 5, object : Interfejs.odgovorSaInterneta {
                                             override fun uspesanOdgovor(response: Response) {
@@ -151,16 +152,16 @@ class Podesavanja : AppCompatActivity() {
                             val preuzeto = JSONObject(response.body!!.string())
                             val velicinaBaze = preuzeto.getDouble("size")
                             Handler(Looper.getMainLooper()).post {
-                                AlertDialog(preference.context).preuzimanjeMapeiliStanica(1, velicinaBaze, object: Interfejs.odgovor {
+                                PopupProzor(preference.context).preuzimanjeMapeiliStanica(1, velicinaBaze, object: Interfejs.odgovor {
                                     override fun da(odg: Boolean) {
                                         Internet().zahtevPremaInternetu(null, null, 6, object : Interfejs.odgovorSaInterneta {
                                             override fun uspesanOdgovor(response: Response) {
                                                 val baza = response.body!!.source().inputStream()
-                                                val sacuvanestanice = SQLcitac(preference.context).dobaviSacuvaneStanice()
-                                                preference.context.getDatabasePath(SQLcitac.IME_BAZE)?.path?.let { File(it) }?.let {
+                                                val sacuvanestanice = PosrednikBaze(preference.context).dobaviSacuvaneStanice()
+                                                preference.context.getDatabasePath(PosrednikBaze.IME_BAZE)?.path?.let { File(it) }?.let {
                                                     Internet().gunzip(baza, it)
                                                 }
-                                                SQLcitac(preference.context).sacuvajStanicu(sacuvanestanice,1)
+                                                PosrednikBaze(preference.context).sacuvajStanicu(sacuvanestanice,1)
                                                 Toster(preference.context).toster(preference.context.resources.getString(R.string.baza_nadogradjena))
                                             }
 
@@ -182,7 +183,7 @@ class Podesavanja : AppCompatActivity() {
                     startActivity(Intent(context, OProgramu::class.java))
                 }
                 "mnozilac" -> {
-                    AlertDialog(preference.context).podesavanjeMnozioca()
+                    PopupProzor(preference.context).podesavanjeMnozioca()
                 }
             }
             return true

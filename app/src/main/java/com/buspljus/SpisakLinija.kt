@@ -3,8 +3,8 @@ import androidx.core.widget.doOnTextChanged
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.buspljus.Adapteri.SpisakLinijaAdapter
+import com.buspljus.Baza.Linije
 import com.buspljus.R
-import com.buspljus.SQLcitac
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.textfield.TextInputEditText
@@ -15,7 +15,7 @@ class SpisakLinija(private val context: Context) {
     private lateinit var rvRecyclerView: RecyclerView
     private lateinit var pretraga: TextInputEditText
 
-    var l = SQLcitac(context).sveLinije("")
+    var l = Linije(context).sveLinije("")
 
     fun nacrtajDugmad() {
         with(dialog) {
@@ -32,9 +32,9 @@ class SpisakLinija(private val context: Context) {
 
         pretraga.doOnTextChanged { text, _, _, _ ->
             l = if (text?.length!! > 0)
-                SQLcitac(context).sveLinije(text.toString())
+                Linije(context).sveLinije(text.toString())
             else
-                SQLcitac(context).sveLinije("")
+                Linije(context).sveLinije("")
             rvRecyclerView.adapter = SpisakLinijaAdapter(context, l)
         }
     }

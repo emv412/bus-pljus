@@ -9,9 +9,9 @@ import android.widget.CursorAdapter
 import android.widget.ImageButton
 import android.widget.TextView
 import androidx.core.content.ContextCompat
+import com.buspljus.Baza.PosrednikBaze
 import com.buspljus.Glavna
 import com.buspljus.R
-import com.buspljus.SQLcitac
 
 class PretragaStanica(context: Context, kursor: Cursor?) : CursorAdapter(context, kursor, 0) {
 
@@ -25,27 +25,28 @@ class PretragaStanica(context: Context, kursor: Cursor?) : CursorAdapter(context
         val odredista = view?.findViewById<TextView>(R.id.odredista_sa_stanice)
         val dugmeSacuvaj = view?.findViewById<ImageButton>(R.id.sacuvaj)
 
-        cursor?.let {
-            with(it) {
-                    val sacuvana = getInt(getColumnIndexOrThrow("sacuvana"))
-                    sifre_stanica?.text = getString(getColumnIndexOrThrow(SQLcitac.ID_KOLONA))
-                    nazivi_stanica?.text = getString(getColumnIndexOrThrow(SQLcitac.CIR_KOLONA))
-                    odredista?.text = getString(getColumnIndexOrThrow("staju")).replace(", ","\n")
+        cursor?.apply {
+                val sacuvana = getInt(getColumnIndexOrThrow(PosrednikBaze.SACUVANA))
+                sifre_stanica?.text = getString(getColumnIndexOrThrow(PosrednikBaze.ID_KOLONA))
+                nazivi_stanica?.text = getString(getColumnIndexOrThrow(PosrednikBaze.CIR_KOLONA))
+                odredista?.text = getString(getColumnIndexOrThrow("staju")).replace(", ","\n")
 
-                    fun ikonica(sacuvana: Int) {
-                        when (sacuvana) {
-                            0 -> dugmeSacuvaj?.setImageDrawable(ContextCompat.getDrawable(view.context, android.R.drawable.ic_menu_save))
-                            1 -> dugmeSacuvaj?.setImageDrawable(ContextCompat.getDrawable(view.context, android.R.drawable.ic_delete))
-                        }
+                fun ikonica(sacuvana: Int) {
+                    when (sacuvana) {
+                        0 -> dugmeSacuvaj?.setImageDrawable(ContextCompat.getDrawable(view.context, android.R.drawable.ic_menu_save))
+                        1 -> dugmeSacuvaj?.setImageDrawable(ContextCompat.getDrawable(view.context, android.R.drawable.ic_delete))
                     }
-
-                    ikonica(sacuvana)
-
-                dugmeSacuvaj?.setOnClickListener {
-                    SQLcitac(view.context).sacuvajStanicu(listOf(sifre_stanica?.text.toString()), if (sacuvana == 1) 0 else 1)
-                    ikonica(if (sacuvana == 1) 0 else 1)
-                    Glavna.adapter.changeCursor(context?.let { it1 -> SQLcitac(it1).ponoviupit() })
                 }
+
+                ikonica(sacuvana)
+
+            dugmeSacuvaj?.setOnClickListener {
+                val novaVrednost = if (sacuvana == 1) 0 else 1
+                val posrednik = PosrednikBaze(view.context.applicationContext)
+
+                ikonica(novaVrednost)
+                posrednik.sacuvajStanicu(listOf(sifre_stanica?.text.toString()), novaVrednost)
+                Glavna.adapter.changeCursor(posrednik.ponoviupit())
             }
         }
     }

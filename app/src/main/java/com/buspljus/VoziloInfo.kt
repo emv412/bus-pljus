@@ -22,6 +22,8 @@ import androidx.vectordrawable.graphics.drawable.VectorDrawableCompat
 import com.buspljus.Adapteri.PrikazZStanica
 import com.buspljus.Adapteri.SpisakLinijaAdapter
 import com.buspljus.Adapteri.sifraNaziv
+import com.buspljus.Baza.Linije
+import com.buspljus.Baza.PosrednikBaze
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import kotlinx.coroutines.CoroutineScope
@@ -46,7 +48,7 @@ class VoziloInfo(private val context: Context) {
         var praznik = false
 
         fun proveriPraznik(c: Context) {
-            if (SQLcitac(c).praznik() == 2) {
+            if (PosrednikBaze(c).praznik() == 2) {
                 danunedelji = 2
                 praznik = true
                 Toster(c).toster(c.getString(R.string.praznik_nedelja))
@@ -79,6 +81,8 @@ class VoziloInfo(private val context: Context) {
     private var samoBGVBoolean = false
     private var rezultat = mutableListOf(listOf<String>())
     private var vozoviPosleVremena : LocalTime? = null
+    private var sledeceStajalisteID = "/"
+    private var sledeceStajalisteNaziv = "/"
 
     private lateinit var vreme : String
     private lateinit var prviSledeciPolazak : LocalTime
@@ -91,6 +95,7 @@ class VoziloInfo(private val context: Context) {
     private lateinit var nemaPolazaka : TextView
     private lateinit var vozilostizeoko : TextView
     private lateinit var krenuo_u_textview : TextView
+    private lateinit var sledStanica : TextView
     private lateinit var krenuo_u_vreme : TextView
     private lateinit var rezimRV : TextView
     private lateinit var prosirenaSekcija : ConstraintLayout
@@ -120,7 +125,9 @@ class VoziloInfo(private val context: Context) {
         for (brojac in 0 until sveStaniceLinije.length()) {
             if (sveStaniceLinije[brojac] == odabranoStajalisteMarker.title) {
                 for (novib in brojac until sveStaniceLinije.length()) {
-                    preostaleStanice.add(listOf(sveStaniceLinije[novib].toString(), SQLcitac(context).idStaniceuGeoPoint(sveStaniceLinije[novib].toString())))
+                    preostaleStanice.add(listOf(sveStaniceLinije[novib].toString(), PosrednikBaze(
+                        context
+                    ).idStaniceuGeoPoint(sveStaniceLinije[novib].toString())))
                 }
                 break
             }
@@ -138,7 +145,7 @@ class VoziloInfo(private val context: Context) {
 
     fun blizinaOkretnice(sveStaniceLinije: JSONArray, linija: MojMarker): Boolean {
         // provera blizine vozila u odnosu na okretnicu
-        return if (SQLcitac(context).idStaniceuGeoPoint(sveStaniceLinije.get(0).toString()).sphericalDistance(linija.polozajVozila) < 100)
+        return if (PosrednikBaze(context).idStaniceuGeoPoint(sveStaniceLinije.get(0).toString()).sphericalDistance(linija.polozajVozila) < 100)
             true
         else
             false
@@ -172,6 +179,7 @@ class VoziloInfo(private val context: Context) {
                             linijarel = findViewById(R.id.linija_relacija)!!
                             garBroj = findViewById(R.id.gb_redv)!!
                             rastojanje = findViewById(R.id.rastojanje)!!
+                            sledStanica = findViewById(R.id.sledStanica)!!
                             presedanjebgvoz = findViewById(R.id.presedanjebgvoz)!!
                             trasaDugme = findViewById(R.id.prikaztrase)!!
                             vozilostizeoko = findViewById(R.id.vozilostizetextview)!!
@@ -192,6 +200,16 @@ class VoziloInfo(private val context: Context) {
 
                         val sveStaniceLinije = JSONArray(dobijenaLista[2])
                         val polasci = JSONObject(dobijenaLista[3])
+
+                        if (dobijenaLista.size == 6) {
+                            if (dobijenaLista[5].toInt() <= sveStaniceLinije.length()) {
+                                sledeceStajalisteID = sveStaniceLinije[dobijenaLista[5].toInt()-1].toString()
+                                sledeceStajalisteNaziv = PosrednikBaze(context).idStaniceUNaziv(sledeceStajalisteID)
+                            }
+                            else {
+                                Toster(context).toster(context.resources.getString(R.string.potrebna_nadogradnja))
+                            }
+                        }
 
                         val relacijaLinije = "$pol - $odr"
 
@@ -219,7 +237,7 @@ class VoziloInfo(private val context: Context) {
                                                 izvrsiUI.post { ucitavamStanice.visibility = View.VISIBLE }
 
                                                 val autoSTGeoPoint = zeleznickeStaniceZaListu.map { it.value[2] }[position] as GeoPoint
-                                                val izlaznaSt = SQLcitac(context).idStaniceUNaziv(zeleznickeStaniceZaListu.map { it.value[3] }[position] as String)
+                                                val izlaznaSt = PosrednikBaze(context).idStaniceUNaziv(zeleznickeStaniceZaListu.map { it.value[3] }[position] as String)
 
                                                 prikazilokstanice.setOnClickListener {
                                                     try {
@@ -230,7 +248,7 @@ class VoziloInfo(private val context: Context) {
                                                         dialog.dismiss()
                                                     }
                                                     catch (g: Exception) {
-                                                        AlertDialog(context).prikaziGresku(g)
+                                                        PopupProzor(context).prikaziGresku(g)
                                                     }
 
                                                 }
@@ -238,7 +256,7 @@ class VoziloInfo(private val context: Context) {
                                                 try {
                                                     vozoviPosleVremena = IzracunavanjeVremena().izracunavanjeVremena(
                                                         listOf(autoSTGeoPoint),
-                                                        SQLcitac(context).prikaziTrasu(linija.brojLinije, odabranoStajalisteMarker.title, null).second,
+                                                        Linije(context).prikaziTrasu(linija.brojLinije, odabranoStajalisteMarker.title, null).second,
                                                         linija,
                                                         proveriPolazak()
                                                     )[0]
@@ -266,7 +284,7 @@ class VoziloInfo(private val context: Context) {
                                 }
                             }
                             catch (g: Exception) {
-                                AlertDialog(context).prikaziGresku(g)
+                                PopupProzor(context).prikaziGresku(g)
                             }
 
                         }
@@ -288,8 +306,9 @@ class VoziloInfo(private val context: Context) {
 
                                     for (brojac in 1 until preostaleStanice.size) {
                                         jednaKoordinata = preostaleStanice[brojac][1] as GeoPoint
-                                        SQLcitac(context).pretragabaze_kliknamapu(jednaKoordinata.latitude.toString(),jednaKoordinata.longitude.toString(), object: Interfejs.Callback {
-                                            override fun korak(s: String) {
+                                        PosrednikBaze(context).pretragabaze_kliknamapu(jednaKoordinata.latitude.toString(),jednaKoordinata.longitude.toString(), object: Interfejs.Callback {
+                                            override fun podesiTextView(idStanice: String,nazivStanice: String) {
+                                                TODO("Not yet implemented")
                                             }
 
                                             override fun koloneBGVOZ(lista: List<Any>) {
@@ -340,6 +359,8 @@ class VoziloInfo(private val context: Context) {
                                 linijarel.text = relacijaLinije
                                 garBroj.text = if (linija.garazniBMenjan == null) linija.garazniBOriginal else linija.garazniBMenjan
                                 rastojanje.text = rastojanjeprer
+                                val sledecaStanicaPrikaz = "$sledeceStajalisteNaziv ($sledeceStajalisteID)"
+                                sledStanica.text = sledecaStanicaPrikaz
                             }
                         }
 
@@ -349,7 +370,7 @@ class VoziloInfo(private val context: Context) {
                                 dialog.dismiss()
                             }
                             catch (g: Exception) {
-                                izvrsiUI.post { AlertDialog(context).prikaziGresku(g) }
+                                izvrsiUI.post { PopupProzor(context).prikaziGresku(g) }
                             }
 
                         }
@@ -360,18 +381,18 @@ class VoziloInfo(private val context: Context) {
                                 pretresiZS()
                             }
                             catch (g: Exception) {
-                                izvrsiUI.post { AlertDialog(context).prikaziGresku(g) }
+                                izvrsiUI.post { PopupProzor(context).prikaziGresku(g) }
                             }
                         }
                     }
 
                 }
             } catch (e:Exception) {
-                izvrsiUI.post { AlertDialog(context).prikaziGresku(e) }
+                izvrsiUI.post { PopupProzor(context).prikaziGresku(e) }
             }
         }
 
-        SQLcitac(context).kliknavozilo(linija.title, linija.smer, odabranoStajalisteMarker.title, object: Interfejs.vracenaLista {
+        PosrednikBaze(context).klikNaVozilo(linija.title, linija.smer, odabranoStajalisteMarker.title, linija.sledeceStajaliste, object: Interfejs.vracenaLista {
             override fun vratiListu(lista: List<String>) {
                 obradilistu(lista)
             }
@@ -426,7 +447,7 @@ class VoziloInfo(private val context: Context) {
                 }
             }
             else {
-                rezultat = SQLcitac(context).preradaRVJSON(JSONObject(rv), null, null, 0,
+                rezultat = PosrednikBaze(context).preradaRVJSON(JSONObject(rv), null, null, 0,
                     if (pozivodfn == 0) LocalTime.now() else vozoviPosleVremena)
             }
 
@@ -448,11 +469,10 @@ class VoziloInfo(private val context: Context) {
 
     fun crtanjeTrase(markerVozilo: MarkerItem, markerStanica: MarkerItem, presedackaSt : String?, polazak: LocalTime, sveStanice: Boolean) {
         stNiz.clear()
-        //if ((voziloCache[0] != markerVozilo.title) or (voziloCache[1] != markerStanica.title) or (sveStanice)) {
             Glavna().izbrisiTrasu()
             gpNiz.clear()
 
-            trasaLinije = SQLcitac(context).prikaziTrasu(markerVozilo.title, markerStanica.title, if (sveStanice) SpisakLinijaAdapter.odabranaLinija[2].toString() else null)
+            trasaLinije = Linije(context).prikaziTrasu(markerVozilo.title, markerStanica.title, if (sveStanice) SpisakLinijaAdapter.odabranaLinija[2].toString() else null)
 
             fun dodajPreostaleStanice() {
                 for (b in 0 until preostaleStanice.size) {
@@ -484,22 +504,12 @@ class VoziloInfo(private val context: Context) {
                 Glavna.sveStanice.addItem(marker)
             }
 
-        /*
-            with (voziloCache) {
-                this[0] = markerVozilo.title
-                this[1] = markerStanica.title
-            }
-
-         */
-
-        //}
-
-        if (gpNiz.size > 0) {
+        if (gpNiz.isNotEmpty()) {
             val listLocalTime = IzracunavanjeVremena().izracunavanjeVremena(gpNiz, trasaLinije.second, markerVozilo, polazak)
 
             for (b in 0 until preostaleStanice.size) {
                 stNiz.add(sifraNaziv(
-                    preostaleStanice[b][0] as String, SQLcitac(context).idStaniceUNaziv(
+                    preostaleStanice[b][0] as String, PosrednikBaze(context).idStaniceUNaziv(
                         preostaleStanice[b][0] as String), if (listLocalTime.size == preostaleStanice.size) listLocalTime[b] else null, gpNiz[b]
                 ))
             }

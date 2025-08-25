@@ -2,32 +2,39 @@ package com.buspljus
 
 import android.app.AlertDialog
 import android.content.Context
+import android.database.Cursor
 import android.widget.EditText
-
-class AlertDialog(private val context: Context): AlertDialog(context) {
-    fun pronadjeneStaniceAlertDialog(pronadjeneStanice: List<String>, callback: Interfejs.Callback) {
-        if (pronadjeneStanice.size > 1) {
-            Builder(context)
-                .setTitle(context.resources.getString(R.string.pronadjene_stanice))
-                .setItems(pronadjeneStanice.toTypedArray()) { dialog, which ->
-                    callback.korak(pronadjeneStanice[which])
-                    dialog.dismiss()
-                }
-                .show()
+import com.buspljus.Adapteri.PretragaStanica
+import com.buspljus.Baza.PosrednikBaze
 
 
-        }
-        else if (pronadjeneStanice.size == 1) {
-            Builder(context)
-                .setTitle(context.resources.getString(R.string.prihvatiti_stanicu))
-                .setMessage(pronadjeneStanice[0])
-                .setPositiveButton(context.resources.getString(R.string.da)) { dialog, _ ->
-                    callback.korak(pronadjeneStanice[0])
-                    dialog.dismiss()
-                }
-                .show()
+class PopupProzor(private val context: Context): AlertDialog(context) {
+    fun pronadjeneStaniceAlertDialog(kursor: Cursor, callback: Interfejs.Callback) {
+        if (kursor.count == 0) {
+            kursor.close()
+            return
         }
 
+        val ad = PretragaStanica(context, kursor)
+
+        val dialog = Builder(context)
+            .setTitle(R.string.pronadjene_stanice)
+            .setAdapter(ad) { d, which ->
+                if (kursor.moveToPosition(which)) {
+                    val sifra = kursor.getString(kursor.getColumnIndexOrThrow(PosrednikBaze.ID_KOLONA))
+                    val naziv = kursor.getString(kursor.getColumnIndexOrThrow(PosrednikBaze.CIR_KOLONA))
+                    callback.podesiTextView(sifra, naziv)
+                }
+                d.dismiss()
+            }
+            .setNegativeButton(R.string.ponisti, null)
+            .create()
+
+        dialog.setOnDismissListener {
+            kursor.close()
+        }
+
+        dialog.show()
     }
 
     fun preuzimanjeMapeiliStanica(bazaMapa: Int, velicina: Double, odgovor: Interfejs.odgovor) {

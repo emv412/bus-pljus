@@ -115,7 +115,7 @@
         android:textAlignment="textStart"
         android:visibility="gone"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/rastojanje_textview"
+        app:layout_constraintTop_toBottomOf="@id/sledStanica"
         tools:visibility="visible" />
 
     <Button
@@ -123,12 +123,12 @@
         style="@style/Widget.AppCompat.Button.Borderless.Colored"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
         android:drawableLeft="@drawable/trasa"
         android:drawablePadding="10sp"
         android:text="@string/trasa"
-        app:layout_constraintBottom_toBottomOf="@+id/presedanjebgvoz"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/presedanjebgvoz" />
+        app:layout_constraintTop_toBottomOf="@id/sledStanica" />
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/prosirena_sekcija"
@@ -253,5 +253,26 @@
         app:layout_constraintStart_toEndOf="@+id/krenuo_u"
         app:layout_constraintTop_toTopOf="@+id/krenuo_u"
         tools:visibility="gone" />
+
+    <TextView
+        android:id="@+id/sledStanica"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="8dp"
+        app:layout_constraintBottom_toBottomOf="@+id/sledStanica_textview"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/sledStanica_textview"
+        app:layout_constraintTop_toTopOf="@+id/sledStanica_textview" />
+
+    <TextView
+        android:id="@+id/sledStanica_textview"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="2dp"
+        android:text="@string/sledecaStanicaKod"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/rastojanje_textview" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
