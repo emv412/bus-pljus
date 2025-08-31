@@ -1,28 +1,25 @@
 package com.buspljus.Vozilo
 
-import com.buspljus.Interfejs
 import com.buspljus.Internet
-import okhttp3.Response
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import okio.IOException
 import org.json.JSONArray
 
 class VoziloRemoteDataSource {
 
-    fun fetchStanice(
+    fun fetchStaniceFlow(
         stanica: String,
-        linija: String,
-        onSuccess: (JSONArray) -> Unit,
-        onError: (IOException) -> Unit
-    ) {
-        Internet().zahtevPremaInternetu(stanica, linija, 1, object : Interfejs.odgovorSaInterneta {
-            override fun uspesanOdgovor(response: Response) {
-                val json = JSONArray(response.body!!.string())
-                onSuccess(json)
+        linija: String
+    ): Flow<JSONArray> = Internet()
+        .downloadAsFlow(stanica, linija, 1)
+        .map { rezultat ->
+            if (rezultat is Internet.DownloadResult.Text) {
+                JSONArray(rezultat.content)
+            } else {
+                throw IOException("Neočekivan tip rezultata")
             }
-
-            override fun neuspesanOdgovor(e: IOException) {
-                onError(e)
-            }
-        })
-    }
+        }
 }
+
+

@@ -34,6 +34,7 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.content.edit
 import androidx.core.graphics.drawable.toBitmap
+import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
 import androidx.vectordrawable.graphics.drawable.VectorDrawableCompat
 import com.buspljus.Adapteri.PretragaStanica
@@ -42,14 +43,17 @@ import com.buspljus.Adapteri.sifraNaziv
 import com.buspljus.Baza.DatabaseManager
 import com.buspljus.Baza.Linije
 import com.buspljus.Baza.PosrednikBaze
-import com.buspljus.Baza.UpitUBazu
+import com.buspljus.Baza.Stanice
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.launch
-import okhttp3.Response
+import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import org.oscim.android.MapView
 import org.oscim.android.canvas.AndroidBitmap
@@ -88,7 +92,6 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
         lateinit var markeriVozila: ItemizedLayer
         lateinit var odabranoStajalisteSloj: ItemizedLayer
         private var tajmer: Timer? = null
-        private var posao: Job? = null
         private var odbrojavanje15Sek = false
     }
 
@@ -117,6 +120,7 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
     private var pozicija = MapPosition()
     private var prviput: Boolean = true
     private var listaPrikazana = false
+    private var animacijaJob: Job? = null
 
     private var najbliziAutobusRastojanje = 100000.0
     private var najbliziAutobusMarker : MarkerItem? = null
@@ -159,6 +163,7 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
 
         mapa = pregledmape.map()
 
+        LinijePoStanici.initialize(this)
         prikazSacuvanihStanica()
 
         VoziloInfo(this).registracijaCallback(this)
@@ -347,7 +352,9 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
 
             if (ProveraDostupnostiInterneta(this@Glavna)) {
                 zahtevZaPozicijuVozila()
-                dugmezaosvezavanje(1, 0)
+                //lifecycleScope.launch {
+                //    dugmezaosvezavanje(1, 0)
+                //}
             }
             else { // Nema interneta
                 if (Podesavanja.deljenapodesavanja.getBoolean("prikazporv", false)) {
@@ -357,7 +364,9 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
                 else {
                     Toster(this@Glavna).toster(resources.getString(R.string.nema_interneta))
                 }
-                dugmezaosvezavanje(0, 1)
+                lifecycleScope.launch {
+                    dugmezaosvezavanje(0, 1)
+                }
             }
 
             if (animacija) {
@@ -596,7 +605,9 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
                 }
             }
 
-            dugmezaosvezavanje(0, 0)
+            lifecycleScope.launch {
+                dugmezaosvezavanje(0, 0)
+            }
             if ((prviput) and (najbliziAutobusMarker?.geoPoint != null)) {
                 odzumirajMapu()
                 prviput = false
@@ -604,7 +615,7 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
 
             tajmer?.schedule(15000) { zahtevZaPozicijuVozila() }
 
-            animacijaUcitavanja()
+            startAnimacijaUcitavanja()
 
         } catch (e: Exception) {
             with(Toster(this@Glavna)) {
@@ -616,7 +627,9 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
                     PopupProzor(this@Glavna).prikaziGresku(e)
                 }
             }
-            dugmezaosvezavanje(0, 1)
+            lifecycleScope.launch {
+                dugmezaosvezavanje(0, 1)
+            }
         }
         finally {
             runOnUiThread {
@@ -629,18 +642,33 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
         }
     }
 
-    fun animacijaUcitavanja() {
-        runOnUiThread {
-            odbrojavanje15Sek = true
-            with (ucitavanje) {
-                visibility = View.VISIBLE
-                isIndeterminate = false
-                progress = 100
-            }
-            posao = scope.launch {
-                while (odbrojavanje15Sek) {
-                    delay(150)
-                    ucitavanje.progress -= 1
+    fun animacijaUcitavanja(
+        trajanjeMs: Long = 15_000,
+        intervalMs: Long = 150
+    ): Flow<Int> = flow {
+        val ukupnoKoraka = (trajanjeMs / intervalMs).toInt()
+        var progres = 100
+        emit(progres)
+
+        repeat(ukupnoKoraka) {
+            delay(intervalMs)
+            progres = (progres - (100 / ukupnoKoraka)).coerceAtLeast(0)
+            emit(progres)
+        }
+    }.onCompletion {
+        emit(0) // osiguraj da završi na 0%
+        dugmezaosvezavanje(1,0)
+    }
+
+    fun startAnimacijaUcitavanja() {
+        animacijaJob?.cancel() // prekini prethodnu ako postoji
+
+        animacijaJob = lifecycleScope.launch {
+            animacijaUcitavanja().collect { progres ->
+                withContext(Dispatchers.Main) {
+                    ucitavanje.visibility = View.VISIBLE
+                    ucitavanje.isIndeterminate = false
+                    ucitavanje.progress = progres
                 }
             }
         }
@@ -682,12 +710,12 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
         tastaturasklonjena = false
     }
 
-    fun dugmezaosvezavanje(animiranaTraka: Int, taster: Int) {
-        runOnUiThread {
-            osvezi.visibility = (if (taster == 0) View.INVISIBLE else View.VISIBLE)
+    suspend fun dugmezaosvezavanje(animiranaTraka: Int, taster: Int) {
+        withContext(Dispatchers.Main) {
+            osvezi.visibility = if (taster == 0) View.INVISIBLE else View.VISIBLE
 
-            with (ucitavanje) {
-                visibility = (if (animiranaTraka == 0) View.INVISIBLE else View.VISIBLE)
+            with(ucitavanje) {
+                visibility = if (animiranaTraka == 0) View.INVISIBLE else View.VISIBLE
                 isIndeterminate = true
             }
 
@@ -695,23 +723,30 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
         }
     }
 
-    private fun zahtevZaPozicijuVozila() {
-        dugmezaosvezavanje(1, 0)
-        Internet().zahtevPremaInternetu(stanicaId, null, 1, object : Interfejs.odgovorSaInterneta {
-            override fun uspesanOdgovor(response: Response) {
-                if (response.isSuccessful) {
-                    primljeniString = response.body!!.string()
-                    crtanjemarkera(primljeniString)
-                }
-            }
 
-            override fun neuspesanOdgovor(e: IOException) {
-                if (Internet.zahtev?.isCanceled() == false)
-                    Toster(this@Glavna).toster(resources.getString(R.string.greska_sa_vezom))
-                dugmezaosvezavanje(0, 1)
+
+    private fun zahtevZaPozicijuVozila() {
+        lifecycleScope.launch {
+            dugmezaosvezavanje(animiranaTraka = 1, taster = 0) // sakrij dugme, prikaži traku
+            try {
+                Internet().downloadAsFlow(stanicaId, null, 1).collect { result ->
+                    if (result is Internet.DownloadResult.Text) {
+                        primljeniString = result.content
+                        crtanjemarkera(primljeniString)
+                    }
+                }
+                //dugmezaosvezavanje(animiranaTraka = 0, taster = 1) // sakrij traku, prikaži dugme
+            } catch (_: IOException) {
+                if (Internet.zahtev?.isCanceled() == false) {
+                    Toster(this@Glavna)
+                        .toster(getString(R.string.greska_sa_vezom))
+                }
+                dugmezaosvezavanje(animiranaTraka = 0, taster = 1)
             }
-        })
+        }
     }
+
+
 
     fun podesiNaziv() {
         with (polje) {
@@ -743,15 +778,7 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
     }
 
     private fun prikazSacuvanihStanica() {
-        val zahtev = object : UpitUBazu(applicationContext) {}
-        val cursor = zahtev.SQLzahtev(
-            "stanice",
-            arrayOf("_id", "naziv_cir", "staju", "sacuvana"),
-            "sacuvana = ?",
-            arrayOf("1"),
-            null
-        )
-        adapter = PretragaStanica(this, cursor)
+        adapter = PretragaStanica(this, Stanice(this).sacuvaneStaniceCursor())
         lista.adapter = adapter
     }
 
@@ -812,8 +839,9 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
 
     override fun onResume() {
         if (stanicaId.isNotEmpty())
-            dugmezaosvezavanje(0, 1)
-
+            lifecycleScope.launch {
+                dugmezaosvezavanje(0, 1)
+            }
         if ((System.currentTimeMillis().div(1000)) - (Podesavanja.deljenapodesavanja.getLong("zatvoren", 0)) > 300){
             reset()
         }
@@ -834,6 +862,6 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
 
     override fun onDestroy() {
         super.onDestroy()
-        adapter.cursor.close()
+        adapter.cursor?.close()
     }
 }

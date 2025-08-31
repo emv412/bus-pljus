@@ -1,5 +1,9 @@
 package com.buspljus
 
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
 import okhttp3.Call
 import okhttp3.Callback
 import okhttp3.OkHttpClient
@@ -8,8 +12,6 @@ import okhttp3.Response
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
-import java.io.InputStream
-import java.util.zip.GZIPInputStream
 
 class Internet : OkHttpClient() {
 
@@ -57,21 +59,61 @@ class Internet : OkHttpClient() {
         }
     }
 
-    fun gunzip(gzipFile: InputStream, outputFile: File) {
-        try {
-            GZIPInputStream(gzipFile).use { gzipInputStream ->
-                FileOutputStream(outputFile).use { fileOutputStream ->
-                    val buffer = ByteArray(1024)
-                    var len = gzipInputStream.read(buffer)
-                    while (len > 0) {
-                        fileOutputStream.write(buffer, 0, len)
-                        len = gzipInputStream.read(buffer)
+    sealed class DownloadResult {
+        data class Text(val content: String) : DownloadResult()
+        data class FileResult(val file: File, val progress: Int) : DownloadResult()
+    }
+
+    fun downloadAsFlow(
+        stanica: String?,
+        linija: String?,
+        argument: Int,
+        outputFile: File? = null // ako je null, vraća string
+    ): Flow<DownloadResult> = flow {
+        // Odredi URL
+        when (argument) {
+            1 -> if (linija == null) {
+                adresa.url(POLOZAJ_VOZILA + stanica)
+            } else {
+                adresa.url(POLOZAJ_VOZILA + stanica + LINIJA + linija)
+            }
+            2 -> adresa.url(MAPA_GZ)
+            3 -> adresa.url(SVIPODACI_GZ)
+            4 -> adresa.url(NADOGRADNJA_PROGRAMA)
+            5 -> adresa.url(MAPA_GZ_DOWNLOAD)
+            6 -> adresa.url(SVIPODACI_GZ_DOWNLOAD)
+            else -> throw IllegalArgumentException("Nepodržan argument: $argument")
+        }
+
+        val call = newCall(adresa.build())
+        val response = call.execute()
+        if (!response.isSuccessful) throw IOException("HTTP greška: ${response.code}")
+
+        val body = response.body ?: throw IOException("Prazan odgovor")
+
+        if (outputFile == null) {
+            // Tekstualni odgovor
+            emit(DownloadResult.Text(body.string()))
+        } else {
+            // Fajl sa progresom
+            val totalBytes = body.contentLength().takeIf { it > 0 } ?: -1
+            val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
+            var bytesCopied = 0L
+
+            body.byteStream().use { input ->
+                FileOutputStream(outputFile).use { output ->
+                    var read: Int
+                    while (input.read(buffer).also { read = it } >= 0) {
+                        output.write(buffer, 0, read)
+                        bytesCopied += read
+                        if (totalBytes > 0) {
+                            val percent = ((bytesCopied * 100) / totalBytes).toInt()
+                            emit(DownloadResult.FileResult(outputFile, percent))
+                        }
                     }
                 }
             }
-        } catch (e: IOException) {
-            e.printStackTrace()
+            emit(DownloadResult.FileResult(outputFile, 100))
         }
-    }
-
+    }.flowOn(Dispatchers.IO)
 }

@@ -23,7 +23,6 @@ class PosrednikBaze(context: Context) : UpitUBazu(context) {
         const val SACUVANA = "sacuvana"
         const val LATITUDE = "lt"
         const val LONGITUDE = "lg"
-        const val STAJU = "staju"
         const val STANICE_TABLE = "stanice"
         const val LINIJE_TABLE = "linije"
         const val BGVOZ_TABLE = "bgvoz"
@@ -37,21 +36,16 @@ class PosrednikBaze(context: Context) : UpitUBazu(context) {
         const val IZMENJENALINIJA_BOOLEAN = "izmenjenaLN"
         const val TRASA = "trasa"
         const val IZMENJENATRASA = "izmenjenaTrasa"
-        //const val IZMENJENA_STAJALISTA = "izmenjenaStajalista"
+        const val IZMENJENA_STAJALISTA = "izmenjenaStajalista"
 
         var globalQueryData: SacuvanaStanica? = null
     }
 
     private val stationService by lazy { Stanice(context) }
     private val holidayService by lazy { Praznik(context) }
-    private val lineService by lazy { Linije(context) }
     private val mapSearchService by lazy { InterakcijaMapa(context) }
 
-    fun ponoviupit(): Cursor {
-        val q = globalQueryData
-            ?: throw IllegalStateException("No previous query to repeat")
-        return super.SQLzahtev(q.tabela, q.kolone, q.odabir, q.parametri, q.redjanjepo)
-    }
+
 
     fun idStaniceuGeoPoint(sifra: String): GeoPoint =
         stationService.idStaniceuGeoPoint(sifra)
@@ -66,13 +60,7 @@ class PosrednikBaze(context: Context) : UpitUBazu(context) {
         mapSearchService.pretragabaze_kliknamapu(lat, lng, callback, pozivOdFunkcije)
 
     fun dobavisifre(rec: CharSequence?, trazenjepobroju: Boolean): Cursor =
-        stationService.dobavisifre(rec,trazenjepobroju)
-
-    fun dobaviSacuvaneStanice(): List<String> =
-        stationService.dobaviSacuvaneStanice()
-
-    fun sacuvajStanicu(stanica: List<String>, cuvanjeilibrisanje: Int) =
-        stationService.sacuvajStanicu(stanica,cuvanjeilibrisanje)
+        stationService.dobaviSifre(rec,trazenjepobroju)
 
     fun preradaRVJSON(
         redVoznjeJSON: JSONObject?,

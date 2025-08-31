@@ -2,70 +2,65 @@ package com.buspljus
 
 import android.content.Intent
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
 import android.widget.Button
 import android.widget.ProgressBar
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
 import com.buspljus.Baza.PosrednikBaze
-import okhttp3.Response
+import kotlinx.coroutines.launch
 import java.io.File
-import java.io.IOException
 
 
-class Prvootvaranje: AppCompatActivity() {
+class Prvootvaranje : AppCompatActivity() {
 
-    private lateinit var postotak : ProgressBar
-    private lateinit var preuzimanje : Button
+    private lateinit var postotak: ProgressBar
+    private lateinit var preuzimanje: Button
+    private val internet = Internet()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.prvootvaranje)
-        preuzimanje = findViewById(R.id.preuzmi)
-        postotak = findViewById(R.id.postotak)
 
-        proveraprisustvafajlova()
+        postotak = findViewById(R.id.postotak)
+        preuzimanje = findViewById(R.id.preuzmi)
+
+        checkFilesPresence()
 
         preuzimanje.setOnClickListener {
-            skidanjeMapeibaze()
-        }
-    }
-
-    fun skidanjeMapeibaze() {
-        for (i in 5 .. 6) {
-            Internet().zahtevPremaInternetu(null, null, i, object: Interfejs.odgovorSaInterneta {
-                override fun uspesanOdgovor(response: Response) {
-                    Handler(Looper.getMainLooper()).post { preuzimanje.isEnabled = false }
-                    val preuzeto = response.body!!.source().inputStream()
-                    when (i) {
-                        5 -> {
-                            Internet().gunzip(preuzeto, File(filesDir,"beograd.map"))
-                            podigniProcenat(50)
-                        }
-                        6 -> {
-                            Internet().gunzip(preuzeto, File(getDatabasePath(PosrednikBaze.IME_BAZE).path))
-                            podigniProcenat(100)
-                            proveraprisustvafajlova()
+            preuzimanje.isEnabled = false
+            lifecycleScope.launch {
+                val tempMapFile = File(cacheDir, "mapa.gz")
+                Internet().downloadAsFlow(null, null, 5, tempMapFile)
+                    .collect { result ->
+                        if (result is Internet.DownloadResult.FileResult) {
+                            postotak.progress = result.progress / 2
                         }
                     }
-                }
+                Raspakivanje().gunzip(tempMapFile.inputStream(), File(filesDir, "beograd.map"))
 
-                override fun neuspesanOdgovor(e: IOException) {
-                    Toster(this@Prvootvaranje).toster(resources.getString(R.string.greska_sa_vezom))
-                }
-            })
+                val tempDbFile = File(cacheDir, "baza.gz")
+                Internet().downloadAsFlow(null, null, 6, tempDbFile)
+                    .collect { result ->
+                        if (result is Internet.DownloadResult.FileResult) {
+                            postotak.progress = 50 + (result.progress / 2)
+                        }
+                    }
+                Raspakivanje().gunzip(tempDbFile.inputStream(), getDatabasePath(PosrednikBaze.IME_BAZE))
+
+                checkFilesPresence()
+            }
+
         }
-
     }
 
-    fun podigniProcenat(i: Int) {
-        Handler(Looper.getMainLooper()).post { postotak.progress = i }
-    }
-
-    fun proveraprisustvafajlova() {
-        if ((File(filesDir,"beograd.map").exists()) and (File(getDatabasePath(PosrednikBaze.IME_BAZE).path).exists())) {
+    private fun checkFilesPresence() {
+        if (File(filesDir, "beograd.map").exists() &&
+            File(getDatabasePath(PosrednikBaze.IME_BAZE).path).exists()
+        ) {
             startActivity(Intent(this, Glavna::class.java))
             finish()
+        } else {
+            preuzimanje.isEnabled = true
         }
     }
 }

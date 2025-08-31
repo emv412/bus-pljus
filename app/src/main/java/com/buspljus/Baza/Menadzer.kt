@@ -19,6 +19,7 @@ class DatabaseManager private constructor(appContext: Context) {
     private val dbPath: String = appContext.getDatabasePath(PosrednikBaze.IME_BAZE).absolutePath
 
     val database: SQLiteDatabase
+        @Synchronized
         get() {
             if (dbInstance == null || !dbInstance!!.isOpen) {
                 dbInstance = SQLiteDatabase.openDatabase(
@@ -32,13 +33,5 @@ class DatabaseManager private constructor(appContext: Context) {
             return dbInstance!!
         }
 
-    fun isOpen(): Boolean = dbInstance?.isOpen == true
     fun isWritable(): Boolean = dbInstance?.let { it.isOpen && !it.isReadOnly } == true
-
-    fun close() {
-        dbInstance?.let {
-            if (it.isOpen) it.close()
-        }
-        dbInstance = null
-    }
 }

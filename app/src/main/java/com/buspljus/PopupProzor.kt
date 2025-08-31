@@ -15,6 +15,7 @@ class PopupProzor(private val context: Context): AlertDialog(context) {
             return
         }
 
+
         val ad = PretragaStanica(context, kursor)
 
         val dialog = Builder(context)

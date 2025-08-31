@@ -3,18 +3,20 @@ package com.buspljus
 import android.content.Intent
 import android.content.SharedPreferences
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.edit
 import androidx.core.net.toUri
+import androidx.lifecycle.lifecycleScope
 import androidx.preference.CheckBoxPreference
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.PreferenceManager
 import com.buspljus.Baza.PosrednikBaze
-import okhttp3.Response
+import com.buspljus.Baza.Stanice
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import java.io.File
 import java.io.IOException
@@ -86,102 +88,150 @@ class Podesavanja : AppCompatActivity() {
         override fun onPreferenceClick(preference: Preference): Boolean {
             when (preference.key) {
                 "nadogradi_program" -> {
-                    Internet().zahtevPremaInternetu(null, null, 4, object : Interfejs.odgovorSaInterneta {
-                        override fun uspesanOdgovor(response: Response) {
-                            if (response.isSuccessful) {
-                                val odgovor = JSONObject(response.body!!.string())
-                                if (odgovor.getString("name").toDouble() > verzija.toDouble()) {
-                                    val prozorZaNadogradnju = context?.let {
-                                        AlertDialog.Builder(it)
-                                            .setTitle(resources.getString(R.string.dostupna_nadogradnja))
-                                            .setMessage(odgovor.getString("body"))
-                                            .setPositiveButton(resources.getString(R.string.preuzmi)) { dialog, _ ->
-                                                dialog.dismiss()
-                                                startActivity(Intent(Intent.ACTION_VIEW,
-                                                    odgovor.getJSONArray("assets").getJSONObject(0)
-                                                        .getString("browser_download_url").toUri()))
-                                            }
-                                    }
-                                    Handler(Looper.getMainLooper()).post {
-                                        prozorZaNadogradnju?.create()?.show()
-                                    }
+                    lifecycleScope.launch {
+                        Internet().downloadAsFlow(null, null, 4).collect { rezultat ->
+                            if (rezultat is Internet.DownloadResult.Text) {
+                                val odgovor = JSONObject(rezultat.content)
+                                val remoteVersion = odgovor.getString("name").toDoubleOrNull()
+                                val localVersion = verzija.toDoubleOrNull()
+
+                                if (remoteVersion != null && localVersion != null && remoteVersion > localVersion) {
+                                    val dialog = AlertDialog.Builder(requireContext())
+                                        .setTitle(getString(R.string.dostupna_nadogradnja))
+                                        .setMessage(odgovor.getString("body"))
+                                        .setPositiveButton(getString(R.string.preuzmi)) { d, _ ->
+                                            d.dismiss()
+                                            startActivity(
+                                                Intent(
+                                                    Intent.ACTION_VIEW,
+                                                    odgovor.getJSONArray("assets")
+                                                        .getJSONObject(0)
+                                                        .getString("browser_download_url")
+                                                        .toUri()
+                                                )
+                                            )
+                                        }
+                                        .create()
+
+                                    dialog.show()
                                 } else {
-                                    context?.let { Toster(it).toster(resources.getString(R.string.nema_nadogradnje)) }
+                                    Toster(requireContext()).toster(getString(R.string.nema_nadogradnje))
                                 }
                             }
                         }
-
-                        override fun neuspesanOdgovor(e: IOException) {
-                            context?.let { Toster(it).toster(resources.getString(R.string.greska_sa_vezom)) }
-                        }
-                    })
+                    }
                 }
-                "nadogradimapu" -> {
-                    Internet().zahtevPremaInternetu(null, null, 2, object : Interfejs.odgovorSaInterneta {
-                        override fun uspesanOdgovor(response: Response) {
-                            val preuzeto = JSONObject(response.body!!.string())
-                            val velicinaMape = preuzeto.getDouble("size")
-                            Handler(Looper.getMainLooper()).post {
-                                PopupProzor(preference.context).preuzimanjeMapeiliStanica(0, velicinaMape, object: Interfejs.odgovor {
-                                    override fun da(odg: Boolean) {
-                                        Internet().zahtevPremaInternetu(null, null, 5, object : Interfejs.odgovorSaInterneta {
-                                            override fun uspesanOdgovor(response: Response) {
-                                                val mapa = response.body!!.source().inputStream()
-                                                Internet().gunzip(mapa, File(preference.context.filesDir, "beograd.map"))
-                                                Toster(preference.context).toster(preference.context.resources.getString(R.string.mapa_nadogradjena))
-                                                Glavna.mapa.updateMap()
-                                            }
+                "nadogradimapu" -> lifecycleScope.launch {
+                    try {
+                        // 1. Preuzmi JSON sa veličinom mape
+                        Internet().downloadAsFlow(null, null, 2)
+                            .collect { rezultat ->
+                                if (rezultat is Internet.DownloadResult.Text) {
+                                    val preuzeto = JSONObject(rezultat.content)
+                                    val velicinaMape = preuzeto.getDouble("size")
 
-                                            override fun neuspesanOdgovor(e: IOException) {
-                                                Toster(preference.context).toster(resources.getString(R.string.greska_sa_vezom))
-                                            }
-                                        })
-                                    }
-                                })
-                            }
-                        }
-
-                        override fun neuspesanOdgovor(e: IOException) {
-                            Toster(preference.context).toster(resources.getString(R.string.greska_sa_vezom))
-                        }
-                    })
-                }
-                "nadogradistanice" -> {
-                    Internet().zahtevPremaInternetu(null, null, 3, object : Interfejs.odgovorSaInterneta {
-                        override fun uspesanOdgovor(response: Response) {
-                            val preuzeto = JSONObject(response.body!!.string())
-                            val velicinaBaze = preuzeto.getDouble("size")
-                            Handler(Looper.getMainLooper()).post {
-                                PopupProzor(preference.context).preuzimanjeMapeiliStanica(1, velicinaBaze, object: Interfejs.odgovor {
-                                    override fun da(odg: Boolean) {
-                                        Internet().zahtevPremaInternetu(null, null, 6, object : Interfejs.odgovorSaInterneta {
-                                            override fun uspesanOdgovor(response: Response) {
-                                                val baza = response.body!!.source().inputStream()
-                                                val sacuvanestanice = PosrednikBaze(preference.context).dobaviSacuvaneStanice()
-                                                preference.context.getDatabasePath(PosrednikBaze.IME_BAZE)?.path?.let { File(it) }?.let {
-                                                    Internet().gunzip(baza, it)
+                                    // 2. Popup na glavnom thread-u
+                                    withContext(Dispatchers.Main) {
+                                        PopupProzor(preference.context)
+                                            .preuzimanjeMapeiliStanica(0, velicinaMape, object : Interfejs.odgovor {
+                                                override fun da(odg: Boolean) {
+                                                    if (odg) {
+                                                        // 3. Skidanje i raspakivanje mape
+                                                        lifecycleScope.launch {
+                                                            val tempMapFile = File(preference.context.cacheDir, "mapa.gz")
+                                                            Internet().downloadAsFlow(null, null, 5, tempMapFile)
+                                                                .collect { fileResult ->
+                                                                    if (fileResult is Internet.DownloadResult.FileResult &&
+                                                                        fileResult.progress == 100
+                                                                    ) {
+                                                                        Raspakivanje().gunzip(
+                                                                            tempMapFile.inputStream(),
+                                                                            File(preference.context.filesDir, "beograd.map")
+                                                                        )
+                                                                        withContext(Dispatchers.Main) {
+                                                                            Toster(preference.context).toster(
+                                                                                preference.context.getString(R.string.mapa_nadogradjena)
+                                                                            )
+                                                                            Glavna.mapa.updateMap()
+                                                                        }
+                                                                    }
+                                                                }
+                                                        }
+                                                    }
                                                 }
-                                                PosrednikBaze(preference.context).sacuvajStanicu(sacuvanestanice,1)
-                                                Toster(preference.context).toster(preference.context.resources.getString(R.string.baza_nadogradjena))
-                                            }
-
-                                            override fun neuspesanOdgovor(e: IOException) {
-                                                Toster(preference.context).toster(resources.getString(R.string.greska_sa_vezom))
-                                            }
-                                        })
+                                            })
                                     }
-                                })
+                                }
                             }
+                    } catch (e: IOException) {
+                        withContext(Dispatchers.Main) {
+                            Toster(preference.context).toster(
+                                preference.context.getString(R.string.greska_sa_vezom)
+                            )
                         }
-
-                        override fun neuspesanOdgovor(e: IOException) {
-                            Toster(preference.context).toster(resources.getString(R.string.greska_sa_vezom))
-                        }
-                    })
+                    }
                 }
+
+                "nadogradistanice" -> lifecycleScope.launch {
+                    try {
+                        // 1. Preuzmi JSON sa veličinom baze
+                        Internet().downloadAsFlow(null, null, 3)
+                            .collect { rezultat ->
+                                if (rezultat is Internet.DownloadResult.Text) {
+                                    val preuzeto = JSONObject(rezultat.content)
+                                    val velicinaBaze = preuzeto.getDouble("size")
+
+                                    // 2. Popup na glavnom thread-u
+                                    withContext(Dispatchers.Main) {
+                                        PopupProzor(preference.context)
+                                            .preuzimanjeMapeiliStanica(1, velicinaBaze, object : Interfejs.odgovor {
+                                                override fun da(odg: Boolean) {
+                                                    if (odg) {
+                                                        // 3. Skidanje i raspakivanje baze
+                                                        lifecycleScope.launch {
+                                                            val tempDbFile = File(preference.context.cacheDir, "baza.gz")
+                                                            Internet().downloadAsFlow(null, null, 6, tempDbFile)
+                                                                .collect { fileResult ->
+                                                                    if (fileResult is Internet.DownloadResult.FileResult &&
+                                                                        fileResult.progress == 100
+                                                                    ) {
+                                                                        val sacuvaneStanice =
+                                                                            Stanice(preference.context).dobaviSacuvaneStanice()
+                                                                        Raspakivanje().gunzip(
+                                                                            tempDbFile.inputStream(),
+                                                                            preference.context.getDatabasePath(PosrednikBaze.IME_BAZE)
+                                                                        )
+                                                                        for (i in sacuvaneStanice.keys) {
+                                                                            Stanice(preference.context)
+                                                                                .sacuvajStanicu(i, 1)
+                                                                        }
+                                                                        withContext(Dispatchers.Main) {
+                                                                            Toster(preference.context).toster(
+                                                                                preference.context.getString(R.string.baza_nadogradjena)
+                                                                            )
+                                                                        }
+                                                                    }
+                                                                }
+                                                        }
+                                                    }
+                                                }
+                                            })
+                                    }
+                                }
+                            }
+                    } catch (e: IOException) {
+                        withContext(Dispatchers.Main) {
+                            Toster(preference.context).toster(
+                                preference.context.getString(R.string.greska_sa_vezom)
+                            )
+                        }
+                    }
+                }
+
                 "o_programu" -> {
                     startActivity(Intent(context, OProgramu::class.java))
                 }
+
                 "mnozilac" -> {
                     PopupProzor(preference.context).podesavanjeMnozioca()
                 }

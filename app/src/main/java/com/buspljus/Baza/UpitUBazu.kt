@@ -15,17 +15,14 @@ abstract class UpitUBazu(val context: Context) {
     protected val baza: SQLiteDatabase
         get() = DatabaseManager.getInstance(context.applicationContext).database
 
-    protected fun isDatabaseOpen(): Boolean =
-        DatabaseManager.getInstance(context.applicationContext).isOpen()
-
     protected fun isDatabaseWritable(): Boolean =
         DatabaseManager.getInstance(context.applicationContext).isWritable()
 
     protected inline fun <T> queryAndProcess(
         table: String,
         columns: Array<String>,
-        selection: String,
-        selectionArgs: Array<String>,
+        selection: String?,
+        selectionArgs: Array<String>?,
         orderBy: String? = null,
         processor: (Cursor) -> T
     ): T {

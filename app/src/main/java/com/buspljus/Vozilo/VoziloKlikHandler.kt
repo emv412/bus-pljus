@@ -2,6 +2,7 @@ package com.buspljus.Vozilo
 
 import android.content.Context
 import android.database.Cursor
+import android.util.Log
 import com.buspljus.Baza.PosrednikBaze.Companion.DATUM_RV
 import com.buspljus.Baza.PosrednikBaze.Companion.LISTA_STAJALISTA
 import com.buspljus.Baza.PosrednikBaze.Companion.OKRETNICA_DO
@@ -10,9 +11,12 @@ import com.buspljus.Baza.PosrednikBaze.Companion.RED_VOZNJE
 import com.buspljus.Baza.PosrednikBaze.Companion.SMER
 import com.buspljus.Interfejs
 import com.buspljus.PopupProzor
-import com.buspljus.R
 import com.buspljus.Toster
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import org.json.JSONArray
+import org.json.JSONException
 
 class VoziloKlikHandler(
     private val context: Context,
@@ -29,38 +33,52 @@ class VoziloKlikHandler(
     ) {
         var kursor: Cursor? = null
         try {
-            fun nastavi() {
+            fun obradiStanice() {
                 val lista = mutableListOf<String>()
-                if (kursor?.count == 1) {
-                    kursor?.use {
-                        val kolone = listOf(OKRETNICA_OD, OKRETNICA_DO, LISTA_STAJALISTA, RED_VOZNJE, DATUM_RV)
-                        it.moveToFirst()
-                        for (kolona in kolone) {
-                            lista.add(it.getString(it.getColumnIndexOrThrow(kolona)))
+
+                kursor?.use { cursor ->
+                    val kolone = listOf(OKRETNICA_OD, OKRETNICA_DO, LISTA_STAJALISTA, RED_VOZNJE, DATUM_RV)
+
+                    while (cursor.moveToNext()) {
+                        val jsonString = cursor.getString(cursor.getColumnIndexOrThrow(LISTA_STAJALISTA))
+                        val niz = try {
+                            JSONArray(jsonString)
+                        } catch (e: JSONException) {
+                            Log.e("obradiStanice", "Invalid JSON in LISTA_STAJALISTA", e)
+                            continue // skip this row
                         }
+
+                        for (kolona in kolone) {
+                            lista.add(cursor.getString(cursor.getColumnIndexOrThrow(kolona)))
+                        }
+                        break
                     }
                 }
+
                 sledeceStajaliste?.let { lista.add(it) }
                 vratiListu.vratiListu(lista)
             }
 
+
             if (smer != null) {
                 kursor = repository.getLinijaBySmer(linija, smer)
-                nastavi()
+                obradiStanice()
             } else {
                 kursor = repository.getLinijaByStanica(linija, stanica)
-                if (kursor.count != 1) {
-                    remote.fetchStanice(
-                        stanica, linija,
-                        onSuccess = { json ->
-                            handleRemoteData(json, linija, { nastavi() })
-                        },
-                        onError = {
-                            Toster(context).toster(context.getString(R.string.greska_sa_vezom))
+                //kursor.let {
+                //    Log.d("KURSOR", DatabaseUtils.dumpCursorToString(it))
+                //}
+                if (kursor.count == 0) {
+                    CoroutineScope(Dispatchers.IO).launch {
+                        VoziloRemoteDataSource().fetchStaniceFlow(stanica,linija).collect { json ->
+                            handleRemoteData(json, linija, { obradiStanice() })
+                            if (kursor.count > 0) {
+                                obradiStanice()
+                            }
                         }
-                    )
+                    }
                 } else {
-                    nastavi()
+                    obradiStanice()
                 }
             }
         } catch (g: Exception) {

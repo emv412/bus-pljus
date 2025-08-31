@@ -38,3 +38,5 @@ data class SacuvanaStanica(
         return result
     }
 }
+
+data class LineInfo(val lineId: String, val destination: String)
