@@ -48,11 +48,18 @@ class IzracunavanjeVremena {
         return GPnaVR
     }
 
-    fun izracunavanjeVremena(autoSTGeoPoint: List<GeoPoint>, gpx: JSONArray, vozilo: MarkerItem, prviSledeciPolazak: LocalTime): List<LocalTime> {
+    fun izracunavanjeVremena(autoSTGeoPoint: List<GeoPoint>, gpx: List<GeoPoint>, vozilo: MarkerItem, prviSledeciPolazak: LocalTime): List<LocalTime> {
         var i = 0
         var aStGeoPoint = 0
+        var pozicijaVozila : GeoPoint
 
-        val pozicijaVozila = GeoPoint(vozilo.geoPoint.latitude, vozilo.geoPoint.longitude)
+        if (vozilo.geoPoint == null) {
+            pozicijaVozila = gpx[0]
+        }
+        else {
+            pozicijaVozila = GeoPoint(vozilo.geoPoint.latitude, vozilo.geoPoint.longitude)
+        }
+
         var pozicijaGPX : GeoPoint? = null
         var rastojanjeVozila: Double?
         var rastojanjeStanica: Double?
@@ -98,11 +105,12 @@ class IzracunavanjeVremena {
         }
 
         fun promeniPozicijuGPX() {
-            pozicijaGPX = GeoPoint(gpx.getJSONObject(i).getDouble("lat"), gpx.getJSONObject(i).getDouble("lon"))
+            pozicijaGPX = gpx[i]
+            //pozicijaGPX = GeoPoint(gpx.getJSONObject(i).getDouble("lat"), gpx.getJSONObject(i).getDouble("lon"))
         }
 
         fun pokreni() {
-            while (i < gpx.length()) {
+            while (i < gpx.size) {
                 promeniPozicijuGPX()
                 if (!pronadjenoVozilo)
                     pronadjiVozilo()

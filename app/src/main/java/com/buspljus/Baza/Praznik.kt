@@ -1,7 +1,7 @@
 package com.buspljus.Baza
 
 import android.content.Context
-import com.buspljus.PopupProzor
+import com.buspljus.grafika.PopupProzor
 import java.time.LocalDate
 
 class Praznik(context: Context) : UpitUBazu(context) {

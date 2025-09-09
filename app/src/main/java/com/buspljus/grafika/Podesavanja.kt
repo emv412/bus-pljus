@@ -1,4 +1,4 @@
-package com.buspljus
+package com.buspljus.grafika
 
 import android.content.Intent
 import android.content.SharedPreferences
@@ -14,13 +14,19 @@ import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.PreferenceManager
 import com.buspljus.Baza.PosrednikBaze
 import com.buspljus.Baza.Stanice
+import com.buspljus.BuildConfig
+import com.buspljus.Glavna
+import com.buspljus.Interfejs
+import com.buspljus.Internet
+import com.buspljus.R
+import com.buspljus.Raspakivanje
+import com.buspljus.Toster
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import java.io.File
 import java.io.IOException
-
 
 class Podesavanja : AppCompatActivity() {
     companion object {
@@ -133,33 +139,49 @@ class Podesavanja : AppCompatActivity() {
                                     // 2. Popup na glavnom thread-u
                                     withContext(Dispatchers.Main) {
                                         PopupProzor(preference.context)
-                                            .preuzimanjeMapeiliStanica(0, velicinaMape, object : Interfejs.odgovor {
-                                                override fun da(odg: Boolean) {
-                                                    if (odg) {
-                                                        // 3. Skidanje i raspakivanje mape
-                                                        lifecycleScope.launch {
-                                                            val tempMapFile = File(preference.context.cacheDir, "mapa.gz")
-                                                            Internet().downloadAsFlow(null, null, 5, tempMapFile)
-                                                                .collect { fileResult ->
-                                                                    if (fileResult is Internet.DownloadResult.FileResult &&
-                                                                        fileResult.progress == 100
-                                                                    ) {
-                                                                        Raspakivanje().gunzip(
-                                                                            tempMapFile.inputStream(),
-                                                                            File(preference.context.filesDir, "beograd.map")
-                                                                        )
-                                                                        withContext(Dispatchers.Main) {
-                                                                            Toster(preference.context).toster(
-                                                                                preference.context.getString(R.string.mapa_nadogradjena)
+                                            .preuzimanjeMapeiliStanica(
+                                                0,
+                                                velicinaMape,
+                                                object : Interfejs.odgovor {
+                                                    override fun da(odg: Boolean) {
+                                                        if (odg) {
+                                                            // 3. Skidanje i raspakivanje mape
+                                                            lifecycleScope.launch {
+                                                                val tempMapFile = File(
+                                                                    preference.context.cacheDir,
+                                                                    "mapa.gz"
+                                                                )
+                                                                Internet().downloadAsFlow(
+                                                                    null,
+                                                                    null,
+                                                                    5,
+                                                                    tempMapFile
+                                                                )
+                                                                    .collect { fileResult ->
+                                                                        if (fileResult is Internet.DownloadResult.FileResult &&
+                                                                            fileResult.progress == 100
+                                                                        ) {
+                                                                            Raspakivanje().gunzip(
+                                                                                tempMapFile.inputStream(),
+                                                                                File(
+                                                                                    preference.context.filesDir,
+                                                                                    "beograd.map"
+                                                                                )
                                                                             )
-                                                                            Glavna.mapa.updateMap()
+                                                                            withContext(Dispatchers.Main) {
+                                                                                Toster(preference.context).toster(
+                                                                                    preference.context.getString(
+                                                                                        R.string.mapa_nadogradjena
+                                                                                    )
+                                                                                )
+                                                                                Glavna.Companion.mapa.updateMap()
+                                                                            }
                                                                         }
                                                                     }
-                                                                }
+                                                            }
                                                         }
                                                     }
-                                                }
-                                            })
+                                                })
                                     }
                                 }
                             }
@@ -184,38 +206,56 @@ class Podesavanja : AppCompatActivity() {
                                     // 2. Popup na glavnom thread-u
                                     withContext(Dispatchers.Main) {
                                         PopupProzor(preference.context)
-                                            .preuzimanjeMapeiliStanica(1, velicinaBaze, object : Interfejs.odgovor {
-                                                override fun da(odg: Boolean) {
-                                                    if (odg) {
-                                                        // 3. Skidanje i raspakivanje baze
-                                                        lifecycleScope.launch {
-                                                            val tempDbFile = File(preference.context.cacheDir, "baza.gz")
-                                                            Internet().downloadAsFlow(null, null, 6, tempDbFile)
-                                                                .collect { fileResult ->
-                                                                    if (fileResult is Internet.DownloadResult.FileResult &&
-                                                                        fileResult.progress == 100
-                                                                    ) {
-                                                                        val sacuvaneStanice =
-                                                                            Stanice(preference.context).dobaviSacuvaneStanice()
-                                                                        Raspakivanje().gunzip(
-                                                                            tempDbFile.inputStream(),
-                                                                            preference.context.getDatabasePath(PosrednikBaze.IME_BAZE)
-                                                                        )
-                                                                        for (i in sacuvaneStanice.keys) {
-                                                                            Stanice(preference.context)
-                                                                                .sacuvajStanicu(i, 1)
-                                                                        }
-                                                                        withContext(Dispatchers.Main) {
-                                                                            Toster(preference.context).toster(
-                                                                                preference.context.getString(R.string.baza_nadogradjena)
+                                            .preuzimanjeMapeiliStanica(
+                                                1,
+                                                velicinaBaze,
+                                                object : Interfejs.odgovor {
+                                                    override fun da(odg: Boolean) {
+                                                        if (odg) {
+                                                            // 3. Skidanje i raspakivanje baze
+                                                            lifecycleScope.launch {
+                                                                val tempDbFile = File(
+                                                                    preference.context.cacheDir,
+                                                                    "baza.gz"
+                                                                )
+                                                                Internet().downloadAsFlow(
+                                                                    null,
+                                                                    null,
+                                                                    6,
+                                                                    tempDbFile
+                                                                )
+                                                                    .collect { fileResult ->
+                                                                        if (fileResult is Internet.DownloadResult.FileResult &&
+                                                                            fileResult.progress == 100
+                                                                        ) {
+                                                                            val sacuvaneStanice =
+                                                                                Stanice(preference.context).dobaviSacuvaneStanice()
+                                                                            Raspakivanje().gunzip(
+                                                                                tempDbFile.inputStream(),
+                                                                                preference.context.getDatabasePath(
+                                                                                    PosrednikBaze.Companion.IME_BAZE
+                                                                                )
                                                                             )
+                                                                            for (i in sacuvaneStanice.keys) {
+                                                                                Stanice(preference.context)
+                                                                                    .sacuvajStanicu(
+                                                                                        i,
+                                                                                        1
+                                                                                    )
+                                                                            }
+                                                                            withContext(Dispatchers.Main) {
+                                                                                Toster(preference.context).toster(
+                                                                                    preference.context.getString(
+                                                                                        R.string.baza_nadogradjena
+                                                                                    )
+                                                                                )
+                                                                            }
                                                                         }
                                                                     }
-                                                                }
+                                                            }
                                                         }
                                                     }
-                                                }
-                                            })
+                                                })
                                     }
                                 }
                             }

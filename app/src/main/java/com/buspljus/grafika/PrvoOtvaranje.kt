@@ -1,4 +1,4 @@
-package com.buspljus
+package com.buspljus.grafika
 
 import android.content.Intent
 import android.os.Bundle
@@ -7,15 +7,17 @@ import android.widget.ProgressBar
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.buspljus.Baza.PosrednikBaze
+import com.buspljus.Glavna
+import com.buspljus.Internet
+import com.buspljus.R
+import com.buspljus.Raspakivanje
 import kotlinx.coroutines.launch
 import java.io.File
 
-
-class Prvootvaranje : AppCompatActivity() {
+class PrvoOtvaranje : AppCompatActivity() {
 
     private lateinit var postotak: ProgressBar
     private lateinit var preuzimanje: Button
-    private val internet = Internet()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -45,7 +47,7 @@ class Prvootvaranje : AppCompatActivity() {
                             postotak.progress = 50 + (result.progress / 2)
                         }
                     }
-                Raspakivanje().gunzip(tempDbFile.inputStream(), getDatabasePath(PosrednikBaze.IME_BAZE))
+                Raspakivanje().gunzip(tempDbFile.inputStream(), getDatabasePath(PosrednikBaze.Companion.IME_BAZE))
 
                 checkFilesPresence()
             }
@@ -55,7 +57,7 @@ class Prvootvaranje : AppCompatActivity() {
 
     private fun checkFilesPresence() {
         if (File(filesDir, "beograd.map").exists() &&
-            File(getDatabasePath(PosrednikBaze.IME_BAZE).path).exists()
+            File(getDatabasePath(PosrednikBaze.Companion.IME_BAZE).path).exists()
         ) {
             startActivity(Intent(this, Glavna::class.java))
             finish()

@@ -1,15 +1,15 @@
 package com.buspljus
 
-import com.buspljus.Adapteri.sifraNaziv
 import okhttp3.Response
 import org.oscim.core.GeoPoint
+import org.oscim.layers.marker.MarkerItem
 import java.io.IOException
 import java.time.LocalTime
 
 
 class Interfejs {
-    interface trasa {
-        fun prikazTrase(linijarv: String, listasifraNaziv: MutableList<sifraNaziv>)
+    interface novaTrasa {
+        fun prikazTrase(voziloMarker: MarkerItem, listaStajalista: List<MarkerItem>, listaTacakaTrase: List<GeoPoint>, listaSifraNaziv: List<sifraNaziv>)
     }
 
     interface odgovorSaInterneta {
@@ -17,7 +17,7 @@ class Interfejs {
         fun neuspesanOdgovor(e: IOException)
     }
 
-    interface Callback {
+    interface MapTapListener {
         fun podesiTextView(idStanice: String, nazivStanice: String)
         fun koloneBGVOZ(lista: List<Any>)
     }

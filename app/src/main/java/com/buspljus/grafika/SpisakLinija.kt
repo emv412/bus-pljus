@@ -1,3 +1,5 @@
+package com.buspljus.grafika
+
 import android.content.Context
 import androidx.core.widget.doOnTextChanged
 import androidx.recyclerview.widget.GridLayoutManager
@@ -8,8 +10,10 @@ import com.buspljus.R
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.textfield.TextInputEditText
+import org.oscim.layers.marker.MarkerItem
+import java.time.LocalTime
 
-class SpisakLinija(private val context: Context) {
+class SpisakLinija(private val context: Context, private val nacrtajTrasu: (MarkerItem, MarkerItem, String?, LocalTime) -> Unit) {
 
     val dialog = BottomSheetDialog(context)
     private lateinit var rvRecyclerView: RecyclerView
@@ -28,14 +32,14 @@ class SpisakLinija(private val context: Context) {
         }
 
         rvRecyclerView.layoutManager = GridLayoutManager(context, 5)
-        rvRecyclerView.adapter = SpisakLinijaAdapter(context, l)
+        rvRecyclerView.adapter = SpisakLinijaAdapter(context, l, dialog, nacrtajTrasu)
 
         pretraga.doOnTextChanged { text, _, _, _ ->
             l = if (text?.length!! > 0)
                 Linije(context).sveLinije(text.toString())
             else
                 Linije(context).sveLinije("")
-            rvRecyclerView.adapter = SpisakLinijaAdapter(context, l)
+            rvRecyclerView.adapter = SpisakLinijaAdapter(context, l, dialog, nacrtajTrasu)
         }
     }
 }

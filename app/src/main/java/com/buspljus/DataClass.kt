@@ -1,5 +1,8 @@
 package com.buspljus
 
+import org.oscim.core.GeoPoint
+import java.time.LocalTime
+
 data class BgVozStation(
     val id: String,
     val naziv: String,
@@ -40,3 +43,5 @@ data class SacuvanaStanica(
 }
 
 data class LineInfo(val lineId: String, val destination: String)
+
+data class sifraNaziv(val sifra: String, val naziv: String, val vreme: LocalTime?, val pozicija: GeoPoint)

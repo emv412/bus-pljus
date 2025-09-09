@@ -8,12 +8,10 @@ import android.widget.ArrayAdapter
 import android.widget.TextView
 import com.buspljus.Glavna
 import com.buspljus.R
-import org.oscim.core.GeoPoint
-import java.time.LocalTime
+import com.buspljus.sifraNaziv
 
-data class sifraNaziv(val sifra: String, val naziv: String, val vreme: LocalTime?, val pozicija: GeoPoint)
 
-class PrikazStanicaTrasa(context: Context, private val items: List<sifraNaziv>) : ArrayAdapter<sifraNaziv>(context, R.layout.polazak_autost, items) {
+class StaniceBottomSheetDialog(context: Context, private val items: List<sifraNaziv>) : ArrayAdapter<sifraNaziv>(context, R.layout.polazak_autost, items) {
 
     override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
         val view: View

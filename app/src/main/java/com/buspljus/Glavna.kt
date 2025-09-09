@@ -1,6 +1,5 @@
 package com.buspljus
 
-import SpisakLinija
 import android.Manifest.permission.ACCESS_COARSE_LOCATION
 import android.Manifest.permission.ACCESS_FINE_LOCATION
 import android.content.Context
@@ -38,20 +37,28 @@ import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
 import androidx.vectordrawable.graphics.drawable.VectorDrawableCompat
 import com.buspljus.Adapteri.PretragaStanica
-import com.buspljus.Adapteri.PrikazStanicaTrasa
-import com.buspljus.Adapteri.sifraNaziv
+import com.buspljus.Adapteri.StaniceBottomSheetDialog
 import com.buspljus.Baza.DatabaseManager
+import com.buspljus.Baza.InterakcijaMapa
 import com.buspljus.Baza.Linije
 import com.buspljus.Baza.PosrednikBaze
 import com.buspljus.Baza.Stanice
+import com.buspljus.Trasa.ObradiTrasu
+import com.buspljus.Trasa.TrasaRender
+import com.buspljus.grafika.Podesavanja
+import com.buspljus.grafika.PopupProzor
+import com.buspljus.grafika.SpisakLinija
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.onCompletion
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
@@ -79,10 +86,8 @@ import java.io.File
 import java.io.FileInputStream
 import java.io.IOException
 import java.time.LocalTime
-import java.util.Timer
-import kotlin.concurrent.schedule
 
-class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInterface>, Interfejs.trasa {
+class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInterface>, Interfejs.novaTrasa {
 
     companion object {
         lateinit var mapa: Map
@@ -91,7 +96,6 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
         lateinit var sveStanice : ItemizedLayer
         lateinit var markeriVozila: ItemizedLayer
         lateinit var odabranoStajalisteSloj: ItemizedLayer
-        private var tajmer: Timer? = null
         private var odbrojavanje15Sek = false
     }
 
@@ -108,11 +112,15 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
     private lateinit var promenaunosa: Button
     private lateinit var gpsdugme: FloatingActionButton
     private lateinit var menadzerLokacije: LocationManager
-    private lateinit var rvsveln : FloatingActionButton
+    private lateinit var redVoznjeSveLinije : FloatingActionButton
     private lateinit var stajaliste: MarkerItem
 
+    // prikaz trase
+    private lateinit var linijaPrikazTrase : TextView
+    private lateinit var listaPrikazTrase : ListView
+    private lateinit var zatvoriPrikazTrase : ImageButton
+
     private var pratilacLokacije: LocationListener? = null
-    private val scope = CoroutineScope(Dispatchers.Default)
 
     private var baner : LinearLayout? = null
     private var markersimbol: MarkerSymbol? = null
@@ -120,6 +128,10 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
     private var pozicija = MapPosition()
     private var prviput: Boolean = true
     private var listaPrikazana = false
+    private var timersParentJob = SupervisorJob()
+    private var sviTajmeri = CoroutineScope(Dispatchers.Main + timersParentJob)
+    private var crtanjeJob: Job? = null
+    private var tajmeriPokrenuti = false
     private var animacijaJob: Job? = null
 
     private var najbliziAutobusRastojanje = 100000.0
@@ -159,14 +171,15 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
         gpsdugme = findViewById(R.id.gps)
         promenaunosa = findViewById(R.id.promenaunosa)
         baner = findViewById(R.id.baner)
-        rvsveln = findViewById(R.id.rv_sveln)
+        redVoznjeSveLinije = findViewById(R.id.rv_sveln)
+        linijaPrikazTrase = findViewById(R.id.ln)
+        listaPrikazTrase = findViewById(R.id.ls)
+        zatvoriPrikazTrase = findViewById(R.id.zatvori)
 
         mapa = pregledmape.map()
 
         LinijePoStanici.initialize(this)
         prikazSacuvanihStanica()
-
-        VoziloInfo(this).registracijaCallback(this)
 
         lista.onItemClickListener = AdapterView.OnItemClickListener { _, _, position, _ ->
             adapter.cursor?.apply {
@@ -286,6 +299,7 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
 
                         ukucanastanica(this@Glavna, stanicaId, odabranoStajalisteSloj, stajaliste, true)
                         podesiNaziv()
+                        prikaziListu(0)
                     }
                     kliknalistu = false
                 } else
@@ -312,8 +326,11 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
             sakrijTrasu()
         }
 
-        rvsveln.setOnClickListener {
-            SpisakLinija(this@Glavna).nacrtajDugmad()
+        redVoznjeSveLinije.setOnClickListener {
+            SpisakLinija(this) { vozilo, stanica, presedacka, time ->
+                reset()
+                pokreniCrtanjeTrase(vozilo, stanica, presedacka, time)
+            }.nacrtajDugmad()
         }
 
         polje.setOnFocusChangeListener { _, hasFocus ->
@@ -330,14 +347,11 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
 
     fun ukucanastanica(context: Context, stanica: String, stajalisteSloj: ItemizedLayer, stajaliste: MarkerItem, animacija: Boolean) {
         try {
+            Internet.zahtev?.cancel()
             sklonitastaturu()
-
             reset()
 
             prviput = true
-
-            if (tajmer != null)
-                stopTajmera()
 
             with (stajaliste) {
                 title = stanica
@@ -348,18 +362,13 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
                 ))
             }
 
-            tajmer = Timer()
-
             if (ProveraDostupnostiInterneta(this@Glavna)) {
-                zahtevZaPozicijuVozila()
-                //lifecycleScope.launch {
-                //    dugmezaosvezavanje(1, 0)
-                //}
+                startCrtanjeMarkera()
             }
             else { // Nema interneta
                 if (Podesavanja.deljenapodesavanja.getBoolean("prikazporv", false)) {
                     Toster(this).toster(resources.getString(R.string.offline_rezim))
-                    tajmercrtanjeSpecMarkera()
+                    startCrtanjeSpecMarkera()
                 }
                 else {
                     Toster(this@Glavna).toster(resources.getString(R.string.nema_interneta))
@@ -382,8 +391,7 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
 
             mapa.updateMap()
         } catch (e: Exception) {
-            Toster(context).toster(e.toString())
-            Log.d(resources.getString(R.string.debug), "" + e)
+            PopupProzor(context).prikaziGresku(e)
         }
     }
 
@@ -393,7 +401,7 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
                 override fun onGesture(g: Gesture, e: MotionEvent): Boolean {
                     if (g == Gesture.TAP) {
                         val p = mMap.viewport().fromScreenPoint(e.x, e.y)
-                        PosrednikBaze(this@Glavna).pretragabaze_kliknamapu(p.latitude.toString(),p.longitude.toString(), object: Interfejs.Callback {
+                        InterakcijaMapa(this@Glavna).pretragabaze_kliknamapu(p.latitude.toString(),p.longitude.toString(), object: Interfejs.MapTapListener {
                             override fun podesiTextView(idStanice: String, nazivStanice: String) {
                                 stanicaId = idStanice
                                 stanicaNaziv = nazivStanice
@@ -608,14 +616,15 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
             lifecycleScope.launch {
                 dugmezaosvezavanje(0, 0)
             }
+            
             if ((prviput) and (najbliziAutobusMarker?.geoPoint != null)) {
                 odzumirajMapu()
                 prviput = false
             }
 
-            tajmer?.schedule(15000) { zahtevZaPozicijuVozila() }
+            //startAnimacijaUcitavanja()
 
-            startAnimacijaUcitavanja()
+            Log.d("BUSPLJUS!","JSON: "+odgovor)
 
         } catch (e: Exception) {
             with(Toster(this@Glavna)) {
@@ -629,47 +638,40 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
             }
             lifecycleScope.launch {
                 dugmezaosvezavanje(0, 1)
+                sviTajmeri.cancel()
             }
         }
         finally {
-            runOnUiThread {
+            lifecycleScope.launch {
                 if (Podesavanja.deljenapodesavanja.getBoolean("prikazporv", false)) {
                     crtanjeCrnihMarkera()
                 }
-                markeriVozila.addItems(vozilaNaMapi as Collection<MarkerInterface>?)
+                (vozilaNaMapi as? Collection<MarkerInterface>)?.let {
+                    markeriVozila.addItems(it)
+                }
                 mapa.updateMap()
             }
         }
     }
 
-    fun animacijaUcitavanja(
-        trajanjeMs: Long = 15_000,
-        intervalMs: Long = 150
+    fun tajmerProgressBar(
+        totalMs: Long = 15_000,
+        intervalMs: Long = 150,
+        action: suspend () -> Unit
     ): Flow<Int> = flow {
-        val ukupnoKoraka = (trajanjeMs / intervalMs).toInt()
-        var progres = 100
-        emit(progres)
+        while (currentCoroutineContext().isActive) {
+            val startTime = System.currentTimeMillis()
 
-        repeat(ukupnoKoraka) {
-            delay(intervalMs)
-            progres = (progres - (100 / ukupnoKoraka)).coerceAtLeast(0)
-            emit(progres)
-        }
-    }.onCompletion {
-        emit(0) // osiguraj da završi na 0%
-        dugmezaosvezavanje(1,0)
-    }
+            action()
 
-    fun startAnimacijaUcitavanja() {
-        animacijaJob?.cancel() // prekini prethodnu ako postoji
+            while (true) {
+                val elapsed = System.currentTimeMillis() - startTime
+                val remaining = (totalMs - elapsed).coerceAtLeast(0)
+                val progress = ((remaining.toDouble() / totalMs) * 100).toInt()
+                emit(progress)
 
-        animacijaJob = lifecycleScope.launch {
-            animacijaUcitavanja().collect { progres ->
-                withContext(Dispatchers.Main) {
-                    ucitavanje.visibility = View.VISIBLE
-                    ucitavanje.isIndeterminate = false
-                    ucitavanje.progress = progres
-                }
+                if (remaining <= 0) break
+                delay(intervalMs)
             }
         }
     }
@@ -686,7 +688,7 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
 
     private fun odzumirajMapu() {
         if (najbliziAutobusRastojanje != 100000.0) {
-            runOnUiThread {
+            lifecycleScope.launch {
                 mapa.setMapPosition(
                     (stajaliste.geoPoint.latitude + najbliziAutobusMarker?.geoPoint?.latitude!!) / 2,
                     (stajaliste.geoPoint.longitude + najbliziAutobusMarker?.geoPoint?.longitude!!) / 2,
@@ -723,30 +725,22 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
         }
     }
 
-
-
-    private fun zahtevZaPozicijuVozila() {
-        lifecycleScope.launch {
-            dugmezaosvezavanje(animiranaTraka = 1, taster = 0) // sakrij dugme, prikaži traku
-            try {
-                Internet().downloadAsFlow(stanicaId, null, 1).collect { result ->
-                    if (result is Internet.DownloadResult.Text) {
-                        primljeniString = result.content
-                        crtanjemarkera(primljeniString)
-                    }
+    private suspend fun zahtevZaPozicijuVozila() {
+        dugmezaosvezavanje(animiranaTraka = 1, taster = 0) // sakrij dugme, prikaži traku
+        try {
+            Internet().downloadAsFlow(stanicaId, null, 1).collect { result ->
+                if (result is Internet.DownloadResult.Text) {
+                    primljeniString = result.content
                 }
-                //dugmezaosvezavanje(animiranaTraka = 0, taster = 1) // sakrij traku, prikaži dugme
-            } catch (_: IOException) {
-                if (Internet.zahtev?.isCanceled() == false) {
-                    Toster(this@Glavna)
-                        .toster(getString(R.string.greska_sa_vezom))
-                }
-                dugmezaosvezavanje(animiranaTraka = 0, taster = 1)
             }
+        } catch (_: IOException) {
+            if (Internet.zahtev?.isCanceled() == false) {
+                Toster(this@Glavna)
+                    .toster(getString(R.string.greska_sa_vezom))
+            }
+            dugmezaosvezavanje(animiranaTraka = 0, taster = 1)
         }
     }
-
-
 
     fun podesiNaziv() {
         with (polje) {
@@ -756,23 +750,11 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
         }
     }
 
-    private fun stopTajmera() {
-        Internet.zahtev?.cancel()
-
-        odbrojavanje15Sek = false
-
-        with (tajmer) {
-            this?.cancel()
-            this?.purge()
-            tajmer = null
-        }
-    }
-
     private fun prikaziListu(prikaz: Int) {
-        runOnUiThread {
+        lifecycleScope.launch {
             lista.visibility = (if (prikaz == 0) View.GONE else View.VISIBLE)
             gpsdugme.visibility = (if (prikaz == 0) View.VISIBLE else View.GONE)
-            rvsveln.visibility = (if (prikaz == 0) View.VISIBLE else View.GONE)
+            redVoznjeSveLinije.visibility = (if (prikaz == 0) View.VISIBLE else View.GONE)
             listaPrikazana = (if (prikaz == 0) true else false)
         }
     }
@@ -782,18 +764,53 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
         lista.adapter = adapter
     }
 
-    override fun prikazTrase(linijarv: String, listasifraNaziv: MutableList<sifraNaziv>) {
-        val linija = findViewById<TextView>(R.id.ln)!!
-        val lista = findViewById<ListView>(R.id.ls)!!
-        val zatvori = findViewById<ImageButton>(R.id.zatvori)!!
-        linija.text = linijarv
-        lista.adapter = PrikazStanicaTrasa(this, listasifraNaziv)
+    fun pokreniCrtanjeTrase(
+        voziloMarker: MarkerItem,
+        stanicaMarker: MarkerItem,
+        presedackaSt: String?,
+        polazak: LocalTime
+    ) {
+        val upit = Linije(this).upitTrasa(voziloMarker.title,stanicaMarker.title, null)
+
+        val preostaleStanice = Stanice(this).staniceDoKrajaTrase(upit.first,stanicaMarker)
+        val pribavljenaTrasa = upit.second
+
+        val (koordinateTrase, spisakStajalista) =
+            ObradiTrasu(this).preradiTrasu(pribavljenaTrasa, preostaleStanice, voziloMarker, polazak)
+
+        val render = TrasaRender(this, this) // 'this' implements Interfejs.trasa
+        render.crtanjeTrase(
+            brojLinije = voziloMarker,
+            koordinateTrase = koordinateTrase, // niz tacaka trase
+            spisakStajalista = spisakStajalista,
+            presedackaSt = presedackaSt
+        )
+    }
+
+    override fun prikazTrase(
+        voziloMarker: MarkerItem,
+        listaStajalista: List<MarkerItem>,
+        listaTacakaTrase: List<GeoPoint>,
+        listaSifraNaziv: List<sifraNaziv>
+    ) {
+        izbrisiTrasu()
+
+        sveStanice.addItems(listaStajalista as Collection<MarkerInterface>)
+        putanja.addPoints(listaTacakaTrase)
+
+        putanja.isEnabled = true
+        sveStanice.isEnabled = true
+
+        linijaPrikazTrase.text = voziloMarker.title
+        listaPrikazTrase.adapter = StaniceBottomSheetDialog(this, listaSifraNaziv)
 
         baner?.visibility = View.VISIBLE
 
-        zatvori.setOnClickListener {
+        zatvoriPrikazTrase.setOnClickListener {
             sakrijTrasu()
         }
+
+        mapa.updateMap()
     }
 
     fun sakrijTrasu() {
@@ -819,20 +836,57 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
         putanja.clearPath()
 
         stopTajmera()
+        restartTajmera()
 
         ukloniBaner()
     }
 
-    fun tajmercrtanjeSpecMarkera() {
-        tajmer?.schedule(0, 2000) {
-            izbrisiSveMarkere()
-            crtanjeCrnihMarkera()
-            markeriVozila.addItems(vozilaNaMapi as Collection<MarkerInterface>)
-            mapa.updateMap()
+    fun startCrtanjeSpecMarkera() {
+        if (crtanjeJob?.isActive == true) return
+        crtanjeJob = sviTajmeri.launch {
+            while (isActive) {
+                delay(2000)
+                izbrisiSveMarkere()
+                crtanjeCrnihMarkera()
+                markeriVozila.addItems(vozilaNaMapi as Collection<MarkerInterface>)
+                mapa.updateMap()
+            }
         }
     }
 
+    fun startCrtanjeMarkera() {
+        if (crtanjeJob?.isActive == true) return
+        crtanjeJob = sviTajmeri.launch {
+            tajmerProgressBar(
+                totalMs = 15_000,
+                intervalMs = 150
+            ) {
+                zahtevZaPozicijuVozila()
+                crtanjemarkera(primljeniString)
+            }.collect { napredak ->
+                withContext(Dispatchers.Main) {
+                    ucitavanje.visibility = View.VISIBLE
+                    ucitavanje.isIndeterminate = false
+                    ucitavanje.progress = napredak
+                }
+            }
+        }
+    }
+
+    fun stopTajmera() {
+        timersParentJob.cancel()
+        tajmeriPokrenuti = false
+    }
+
+    fun restartTajmera() {
+        if (tajmeriPokrenuti) return
+        timersParentJob = SupervisorJob()
+        sviTajmeri = CoroutineScope(Dispatchers.Main + timersParentJob)
+        tajmeriPokrenuti = true
+    }
+
     override fun onStop() {
+        Internet.zahtev?.cancel()
         stopTajmera()
         super.onStop()
     }
@@ -846,6 +900,7 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
             reset()
         }
 
+        restartTajmera()
         super.onResume()
     }
 
@@ -858,6 +913,7 @@ class Glavna : AppCompatActivity(),ItemizedLayer.OnItemGestureListener<MarkerInt
             )
         }
         pratilacLokacije?.let { it1 -> menadzerLokacije.removeUpdates(it1) }
+        animacijaJob?.cancel()
     }
 
     override fun onDestroy() {

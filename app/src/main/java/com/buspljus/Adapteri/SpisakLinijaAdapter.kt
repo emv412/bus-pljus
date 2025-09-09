@@ -11,21 +11,26 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.buspljus.Alati
 import com.buspljus.Baza.Linije
 import com.buspljus.R
 import com.buspljus.Toster
-import com.buspljus.VoziloInfo
 import com.buspljus.VoziloInfo.Companion.danunedelji
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.tabs.TabLayout
 import org.json.JSONArray
 import org.json.JSONObject
+import org.oscim.layers.marker.MarkerItem
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 
-class SpisakLinijaAdapter(private val context: Context, private val buttonLabels: List<String>) :
-    RecyclerView.Adapter<SpisakLinijaAdapter.ButtonViewHolder>() {
+class SpisakLinijaAdapter(
+    private val context: Context,
+    private val buttonLabels: List<String>,
+    private val parentDialog: BottomSheetDialog,
+    private val nacrtajTrasu: (MarkerItem, MarkerItem, String?, LocalTime) -> Unit
+) : RecyclerView.Adapter<SpisakLinijaAdapter.ButtonViewHolder>() {
 
     companion object {
         var odabranaLinija = mutableListOf<Any>()
@@ -66,7 +71,7 @@ class SpisakLinijaAdapter(private val context: Context, private val buttonLabels
                 brojln?.text = podaciOLn[0] as String
                 smerovi?.getTabAt(0)?.text = podaciOLn[2] as String
                 smerovi?.getTabAt(1)?.text = podaciOLn[3] as String
-                datum?.text = VoziloInfo(context).prikaziDatumRV(JSONArray(podaciOLn[4] as String))
+                datum?.text = Alati(context).prikaziDatumRV(JSONArray(podaciOLn[4] as String))
 
                 fun odradi(dan: Int) {
                     listaPol.clear()
@@ -107,7 +112,13 @@ class SpisakLinijaAdapter(private val context: Context, private val buttonLabels
                     }
 
                     mrezaPolazaka?.layoutManager = GridLayoutManager(context, 5)
-                    mrezaPolazaka?.adapter = RVLinijeAdapter(context, listaPol)
+                    mrezaPolazaka?.adapter = RVLinijeAdapter(listaPol) { vozilo, stanica, presedacka, time ->
+                        nacrtajTrasu(vozilo, stanica, presedacka, time)
+
+                        // close both dialogs
+                        dl.dismiss()
+                        parentDialog.dismiss()
+                    }
                 }
 
                 fun mikrofn(tab: Int?) {

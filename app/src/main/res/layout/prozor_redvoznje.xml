@@ -1,0 +1,251 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <TextView
+        android:id="@+id/rastojanje"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        app:layout_constraintBottom_toBottomOf="@+id/rastojanje_textview"
+        app:layout_constraintStart_toEndOf="@+id/gbvozila_textview"
+        app:layout_constraintTop_toTopOf="@+id/rastojanje_textview"
+        tools:text="0.5 km" />
+
+    <TextView
+        android:id="@+id/redvoznje_textview"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="8dp"
+        android:text="@string/red_voznje_od"
+        android:visibility="gone"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/divider2"
+        tools:visibility="visible" />
+
+    <TextView
+        android:id="@+id/datum_rv"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="@+id/rdsn"
+        app:layout_constraintStart_toEndOf="@+id/redvoznje_textview"
+        app:layout_constraintTop_toTopOf="@+id/rdsn"
+        tools:text="16. 9. 2023."
+        tools:visibility="visible" />
+
+    <TextView
+        android:id="@+id/linija_rv"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="8dp"
+        android:textSize="26sp"
+        android:textStyle="bold"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:text="95" />
+
+    <TextView
+        android:id="@+id/linija_relacija"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="48dp"
+        android:textSize="16sp"
+        app:layout_constraintEnd_toStartOf="@+id/prethodnipol"
+        app:layout_constraintStart_toStartOf="@+id/linija_rv"
+        app:layout_constraintTop_toBottomOf="@+id/linija_rv"
+        tools:text="Борча 3 - Блок 45" />
+
+    <TextView
+        android:id="@+id/gbvozila_textview"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="16dp"
+        android:text="@string/gar_broj"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/linija_relacija" />
+
+    <TextView
+        android:id="@+id/prvipolazak"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="8dp"
+        android:text="-:--"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:visibility="invisible"
+        app:layout_constraintBottom_toTopOf="@+id/drugipolazak"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/prethodnipol"
+        tools:visibility="visible" />
+
+    <TextView
+        android:id="@+id/drugipolazak"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="8dp"
+        android:text="-:--"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:visibility="invisible"
+        app:layout_constraintBottom_toTopOf="@+id/divider2"
+        app:layout_constraintEnd_toEndOf="@+id/prvipolazak"
+        app:layout_constraintTop_toBottomOf="@+id/prvipolazak"
+        tools:visibility="visible" />
+
+    <TextView
+        android:id="@+id/gb_redv"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        app:layout_constraintBottom_toBottomOf="@+id/gbvozila_textview"
+        app:layout_constraintStart_toEndOf="@+id/gbvozila_textview"
+        app:layout_constraintTop_toTopOf="@+id/gbvozila_textview"
+        tools:text="3156" />
+
+    <TextView
+        android:id="@+id/rdsn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="8dp"
+        android:visibility="invisible"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/divider2"
+        tools:text="Радни дан"
+        tools:visibility="visible" />
+
+    <TextView
+        android:id="@+id/rastojanje_textview"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginBottom="8dp"
+        android:text="@string/rastojanje"
+        app:layout_constraintBottom_toBottomOf="@id/divider2"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/gbvozila_textview" />
+
+    <TextView
+        android:id="@+id/polasci_textview"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginBottom="8dp"
+        android:text="@string/sl_polasci"
+        android:visibility="invisible"
+        app:layout_constraintBottom_toTopOf="@+id/linija_relacija"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:visibility="visible" />
+
+    <View
+        android:id="@+id/divider2"
+        android:layout_width="409dp"
+        android:layout_height="1dp"
+        android:layout_marginTop="8dp"
+        android:background="?android:attr/listDivider"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/rastojanje_textview" />
+
+    <TextView
+        android:id="@+id/prethodnipol"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginBottom="8dp"
+        android:text="-:--"
+        android:textColor="@color/siva"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:visibility="invisible"
+        app:layout_constraintBottom_toTopOf="@+id/prvipolazak"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/polasci_textview"
+        tools:visibility="visible" />
+
+    <Button
+        android:id="@+id/presedanjebgvoz"
+        style="@style/Widget.AppCompat.Button.Borderless.Colored"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:clickable="true"
+        android:drawableStart="@drawable/voz"
+        android:drawablePadding="10sp"
+        android:text="@string/presedanjebgvoz"
+        android:textAlignment="viewStart"
+        android:visibility="gone"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/redvoznje_textview"
+        tools:visibility="visible" />
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/prosirena_sekcija"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/presedanjebgvoz"
+        tools:visibility="visible">
+
+        <TextView
+            android:id="@+id/odaberistanicu_textview"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:text="Преко станице:"
+            android:textSize="16sp"
+            app:layout_constraintBottom_toBottomOf="@+id/stanicepadajucalista"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="@+id/stanicepadajucalista"
+            tools:text="Преко станице:" />
+
+        <Spinner
+            android:id="@+id/stanicepadajucalista"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:layout_marginBottom="16dp"
+            android:minHeight="48dp"
+            app:layout_constraintBottom_toTopOf="@+id/include"
+            app:layout_constraintStart_toEndOf="@+id/odaberistanicu_textview" />
+
+        <CheckBox
+            android:id="@+id/samobgvoz"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="8dp"
+            android:checked="true"
+            android:enabled="false"
+            android:minHeight="48dp"
+            android:text="Само БГ:Воз"
+            android:visibility="gone"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            tools:text="Само БГ:Воз" />
+
+        <include
+            android:id="@+id/include"
+            layout="@layout/prozor_bgvoz"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

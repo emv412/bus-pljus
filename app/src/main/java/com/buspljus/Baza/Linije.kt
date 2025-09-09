@@ -11,7 +11,7 @@ import com.buspljus.Baza.PosrednikBaze.Companion.SMER
 import com.buspljus.Baza.PosrednikBaze.Companion.TRASA
 import com.buspljus.Interfejs
 import com.buspljus.IzracunavanjeVremena
-import com.buspljus.PopupProzor
+import com.buspljus.grafika.PopupProzor
 import org.json.JSONArray
 import org.oscim.core.GeoPoint
 
@@ -85,7 +85,7 @@ class Linije(context: Context) : UpitUBazu(context) {
         }
     }
 
-    fun prikaziTrasu(linija: String, sifraStajalista: String, smer: String?): Triple<JSONArray, JSONArray, MutableList<GeoPoint>> {
+    fun upitTrasa(linija: String, sifraStajalista: String, smer: String?): Triple<JSONArray, JSONArray, MutableList<GeoPoint>> {
         var trasaUnzip = ""
         var jsonIDStanice : JSONArray? = null
         val jsonGeoPointStanice = mutableListOf<GeoPoint>()
@@ -109,8 +109,8 @@ class Linije(context: Context) : UpitUBazu(context) {
                     moveToFirst()
 
                     jsonIDStanice = JSONArray(getString(getColumnIndexOrThrow(LISTA_STAJALISTA)))
-                    for (n in 0 until jsonIDStanice!!.length()) {
-                        jsonGeoPointStanice.add(PosrednikBaze(context).idStaniceuGeoPoint(jsonIDStanice!![n].toString()))
+                    for (n in 0 until jsonIDStanice.length()) {
+                        jsonGeoPointStanice.add(PosrednikBaze(context).idStaniceuGeoPoint(jsonIDStanice[n].toString()))
                     }
 
                     val izmena = getString(getColumnIndexOrThrow(IZMENJENALINIJA_BOOLEAN))

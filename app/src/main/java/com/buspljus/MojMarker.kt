@@ -7,5 +7,4 @@ class MojMarker(
     var brojLinije: String, var smer: String?, var garazniBOriginal: String, var garazniBMenjan: String?, var vremePolaska: String,
     var polozajVozila: GeoPoint, var sledeceStajaliste: String?
 ):
-    MarkerItem(brojLinije, garazniBOriginal, polozajVozila) {
-}
+    MarkerItem(brojLinije, garazniBOriginal, polozajVozila)

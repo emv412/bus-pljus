@@ -9,6 +9,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.oscim.core.GeoPoint
+import org.oscim.layers.marker.MarkerItem
 
 class Stanice(context: Context) : UpitUBazu(context) {
 
@@ -102,27 +103,6 @@ class Stanice(context: Context) : UpitUBazu(context) {
         return super.SQLzahtev(q.tabela, q.kolone, q.odabir, q.parametri, q.redjanjepo)
     }
 
-    fun prikazLinijaNaStanici(stanica: String): Map<String, String> {
-        val selection = "${PosrednikBaze.LISTA_STAJALISTA} LIKE ?"
-        val args = arrayOf("%\"$stanica\"%")
-
-        return queryAndProcess(
-            PosrednikBaze.LINIJE_TABLE,
-            arrayOf(PosrednikBaze.ID_KOLONA, PosrednikBaze.OKRETNICA_DO),
-            selection,
-            args,
-            null
-        ) { cursor ->
-            buildMap {
-                while (cursor.moveToNext()) {
-                    val id = cursor.getString(cursor.getColumnIndexOrThrow(PosrednikBaze.ID_KOLONA))
-                    val doStanice = cursor.getString(cursor.getColumnIndexOrThrow(PosrednikBaze.OKRETNICA_DO))
-                    put(id, doStanice)
-                }
-            }
-        }
-    }
-
     fun ucitajLinijePoStanicama(): Map<String, List<LineInfo>> {
         val result = mutableMapOf<String, MutableList<LineInfo>>()
 
@@ -149,7 +129,6 @@ class Stanice(context: Context) : UpitUBazu(context) {
         return result
     }
 
-
     fun extractIdsFromList(raw: String): List<String> {
         return try {
             val jsonArray = JSONArray(raw)
@@ -157,6 +136,22 @@ class Stanice(context: Context) : UpitUBazu(context) {
         } catch (e: Exception) {
             emptyList()
         }
+    }
+
+    fun staniceDoKrajaTrase(sveStaniceLinije: JSONArray, odabranoStajalisteMarker: MarkerItem): List<List<Any>> {
+        val preostaleStanice = mutableListOf<List<Any>>()
+        preostaleStanice.clear()
+        for (brojac in 0 until sveStaniceLinije.length()) {
+            if (sveStaniceLinije[brojac] == odabranoStajalisteMarker.title) {
+                for (novib in brojac until sveStaniceLinije.length()) {
+                    preostaleStanice.add(listOf(sveStaniceLinije[novib].toString(), PosrednikBaze(
+                        context
+                    ).idStaniceuGeoPoint(sveStaniceLinije[novib].toString())))
+                }
+                break
+            }
+        }
+        return preostaleStanice
     }
 
 

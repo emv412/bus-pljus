@@ -16,7 +16,7 @@
         android:theme="@style/Theme.AppCompat">
 
         <activity
-            android:name=".Prvootvaranje"
+            android:name=".grafika.PrvoOtvaranje"
             android:exported="true"
             android:screenOrientation="portrait">
             <intent-filter>
@@ -33,12 +33,12 @@
             android:windowSoftInputMode="adjustResize">
         </activity>
         <activity
-            android:name=".Podesavanja"
+            android:name=".grafika.Podesavanja"
             android:screenOrientation="portrait"
             android:exported="false">
         </activity>
         <activity
-            android:name=".OProgramu"
+            android:name=".grafika.OProgramu"
             android:screenOrientation="portrait"
             android:exported="false"/>
     </application>

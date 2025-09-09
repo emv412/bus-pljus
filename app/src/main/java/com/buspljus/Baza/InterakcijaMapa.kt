@@ -5,22 +5,22 @@ import android.database.Cursor
 import com.buspljus.BgVozStation
 import com.buspljus.Glavna
 import com.buspljus.Interfejs
-import com.buspljus.PopupProzor
 import com.buspljus.VoziloInfo
+import com.buspljus.grafika.PopupProzor
 import org.oscim.core.GeoPoint
 
 class InterakcijaMapa(context: Context) : UpitUBazu(context) {
 
-    fun pretragabaze_kliknamapu(lat: String, lng: String, callback: Interfejs.Callback, pozivOdFunkcije: Int) {
+    fun pretragabaze_kliknamapu(lat: String, lng: String, mapTapListener: Interfejs.MapTapListener, pozivOdFunkcije: Int) {
         val tackaGeoPoint = GeoPoint(lat.toDouble(), lng.toDouble())
 
         when (pozivOdFunkcije) {
-            0 -> handleMapClickSearch(tackaGeoPoint, callback)
-            1 -> handleProximitySearch(tackaGeoPoint, callback)
+            0 -> handleMapClickSearch(tackaGeoPoint, mapTapListener)
+            1 -> handleProximitySearch(tackaGeoPoint, mapTapListener)
         }
     }
 
-    private fun handleMapClickSearch(tackaGeoPoint: GeoPoint, callback: Interfejs.Callback) {
+    private fun handleMapClickSearch(tackaGeoPoint: GeoPoint, mapTapListener: Interfejs.MapTapListener) {
         val nearbyBgVozStations = findNearbyBgVozStations(tackaGeoPoint, 50.0)
 
         nearbyBgVozStations.forEach { station ->
@@ -28,20 +28,20 @@ class InterakcijaMapa(context: Context) : UpitUBazu(context) {
         }
 
         if (nearbyBgVozStations.isEmpty() && Glavna.mapa.mapPosition.zoomLevel >= 14) {
-            findNearbyRegularStations(tackaGeoPoint, callback)
+            findNearbyRegularStations(tackaGeoPoint, mapTapListener)
         }
     }
 
-    private fun handleProximitySearch(tackaGeoPoint: GeoPoint, callback: Interfejs.Callback) {
+    private fun handleProximitySearch(tackaGeoPoint: GeoPoint, mapTapListener: Interfejs.MapTapListener) {
         val nearbyStations = findNearbyBgVozStations(tackaGeoPoint, 400.0)
 
         if (nearbyStations.isNotEmpty()) {
             nearbyStations.forEach { station ->
-                callback.koloneBGVOZ(listOf(station.id, station.naziv, station.redvoznje, station.distance))
+                mapTapListener.koloneBGVOZ(listOf(station.id, station.naziv, station.redvoznje, station.distance))
             }
         } else {
             val broaderSearch = findBroaderBgVozSearch(tackaGeoPoint)
-            processBroaderSearchResults(broaderSearch, tackaGeoPoint, callback)
+            processBroaderSearchResults(broaderSearch, tackaGeoPoint, mapTapListener)
         }
     }
 
@@ -103,18 +103,18 @@ class InterakcijaMapa(context: Context) : UpitUBazu(context) {
         )
     }
 
-    private fun processBroaderSearchResults(cursor: Cursor, tackaGeoPoint: GeoPoint, callback: Interfejs.Callback) {
+    private fun processBroaderSearchResults(cursor: Cursor, tackaGeoPoint: GeoPoint, mapTapListener: Interfejs.MapTapListener) {
         cursor.use {
             while (it.moveToNext()) {
                 val station = extractBgVozStation(it, tackaGeoPoint)
                 if (station.distance < 400) {
-                    callback.koloneBGVOZ(listOf(station.id, station.naziv, station.redvoznje, station.distance))
+                    mapTapListener.koloneBGVOZ(listOf(station.id, station.naziv, station.redvoznje, station.distance))
                 }
             }
         }
     }
 
-    private fun findNearbyRegularStations(tackaGeoPoint: GeoPoint, callback: Interfejs.Callback) {
+    private fun findNearbyRegularStations(tackaGeoPoint: GeoPoint, mapTapListener: Interfejs.MapTapListener) {
         val precision = "3"
         val tacka = arrayOf(
             precision, tackaGeoPoint.latitude.toString(), precision,
@@ -129,6 +129,6 @@ class InterakcijaMapa(context: Context) : UpitUBazu(context) {
             null
         )
 
-        PopupProzor(context).pronadjeneStaniceAlertDialog(cursor, callback)
+        PopupProzor(context).pronadjeneStaniceAlertDialog(cursor, mapTapListener)
     }
 }

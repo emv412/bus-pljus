@@ -43,9 +43,6 @@ class PosrednikBaze(context: Context) : UpitUBazu(context) {
 
     private val stationService by lazy { Stanice(context) }
     private val holidayService by lazy { Praznik(context) }
-    private val mapSearchService by lazy { InterakcijaMapa(context) }
-
-
 
     fun idStaniceuGeoPoint(sifra: String): GeoPoint =
         stationService.idStaniceuGeoPoint(sifra)
@@ -55,9 +52,6 @@ class PosrednikBaze(context: Context) : UpitUBazu(context) {
 
     fun praznik(): Int =
         holidayService.praznik()
-
-    fun pretragabaze_kliknamapu(lat: String, lng: String, callback: Interfejs.Callback, pozivOdFunkcije: Int) =
-        mapSearchService.pretragabaze_kliknamapu(lat, lng, callback, pozivOdFunkcije)
 
     fun dobavisifre(rec: CharSequence?, trazenjepobroju: Boolean): Cursor =
         stationService.dobaviSifre(rec,trazenjepobroju)

@@ -16,14 +16,14 @@ import android.widget.ProgressBar
 import android.widget.Spinner
 import android.widget.TextView
 import androidx.constraintlayout.widget.ConstraintLayout
-import androidx.core.graphics.drawable.toBitmap
 import androidx.core.view.isVisible
-import androidx.vectordrawable.graphics.drawable.VectorDrawableCompat
 import com.buspljus.Adapteri.PrikazZStanica
-import com.buspljus.Adapteri.SpisakLinijaAdapter
-import com.buspljus.Adapteri.sifraNaziv
+import com.buspljus.Baza.InterakcijaMapa
 import com.buspljus.Baza.Linije
 import com.buspljus.Baza.PosrednikBaze
+import com.buspljus.Baza.Stanice
+import com.buspljus.Trasa.ObradiTrasu
+import com.buspljus.grafika.PopupProzor
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import kotlinx.coroutines.CoroutineScope
@@ -31,12 +31,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.json.JSONArray
 import org.json.JSONObject
-import org.oscim.android.canvas.AndroidBitmap
 import org.oscim.core.GeoPoint
 import org.oscim.layers.marker.MarkerItem
-import org.oscim.layers.marker.MarkerSymbol
-import java.math.BigDecimal
-import java.math.RoundingMode
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
@@ -61,17 +57,7 @@ class VoziloInfo(private val context: Context) {
                 }
             }
         }
-
-        private var pozivTrasaInterface: Interfejs.trasa? = null
-
-        //var voziloCache = mutableListOf("0","0")
-        lateinit var trasaLinije : Triple<JSONArray, JSONArray, MutableList<GeoPoint>>
-
-        val stNiz = mutableListOf<sifraNaziv>()
-        val gpNiz = mutableListOf<GeoPoint>()
-
     }
-    var preostaleStanice = mutableListOf<List<Any>>()
     val zeleznickeStaniceZaListu = mutableMapOf<String,List<Any>>()
 
     private lateinit var sati : JSONObject
@@ -112,51 +98,6 @@ class VoziloInfo(private val context: Context) {
 
     private val dialog = BottomSheetDialog(context)
 
-    fun registracijaCallback(povratniPZ: Interfejs.trasa) {
-        pozivTrasaInterface = povratniPZ
-    }
-
-    fun zaokruzivanje(broj: Double, brojDecimala: Int): Double {
-        return BigDecimal(broj).setScale(brojDecimala, RoundingMode.HALF_EVEN).toDouble()
-    }
-
-    fun staniceDoKrajaTrase(sveStaniceLinije: JSONArray, odabranoStajalisteMarker: MarkerItem) {
-        preostaleStanice.clear()
-        for (brojac in 0 until sveStaniceLinije.length()) {
-            if (sveStaniceLinije[brojac] == odabranoStajalisteMarker.title) {
-                for (novib in brojac until sveStaniceLinije.length()) {
-                    preostaleStanice.add(listOf(sveStaniceLinije[novib].toString(), PosrednikBaze(
-                        context
-                    ).idStaniceuGeoPoint(sveStaniceLinije[novib].toString())))
-                }
-                break
-            }
-        }
-    }
-
-    fun proveriPolazak(): LocalTime {
-        var lokalVreme = LocalTime.now()
-        if (voziloNaOkretnici) {
-            if (prviSledeciPolazak.isAfter(LocalTime.now()))
-                lokalVreme = prviSledeciPolazak
-        }
-        return lokalVreme
-    }
-
-    fun blizinaOkretnice(sveStaniceLinije: JSONArray, linija: MojMarker): Boolean {
-        // provera blizine vozila u odnosu na okretnicu
-        return if (PosrednikBaze(context).idStaniceuGeoPoint(sveStaniceLinije.get(0).toString()).sphericalDistance(linija.polozajVozila) < 100)
-            true
-        else
-            false
-    }
-
-    fun prikaziDatumRV(datum: JSONArray): String {
-        with(datum) {
-            return this.getString(0) + ". " + this.getString(1) + ". " + this.getString(2) + "."
-        }
-    }
-
     fun redvoznjeKliknaVozilo(linija: MojMarker, odabranoStajalisteMarker: MarkerItem) : Boolean {
         val asinhrono = CoroutineScope(Dispatchers.Main)
         vreme = linija.vremePolaska
@@ -167,7 +108,7 @@ class VoziloInfo(private val context: Context) {
             )
         ).div(1000)
 
-        val rastojanjeprer = zaokruzivanje(rastojanjedostanice,1).toString() + " km"
+        val rastojanjeprer = Alati(context).zaokruzivanje(rastojanjedostanice,1).toString() + " km"
 
         fun obradilistu(dobijenaLista: List<String>) {
             try {
@@ -243,7 +184,7 @@ class VoziloInfo(private val context: Context) {
                                                     try {
                                                         val xy = zeleznickeStaniceZaListu.map {it.value[2]}[position] as GeoPoint
                                                         Glavna.mapa.setMapPosition(xy.latitude, xy.longitude, 80000.0)
-                                                        crtanjeTrase(linija, odabranoStajalisteMarker, zeleznickeStaniceZaListu.map { it.value[3] }[position] as String, proveriPolazak(), false)
+                                                        nacrtajTrasu(linija, odabranoStajalisteMarker, zeleznickeStaniceZaListu.map { it.value[3] }[position] as String, Alati(context).proveriPolazak(voziloNaOkretnici,prviSledeciPolazak))
 
                                                         dialog.dismiss()
                                                     }
@@ -254,14 +195,16 @@ class VoziloInfo(private val context: Context) {
                                                 }
 
                                                 try {
+                                                    val gpx = Linije(context).upitTrasa(linija.brojLinije, odabranoStajalisteMarker.title, null).second
+                                                    val gpxUGP = ObradiTrasu(context).jsonArrayuGeoPoint(gpx)
                                                     vozoviPosleVremena = IzracunavanjeVremena().izracunavanjeVremena(
                                                         listOf(autoSTGeoPoint),
-                                                        Linije(context).prikaziTrasu(linija.brojLinije, odabranoStajalisteMarker.title, null).second,
+                                                        gpxUGP,
                                                         linija,
-                                                        proveriPolazak()
+                                                        Alati(context).proveriPolazak(voziloNaOkretnici,prviSledeciPolazak)
                                                     )[0]
                                                 }
-                                                catch (e: Exception) {
+                                                catch (_: Exception) {
                                                     vozilostizeoko.text = context.resources.getString(R.string.neuspelo_trazenje_vozila)
                                                 }
 
@@ -301,12 +244,12 @@ class VoziloInfo(private val context: Context) {
 
                         fun pretresiZS() {
                             try {
-                                    zeleznickeStaniceZaListu.clear()
-                                    staniceDoKrajaTrase(sveStaniceLinije, odabranoStajalisteMarker)
+                                zeleznickeStaniceZaListu.clear()
+                                val preostaleStanice = Stanice(context).staniceDoKrajaTrase(sveStaniceLinije, odabranoStajalisteMarker)
 
                                     for (brojac in 1 until preostaleStanice.size) {
                                         jednaKoordinata = preostaleStanice[brojac][1] as GeoPoint
-                                        PosrednikBaze(context).pretragabaze_kliknamapu(jednaKoordinata.latitude.toString(),jednaKoordinata.longitude.toString(), object: Interfejs.Callback {
+                                        InterakcijaMapa(context).pretragabaze_kliknamapu(jednaKoordinata.latitude.toString(),jednaKoordinata.longitude.toString(), object: Interfejs.MapTapListener {
                                             override fun podesiTextView(idStanice: String,nazivStanice: String) {
                                                 TODO("Not yet implemented")
                                             }
@@ -331,7 +274,7 @@ class VoziloInfo(private val context: Context) {
                         }
 
                         fun naOkretnici() {
-                            if (blizinaOkretnice(sveStaniceLinije, linija)) {
+                            if (Alati(context).proveraVozilaNaOkretnici(sveStaniceLinije, linija)) {
                                 sati = polasci.getJSONObject("rv")
 
                                 with (dialog) {
@@ -366,7 +309,7 @@ class VoziloInfo(private val context: Context) {
 
                         trasaDugme.setOnClickListener {
                             try {
-                                crtanjeTrase(linija, odabranoStajalisteMarker, null, proveriPolazak(), false)
+                                nacrtajTrasu(linija, odabranoStajalisteMarker, null, Alati(context).proveriPolazak(voziloNaOkretnici,prviSledeciPolazak))
                                 dialog.dismiss()
                             }
                             catch (g: Exception) {
@@ -452,7 +395,7 @@ class VoziloInfo(private val context: Context) {
             }
 
             prosirivalista.setAdapter(PrikazZStanica(context, rezultat.sortedBy { it[1] }, prosirivalista))
-            if (rezultat.size == 0) {
+            if (rezultat.isEmpty()) {
                 nemaPolazaka.visibility = View.VISIBLE
             }
             else
@@ -467,57 +410,7 @@ class VoziloInfo(private val context: Context) {
         }
     }
 
-    fun crtanjeTrase(markerVozilo: MarkerItem, markerStanica: MarkerItem, presedackaSt : String?, polazak: LocalTime, sveStanice: Boolean) {
-        stNiz.clear()
-            Glavna().izbrisiTrasu()
-            gpNiz.clear()
-
-            trasaLinije = Linije(context).prikaziTrasu(markerVozilo.title, markerStanica.title, if (sveStanice) SpisakLinijaAdapter.odabranaLinija[2].toString() else null)
-
-            fun dodajPreostaleStanice() {
-                for (b in 0 until preostaleStanice.size) {
-                    gpNiz.add(preostaleStanice[b][1] as GeoPoint)
-                }
-            }
-
-            for (i in 0 until trasaLinije.second.length()) {
-                Glavna.putanja.addPoints(listOf(GeoPoint(
-                    trasaLinije.second.getJSONObject(i)["lat"].toString().toDouble(),
-                    trasaLinije.second.getJSONObject(i)["lon"].toString().toDouble()
-                )))
-            }
-
-            if (sveStanice) {
-                markerVozilo.geoPoint = Glavna.putanja.points[0]
-                staniceDoKrajaTrase(SpisakLinijaAdapter.odabranaLinija[1] as JSONArray, markerStanica)
-            }
-
-            dodajPreostaleStanice()
-
-            for (i in 0 until trasaLinije.third.size) {
-                val ltlg = trasaLinije.third[i]
-                val marker = MarkerItem(null, trasaLinije.first[i].toString(),null, GeoPoint(ltlg.latitude, ltlg.longitude))
-                marker.marker = MarkerSymbol(
-                    AndroidBitmap(VectorDrawableCompat.create(
-                        context.resources, if ((presedackaSt != null) and (presedackaSt == trasaLinije.first[i].toString())) R.drawable.crvena_tacka else
-                            R.drawable.plava_tacka, context.theme)!!.toBitmap()), MarkerSymbol.HotspotPlace.BOTTOM_CENTER,true)
-                Glavna.sveStanice.addItem(marker)
-            }
-
-        if (gpNiz.isNotEmpty()) {
-            val listLocalTime = IzracunavanjeVremena().izracunavanjeVremena(gpNiz, trasaLinije.second, markerVozilo, polazak)
-
-            for (b in 0 until preostaleStanice.size) {
-                stNiz.add(sifraNaziv(
-                    preostaleStanice[b][0] as String, PosrednikBaze(context).idStaniceUNaziv(
-                        preostaleStanice[b][0] as String), if (listLocalTime.size == preostaleStanice.size) listLocalTime[b] else null, gpNiz[b]
-                ))
-            }
-        }
-
-        Glavna.putanja.isEnabled = true
-        Glavna.sveStanice.isEnabled = true
-        pozivTrasaInterface?.prikazTrase(markerVozilo.title, stNiz)
-
+    fun nacrtajTrasu(markerVozilo: MarkerItem, markerStanica: MarkerItem, presedackaSt : String?, polazak: LocalTime) {
+        (context as? Glavna)?.pokreniCrtanjeTrase(markerVozilo,markerStanica, presedackaSt, polazak)
     }
 }

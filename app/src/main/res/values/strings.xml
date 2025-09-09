@@ -64,7 +64,8 @@
     <string name="samobgvoz">Само БГ:Воз</string>
     <string name="skinuta_mapa">Преузета мапа</string>
     <string name="skinute_stanice">Преузете станице</string>
-    <string name="sl_polasci">Полазак у:</string>
+    <string name="sl_polasci">Полазак са окретнице:</string>
+    <string name="polazak_u">Полазак у:</string>
     <string name="sledecaStanicaKod">Следеће стајалиште:</string>
     <string name="stanicaobrisana">Уклоњена</string>
     <string name="stanicasacuvana">Сачувана</string>

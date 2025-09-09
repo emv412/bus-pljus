@@ -10,8 +10,8 @@ import com.buspljus.Baza.PosrednikBaze.Companion.OKRETNICA_OD
 import com.buspljus.Baza.PosrednikBaze.Companion.RED_VOZNJE
 import com.buspljus.Baza.PosrednikBaze.Companion.SMER
 import com.buspljus.Interfejs
-import com.buspljus.PopupProzor
 import com.buspljus.Toster
+import com.buspljus.grafika.PopupProzor
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
